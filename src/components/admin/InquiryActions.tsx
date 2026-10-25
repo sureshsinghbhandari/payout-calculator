@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { deleteInquiryAction, setInquiryStatusAction } from "@/app/admin/actions";
+import { deleteInquiryAction, restoreInquiryAction, setInquiryStatusAction } from "@/app/admin/actions";
 import type { InquiryStatus } from "@/lib/inquiry";
 
 function SubmitButton({ children, tone }: { children: React.ReactNode; tone: "primary" | "danger" }) {
@@ -22,6 +22,15 @@ function SubmitButton({ children, tone }: { children: React.ReactNode; tone: "pr
 }
 
 export function InquiryActions({ id, status, name }: { id: string; status: InquiryStatus; name: string }) {
+  if (status === "deleted") {
+    return (
+      <form action={restoreInquiryAction}>
+        <input type="hidden" name="id" value={id} />
+        <SubmitButton tone="primary">Restore</SubmitButton>
+      </form>
+    );
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
       <form action={setInquiryStatusAction}>
@@ -32,7 +41,9 @@ export function InquiryActions({ id, status, name }: { id: string; status: Inqui
       <form
         action={deleteInquiryAction}
         onSubmit={(e) => {
-          if (!window.confirm(`Delete the inquiry from ${name}? This cannot be undone.`)) e.preventDefault();
+          if (!window.confirm(`Delete the inquiry from ${name}? It moves to Deleted inquiries, where you can restore it.`)) {
+            e.preventDefault();
+          }
         }}
       >
         <input type="hidden" name="id" value={id} />

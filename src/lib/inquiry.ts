@@ -14,7 +14,9 @@ export const INQUIRY_LIMITS = {
 } as const;
 
 export type InquiryField = "name" | "email" | "phone" | "message";
-export type InquiryStatus = "new" | "contacted";
+export type InquiryStatus = "new" | "contacted" | "deleted";
+/** Statuses an inquiry can have while it is not deleted. */
+export type ActiveInquiryStatus = Exclude<InquiryStatus, "deleted">;
 
 export interface InquiryContact {
   name: string;
@@ -37,6 +39,10 @@ export interface StoredInquiry extends InquiryContact {
   /** ISO timestamp (UTC). */
   createdAt: string;
   status: InquiryStatus;
+  /** When the inquiry was (soft) deleted, ISO timestamp (UTC). */
+  deletedAt?: string;
+  /** Status to return to when a deleted inquiry is restored. */
+  statusBeforeDelete?: ActiveInquiryStatus;
   plan: InquiryPlan;
 }
 
@@ -152,10 +158,14 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   ) {
     throw new Error("Invalid inquiry plan.");
   }
+  const status: InquiryStatus = d.status === "contacted" || d.status === "deleted" ? d.status : "new";
+  const deletedAt = str(d.deletedAt);
+  const statusBeforeDelete = d.statusBeforeDelete === "contacted" ? "contacted" : "new";
   return {
     id,
     createdAt,
-    status: d.status === "contacted" ? "contacted" : "new",
+    status,
+    ...(status === "deleted" ? { deletedAt: deletedAt ?? createdAt, statusBeforeDelete } : {}),
     name,
     email,
     phone: str(d.phone) ?? "",

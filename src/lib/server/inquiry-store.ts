@@ -1,6 +1,6 @@
 import "server-only";
-import { del, get, list, put } from "@vercel/blob";
-import { isInquiryId, parseStoredInquiry, type InquiryStatus, type StoredInquiry } from "../inquiry";
+import { get, list, put } from "@vercel/blob";
+import { isInquiryId, parseStoredInquiry, type ActiveInquiryStatus, type StoredInquiry } from "../inquiry";
 
 /**
  * Inquiries are stored as one private JSON file each in Vercel Blob, so two
@@ -64,11 +64,14 @@ export async function listInquiries(): Promise<{ inquiries: StoredInquiry[]; tot
   };
 }
 
-export async function setInquiryStatus(id: string, status: InquiryStatus): Promise<boolean> {
+/** Rewrites one inquiry, only if it has not changed since it was read. */
+async function updateInquiry(id: string, change: (inquiry: StoredInquiry) => StoredInquiry | null): Promise<boolean> {
   const pathname = pathnameFor(id);
   const current = await readInquiry(pathname);
   if (!current) return false;
-  await put(pathname, JSON.stringify({ ...current.inquiry, status }, null, 2), {
+  const next = change(current.inquiry);
+  if (!next) return false;
+  await put(pathname, JSON.stringify(next, null, 2), {
     access: "private",
     addRandomSuffix: false,
     allowOverwrite: true,
@@ -78,6 +81,26 @@ export async function setInquiryStatus(id: string, status: InquiryStatus): Promi
   return true;
 }
 
-export async function deleteInquiry(id: string): Promise<void> {
-  await del(pathnameFor(id));
+/** Marks an active inquiry as new or contacted. */
+export function setInquiryStatus(id: string, status: ActiveInquiryStatus): Promise<boolean> {
+  return updateInquiry(id, (inquiry) => (inquiry.status === "deleted" ? null : { ...inquiry, status }));
+}
+
+/** Soft delete: the inquiry stays stored with status "deleted" and can be restored. */
+export function softDeleteInquiry(id: string, deletedAt: string): Promise<boolean> {
+  return updateInquiry(id, (inquiry) =>
+    inquiry.status === "deleted"
+      ? null
+      : { ...inquiry, status: "deleted", deletedAt, statusBeforeDelete: inquiry.status },
+  );
+}
+
+/** Restores a deleted inquiry to the status it had before it was deleted. */
+export function restoreInquiry(id: string): Promise<boolean> {
+  return updateInquiry(id, (inquiry) => {
+    if (inquiry.status !== "deleted") return null;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { deletedAt, statusBeforeDelete, ...rest } = inquiry;
+    return { ...rest, status: statusBeforeDelete ?? "new" };
+  });
 }

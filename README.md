@@ -104,7 +104,9 @@ separate files, so testing never changes the live rates.
 - Inquiries are stored privately in Vercel Blob (one file per inquiry, separate folders for
   production, preview and local) with a snapshot of the plan and its totals.
 - Admins see them at `/admin/inquiries` (the admin home page after signing in), newest first, and can
-  mark each one as contacted or delete it.
+  mark each one as contacted or delete it. Delete is a soft delete: the inquiry keeps
+  its data, gets the status "deleted" and moves to **Deleted inquiries**
+  (`/admin/inquiries/deleted`), where it can be restored.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
 - Email notifications are not set up yet.
 

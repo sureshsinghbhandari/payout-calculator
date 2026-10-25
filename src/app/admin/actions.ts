@@ -16,7 +16,7 @@ import {
   unlockRates,
 } from "@/lib/server/admin-auth";
 import { isInquiryId } from "@/lib/inquiry";
-import { deleteInquiry, setInquiryStatus } from "@/lib/server/inquiry-store";
+import { restoreInquiry, setInquiryStatus, softDeleteInquiry } from "@/lib/server/inquiry-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { isRateStorageConfigured, RATES_TAG, saveRates } from "@/lib/server/rates-store";
 
@@ -144,15 +144,28 @@ export async function setInquiryStatusAction(formData: FormData): Promise<void> 
   refresh();
 }
 
-/** Permanently deletes an inquiry (admin only). */
+/** Soft-deletes an inquiry: it moves to Deleted inquiries with status "deleted" (admin only). */
 export async function deleteInquiryAction(formData: FormData): Promise<void> {
   if (!(await isAdmin())) return;
   const id = formData.get("id");
   if (typeof id !== "string" || !isInquiryId(id)) return;
   try {
-    await deleteInquiry(id);
+    await softDeleteInquiry(id, new Date().toISOString());
   } catch (error) {
     console.error("Deleting inquiry failed", error);
+  }
+  refresh();
+}
+
+/** Restores a deleted inquiry to its previous status (admin only). */
+export async function restoreInquiryAction(formData: FormData): Promise<void> {
+  if (!(await isAdmin())) return;
+  const id = formData.get("id");
+  if (typeof id !== "string" || !isInquiryId(id)) return;
+  try {
+    await restoreInquiry(id);
+  } catch (error) {
+    console.error("Restoring inquiry failed", error);
   }
   refresh();
 }

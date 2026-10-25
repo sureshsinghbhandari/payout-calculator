@@ -68,6 +68,9 @@ export function SettingsMenu() {
           <Link role="menuitem" href="/admin/inquiries" onClick={() => setOpen(false)} className={itemClass}>
             Inquiries
           </Link>
+          <Link role="menuitem" href="/admin/inquiries/deleted" onClick={() => setOpen(false)} className={itemClass}>
+            Deleted inquiries
+          </Link>
           <div className="my-1 border-t border-slate-100" />
           <form action={logoutAction}>
             <button role="menuitem" type="submit" className={itemClass}>
