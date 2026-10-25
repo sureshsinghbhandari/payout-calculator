@@ -36,7 +36,8 @@ export default function Home() {
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-6 text-xs leading-relaxed text-slate-500 sm:px-6">
           Illustrative calculator only. This is not an offer to invest. Your selections are sent
-          to our server only to calculate the schedule and are not stored.
+          to our server only to calculate the schedule and are not stored. If you send an inquiry,
+          the details you enter are stored so our team can respond.
         </div>
       </footer>
     </div>

@@ -1,8 +1,10 @@
 /**
- * Limits admin password guessing: after MAX_FAILURES wrong passwords from one
- * client within WINDOW_MS, sign-in is refused for that client until the window
- * ends. State is kept in memory per server instance, so this complements (does
- * not replace) a platform rate limit such as a Vercel Firewall rule.
+ * Per-client attempt limiter. After `max` recorded attempts from one client
+ * within `windowMs`, further attempts are refused until the window ends. Used
+ * for admin sign-in failures (defaults: 5 per 15 minutes) and for inquiry
+ * submissions. State is kept in memory per server instance, so this
+ * complements (does not replace) a platform rate limit such as a Vercel
+ * Firewall rule.
  */
 export const MAX_FAILURES = 5;
 export const WINDOW_MS = 15 * 60 * 1000;
@@ -16,21 +18,26 @@ interface Entry {
 export class LoginThrottle {
   private entries = new Map<string, Entry>();
 
+  constructor(
+    private readonly max: number = MAX_FAILURES,
+    private readonly windowMs: number = WINDOW_MS,
+  ) {}
+
   /** Milliseconds until `key` may try again, or 0 when it is not blocked. */
   blockedFor(key: string, now: number): number {
     const entry = this.entries.get(key);
     if (!entry) return 0;
-    const windowEnd = entry.windowStart + WINDOW_MS;
+    const windowEnd = entry.windowStart + this.windowMs;
     if (now >= windowEnd) {
       this.entries.delete(key);
       return 0;
     }
-    return entry.failures >= MAX_FAILURES ? windowEnd - now : 0;
+    return entry.failures >= this.max ? windowEnd - now : 0;
   }
 
   recordFailure(key: string, now: number): void {
     const entry = this.entries.get(key);
-    if (!entry || now >= entry.windowStart + WINDOW_MS) {
+    if (!entry || now >= entry.windowStart + this.windowMs) {
       if (this.entries.size >= MAX_TRACKED_CLIENTS) this.prune(now);
       this.entries.set(key, { failures: 1, windowStart: now });
     } else {
@@ -44,7 +51,7 @@ export class LoginThrottle {
 
   private prune(now: number): void {
     for (const [key, entry] of this.entries) {
-      if (now >= entry.windowStart + WINDOW_MS) this.entries.delete(key);
+      if (now >= entry.windowStart + this.windowMs) this.entries.delete(key);
     }
     // Still full: drop the oldest entries rather than grow without bound.
     while (this.entries.size >= MAX_TRACKED_CLIENTS) {

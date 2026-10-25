@@ -89,6 +89,17 @@ Until the first save, the starting rates in `src/lib/config.ts`
 Production uses its own rates file; preview deployments and local development use
 separate files, so testing never changes the live rates.
 
+## Inquiries
+
+- After calculating, visitors can select **Send inquiry**. The form shows their plan and
+  asks for name, email, an optional phone number and an optional message.
+- Inquiries are stored privately in Vercel Blob (one file per inquiry, separate folders for
+  production, preview and local) with a snapshot of the plan and its totals.
+- Admins see them at `/admin/inquiries` (the **Inquiries** tab), newest first, and can
+  mark each one as contacted or delete it.
+- Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
+- Email notifications are not set up yet.
+
 ## Admin setup
 
 The admin page needs these environment variables in the Vercel project:

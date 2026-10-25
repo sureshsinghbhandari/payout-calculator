@@ -12,6 +12,8 @@ import {
   isAdmin,
   startAdminSession,
 } from "@/lib/server/admin-auth";
+import { isInquiryId } from "@/lib/inquiry";
+import { deleteInquiry, setInquiryStatus } from "@/lib/server/inquiry-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { isRateStorageConfigured, RATES_TAG, saveRates } from "@/lib/server/rates-store";
 
@@ -86,4 +88,31 @@ export async function saveRatesAction(_prev: SaveRatesState, formData: FormData)
   updateTag(RATES_TAG);
   refresh();
   return { status: "saved", message: "Rates saved. New calculations use them immediately." };
+}
+
+/** Marks an inquiry as new or contacted (admin only). */
+export async function setInquiryStatusAction(formData: FormData): Promise<void> {
+  if (!(await isAdmin())) return;
+  const id = formData.get("id");
+  const status = formData.get("status");
+  if (typeof id !== "string" || !isInquiryId(id) || (status !== "new" && status !== "contacted")) return;
+  try {
+    await setInquiryStatus(id, status);
+  } catch (error) {
+    console.error("Updating inquiry failed", error);
+  }
+  refresh();
+}
+
+/** Permanently deletes an inquiry (admin only). */
+export async function deleteInquiryAction(formData: FormData): Promise<void> {
+  if (!(await isAdmin())) return;
+  const id = formData.get("id");
+  if (typeof id !== "string" || !isInquiryId(id)) return;
+  try {
+    await deleteInquiry(id);
+  } catch (error) {
+    console.error("Deleting inquiry failed", error);
+  }
+  refresh();
 }

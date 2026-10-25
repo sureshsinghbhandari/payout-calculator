@@ -5,6 +5,7 @@ import { DISCLAIMER } from "@/lib/disclaimer";
 import { formatCents, formatDollars, formatIsoDate, formatIsoDateLong, formatYears } from "@/lib/format";
 import { FREQUENCY_LABELS, interestStartDelayText, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import type { PublicScenarioSet } from "@/lib/scenarios";
+import { InquiryDialog } from "./InquiryDialog";
 import { ScenarioComparison } from "./ScenarioComparison";
 
 const START_DELAY = interestStartDelayText();
@@ -44,6 +45,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
   const { inputs, rows, totals, periodsPerYear, startDate } = schedule;
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
 
   async function handleDownload() {
     setDownloading(true);
@@ -90,6 +92,14 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
           </p>
         </div>
         <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setInquiryOpen(true)}
+            className="inline-flex items-center justify-center rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+          >
+            Send inquiry
+          </button>
           <button
             type="button"
             onClick={handleDownload}
@@ -103,6 +113,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
             </svg>
             {downloading ? "Preparing Excel…" : "Download Excel"}
           </button>
+          </div>
           <p id="excel-download-note" className="max-w-xs text-xs text-slate-500 sm:text-right">
             {sheetCountText(scenarios)}
           </p>
@@ -231,6 +242,22 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
       </div>
 
       <ScenarioComparison scenarios={scenarios} />
+
+      <div className="flex flex-col gap-4 rounded-2xl border border-blue-200 bg-blue-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-blue-950">Interested in this plan?</h2>
+          <p className="mt-1 text-sm text-blue-900">Send an inquiry and our team will contact you.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setInquiryOpen(true)}
+          className="shrink-0 rounded-lg bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+        >
+          Send inquiry
+        </button>
+      </div>
+
+      <InquiryDialog open={inquiryOpen} plan={schedule} onClose={() => setInquiryOpen(false)} />
 
       <div className="space-y-3 text-sm text-slate-600">
         <p>
