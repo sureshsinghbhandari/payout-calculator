@@ -163,75 +163,77 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
       </div>
 
       {/* Schedule table */}
-      <p className="-mb-3 text-xs text-slate-500 md:hidden">Swipe the table sideways to see every column.</p>
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div
-          className="overflow-x-auto rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
-          tabIndex={0}
-          role="region"
-          aria-label="Payout schedule table, scrolls horizontally"
-        >
-          <table className="w-full min-w-[760px] border-collapse text-sm">
-            <caption className="sr-only">
-              Payout schedule for a {formatDollars(inputs.principal)} investment at{" "}
-              {formatPercent(inputs.annualRatePercent)}, all amounts in US dollars
-            </caption>
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
-                <th scope="col" className="px-4 py-3 text-left font-semibold">
-                  Payout No.
-                </th>
-                <th scope="col" className="px-4 py-3 text-left font-semibold">
-                  Payout Date
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Opening Principal
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Interest Amount
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Principal Repayment
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Total Payout
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Remaining Principal
-                </th>
-              </tr>
-            </thead>
-            <tbody className="tabular-nums text-slate-800">
-              {rows.map((row) => (
-                <tr key={row.payoutNumber} className="border-b border-slate-100 even:bg-slate-50/60">
-                  <th scope="row" className="px-4 py-3 text-left font-medium text-slate-900">
-                    {row.payoutNumber}
+      <div className="space-y-2">
+        <p className="text-xs text-slate-500 md:hidden">Swipe the table sideways to see every column.</p>
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div
+            className="relative overflow-x-auto rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+            tabIndex={0}
+            role="region"
+            aria-label="Payout schedule table, scrolls horizontally"
+          >
+            <table className="w-full min-w-[760px] border-collapse text-sm">
+              <caption className="sr-only">
+                Payout schedule for a {formatDollars(inputs.principal)} investment at{" "}
+                {formatPercent(inputs.annualRatePercent)}, all amounts in US dollars
+              </caption>
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    Payout No.
                   </th>
-                  <td className="whitespace-nowrap px-4 py-3">{formatIsoDate(row.payoutDate)}</td>
-                  <td className="px-4 py-3 text-right">{formatCents(row.openingPrincipalCents)}</td>
-                  <td className="px-4 py-3 text-right">{formatCents(row.interestCents)}</td>
-                  <td className="px-4 py-3 text-right">{formatCents(row.principalRepaymentCents)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                    {formatCents(row.totalPayoutCents)}
-                  </td>
-                  <td className="px-4 py-3 text-right">{formatCents(row.remainingPrincipalCents)}</td>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold">
+                    Payout Date
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Opening Principal
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Interest Amount
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Principal Repayment
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Total Payout
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Remaining Principal
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot className="tabular-nums">
-              <tr className="border-t-2 border-blue-900 bg-blue-50 font-semibold text-blue-950">
-                <th scope="row" colSpan={3} className="px-4 py-3 text-left">
-                  Total
-                </th>
-                <td className="px-4 py-3 text-right">{formatCents(totals.interestCents)}</td>
-                <td className="px-4 py-3 text-right">{formatCents(totals.principalCents)}</td>
-                <td className="px-4 py-3 text-right">{formatCents(totals.payoutCents)}</td>
-                <td className="px-4 py-3 text-right">
-                  {formatCents(rows.at(-1)?.remainingPrincipalCents ?? 0)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody className="tabular-nums text-slate-800">
+                {rows.map((row) => (
+                  <tr key={row.payoutNumber} className="border-b border-slate-100 even:bg-slate-50/60">
+                    <th scope="row" className="px-4 py-3 text-left font-medium text-slate-900">
+                      {row.payoutNumber}
+                    </th>
+                    <td className="whitespace-nowrap px-4 py-3">{formatIsoDate(row.payoutDate)}</td>
+                    <td className="px-4 py-3 text-right">{formatCents(row.openingPrincipalCents)}</td>
+                    <td className="px-4 py-3 text-right">{formatCents(row.interestCents)}</td>
+                    <td className="px-4 py-3 text-right">{formatCents(row.principalRepaymentCents)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                      {formatCents(row.totalPayoutCents)}
+                    </td>
+                    <td className="px-4 py-3 text-right">{formatCents(row.remainingPrincipalCents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="tabular-nums">
+                <tr className="border-t-2 border-blue-900 bg-blue-50 font-semibold text-blue-950">
+                  <th scope="row" colSpan={3} className="px-4 py-3 text-left">
+                    Total
+                  </th>
+                  <td className="px-4 py-3 text-right">{formatCents(totals.interestCents)}</td>
+                  <td className="px-4 py-3 text-right">{formatCents(totals.principalCents)}</td>
+                  <td className="px-4 py-3 text-right">{formatCents(totals.payoutCents)}</td>
+                  <td className="px-4 py-3 text-right">
+                    {formatCents(rows.at(-1)?.remainingPrincipalCents ?? 0)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 

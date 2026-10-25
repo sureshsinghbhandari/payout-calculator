@@ -44,7 +44,7 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
         </p>
       ) : (
         <div
-          className="overflow-x-auto rounded-b-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+          className="relative overflow-x-auto rounded-b-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
           tabIndex={0}
           role="region"
           aria-label="Longer payout period comparison, scrolls horizontally"
@@ -212,7 +212,7 @@ function PayoutTypes({ scenarios }: { scenarios: ScenarioSet }) {
           </svg>
         </summary>
         <div
-          className="overflow-x-auto border-t border-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+          className="relative overflow-x-auto border-t border-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
           tabIndex={0}
           role="region"
           aria-label="Payout by payout comparison, scrolls horizontally"

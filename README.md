@@ -2,8 +2,10 @@
 
 A public, no-login web calculator that shows the payout schedule for a fixed-term
 investment. Visitors pick an investment amount, lock-in period, payout type, payout
-frequency and annual interest rate, then get a payout-by-payout table with totals and a
-CSV download.
+frequency and annual interest rate. They get a payout-by-payout table with totals,
+comparisons with other scenarios, and an Excel download.
+
+**Live site:** https://payout-calculator-steel.vercel.app
 
 This is an illustrative calculator prototype. It does not collect payments, register
 investors or store any personal or financial information. All calculations run in the
@@ -14,21 +16,57 @@ visitor's browser.
 - Next.js (App Router) with TypeScript
 - Tailwind CSS
 - React state for inputs and results
-- Vitest for calculation tests
+- ExcelJS for the Excel download, loaded only when the button is clicked
+- Vitest for tests
 - Vercel for hosting
 
 ## Project layout
 
 | Path | Purpose |
 | --- | --- |
-| `src/lib/config.ts` | Defaults: interest rate, amounts, lock-in periods |
+| `src/lib/config.ts` | Defaults: standard rate per payout frequency, amounts, lock-in periods |
 | `src/lib/payout.ts` | Calculation engine and rate validation |
-| `src/lib/payout.test.ts` | Automated calculation tests |
-| `src/lib/csv.ts` | CSV export |
+| `src/lib/form.ts` | How the rate field follows the payout frequency |
+| `src/lib/scenarios.ts` | Longer-payout-period and other-payout-type scenarios |
+| `src/lib/excel.ts` | Excel workbook export |
 | `src/lib/format.ts` | Currency, date and percent formatting |
+| `src/lib/*.test.ts` | Automated tests |
 | `src/components/PayoutCalculator.tsx` | Input form |
-| `src/components/PayoutResults.tsx` | Summary, schedule table, CSV button, disclaimer |
+| `src/components/PayoutResults.tsx` | Summary, schedule table, Excel button, disclaimer |
+| `src/components/ScenarioComparison.tsx` | Scenario comparisons on the results page |
 | `src/app/page.tsx` | Page layout |
+
+## Interest rates
+
+Each payout frequency has a standard annual rate:
+
+| Payout frequency | Standard rate |
+| --- | --- |
+| Quarterly | 8% |
+| Half-Yearly | 9% |
+| Yearly | 10% |
+
+The rate field fills in the standard rate for the selected frequency and updates when
+the frequency changes. Visitors can type any rate from 0% to 100%. Once they do, their
+rate is kept when the frequency changes, and a link restores the standard rate.
+
+## Scenario comparisons
+
+After calculating, the results page and the Excel file compare the selection with:
+
+- **Longer payout periods:** the same payout type, paid less often, each at its
+  standard rate. Quarterly compares Half-Yearly and Yearly. Half-Yearly compares Yearly.
+  Yearly has no longer period.
+- **The other payout type:** Interest Only vs Interest and Principal at the same
+  frequency and rate.
+
+The Excel workbook contains these sheets:
+
+1. `Your Selection`: the calculated schedule.
+2. One `<Frequency> Payout` sheet per longer payout period.
+3. One sheet for the other payout type.
+4. `Comparison`: totals for every scenario side by side, plus a payout-by-payout
+   comparison of the two payout types.
 
 ## Calculation rules
 
@@ -51,7 +89,7 @@ visitor's browser.
 
 ## Local development
 
-Requires Node.js 20 or newer.
+Requires Node.js 20.9 or newer.
 
 ```bash
 npm install
@@ -65,37 +103,40 @@ Then open http://localhost:3000.
 ```bash
 npm run lint        # ESLint
 npm run typecheck   # TypeScript
-npm test            # Vitest calculation tests
+npm test            # Vitest tests
 npm run build       # Production build
 ```
 
-## Changing the default interest rate
+## Changing the default interest rates
 
 1. Open `src/lib/config.ts`.
-2. Change `DEFAULT_ANNUAL_RATE_PERCENT` (for example to `8.5`).
-3. Run `npm test` and `npm run build` to confirm everything still passes.
+2. Change the numbers in `DEFAULT_RATE_BY_FREQUENCY`, for example `quarterly: 8.5`.
+3. Update the expected rates in `src/lib/form.test.ts`, then run `npm test` and
+   `npm run build`.
 4. Commit, push and redeploy (see below).
 
-The same file holds the investment amount options and the default amount and lock-in period.
+The same file holds the investment amount options and the default amount, lock-in
+period, payout frequency and payout type.
 
 ## Deploying updates
 
-The site is hosted on Vercel.
+The site is hosted on Vercel as the `payout-calculator` project.
 
-**If the Vercel project is connected to the GitHub repository**, every push to the `main`
-branch deploys to production automatically:
+**From your machine with the Vercel CLI:**
+
+```bash
+npx vercel login          # first time only
+npx vercel deploy --prod
+```
+
+**Automatic deploys from GitHub:** connect the repository once, either in the Vercel
+dashboard (Project Settings, then Git) or with `npx vercel git connect`. After that,
+every push to `main` deploys to production:
 
 ```bash
 git add -A
 git commit -m "Describe the change"
 git push origin main
-```
-
-**To deploy from your machine with the Vercel CLI** instead:
-
-```bash
-npx vercel login          # first time only
-npx vercel --prod
 ```
 
 Run the checks above before deploying.
