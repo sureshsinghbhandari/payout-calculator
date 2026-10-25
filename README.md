@@ -108,6 +108,16 @@ npx vercel deploy --prod
 To change an existing password, remove it first with `npx vercel env rm ADMIN_PASSWORD
 production`. Changing the password or the session secret signs every admin out.
 
+### Sign-in protection
+
+- The app locks a client out of sign-in for 15 minutes after 5 wrong passwords
+  (tracked per server instance), and waits 1 second after every wrong password.
+- A Vercel Firewall rule, **Admin sign-in rate limit**, allows at most 10 POST requests
+  to `/admin` (sign-in, saving rates, sign-out) per IP address per 5 minutes. An address
+  that goes over is blocked from those requests for 15 minutes. View or change it with
+  `npx vercel firewall status` and `npx vercel firewall rules list`, or in the Vercel
+  dashboard under Firewall.
+
 For local development, put `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` in
 `.env.development.local`, and run `npx vercel env pull .env.local` for the Blob token.
 Both files are git-ignored.
