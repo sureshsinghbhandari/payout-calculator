@@ -61,7 +61,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
     { label: "Original investment", value: formatDollars(inputs.principal) },
     { label: "Planned investment date", value: formatIsoDate(inputs.investmentDate) },
     { label: "Interest starts", value: formatIsoDate(schedule.startDate) },
-    { label: "Term", value: formatYears(inputs.lockInYears) },
+    { label: "Term locked", value: formatYears(inputs.lockInYears) },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[inputs.payoutType] },
     { label: "Payout term", value: FREQUENCY_LABELS[inputs.frequency] },
   ];

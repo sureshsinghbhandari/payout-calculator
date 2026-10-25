@@ -239,10 +239,10 @@ export function PayoutCalculator() {
               )}
             </div>
 
-            {/* Term */}
+            {/* Term locked */}
             <div>
               <label htmlFor={ids.lockIn} className="text-sm font-semibold text-slate-900">
-                Term
+                Term locked
               </label>
               <div className="relative mt-2">
                 <select

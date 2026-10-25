@@ -232,7 +232,7 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   ws.addRow([]);
 
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
-  addDetail(ws, "Term", formatYears(inputs.lockInYears));
+  addDetail(ws, "Term locked", formatYears(inputs.lockInYears));
   addDetail(ws, "Payout type", PAYOUT_TYPE_LABELS[inputs.payoutType]);
   addDetail(ws, "Payout term", FREQUENCY_LABELS[inputs.frequency]);
   addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
@@ -352,7 +352,7 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   styleSubtitle(ws.addRow(["Every scenario uses the same investment amount, term and planned investment date as your selection."]));
   ws.addRow([]);
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
-  addDetail(ws, "Term", formatYears(inputs.lockInYears));
+  addDetail(ws, "Term locked", formatYears(inputs.lockInYears));
   addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
   addDetail(ws, "Interest start date", isoToExcelDate(selected.startDate), DATE);
   addDetail(ws, "Your selection", `${selectedFrequency}, ${selectedType}`);

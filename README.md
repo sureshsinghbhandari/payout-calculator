@@ -45,7 +45,7 @@ investors or store any visitor information.
 
 ## How it works
 
-- **Labels:** Investment amount (a list), Planned investment date, Term (1 or 2 years),
+- **Labels:** Investment amount (a list), Planned investment date, Term locked (1 or 2 years),
   Payout term (Quarterly, Half-Yearly or Yearly) and Payout type.
 - **Defaults:** $100,000, 2 years, Yearly payouts, Interest Only, invested today. Reset
   returns to these.
