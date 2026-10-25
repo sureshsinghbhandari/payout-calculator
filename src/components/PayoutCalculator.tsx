@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, useTransition, type FormEvent } from "react";
+import { INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
+import { formatDollars, formatPercent, formatYears } from "@/lib/format";
 import {
-  DEFAULT_ANNUAL_RATE_PERCENT,
-  DEFAULT_INVESTMENT_AMOUNT,
-  DEFAULT_LOCK_IN_YEARS,
-  INVESTMENT_AMOUNTS,
-  LOCK_IN_YEARS,
-} from "@/lib/config";
-import { formatDollars, formatYears } from "@/lib/format";
+  initialFormState,
+  standardRate,
+  withFrequency,
+  withRateText,
+  withStandardRate,
+  type FormState,
+} from "@/lib/form";
 import {
   calculatePayoutSchedule,
   FREQUENCY_LABELS,
@@ -16,34 +18,21 @@ import {
   toIsoDate,
   validateRate,
   type PayoutFrequency,
-  type PayoutSchedule,
   type PayoutType,
 } from "@/lib/payout";
+import { buildScenarios, FREQUENCY_ORDER, type ScenarioSet } from "@/lib/scenarios";
 import { PayoutResults } from "./PayoutResults";
-
-interface FormState {
-  principal: number;
-  lockInYears: number;
-  payoutType: PayoutType;
-  frequency: PayoutFrequency;
-  rateText: string;
-}
-
-const DEFAULT_FORM: FormState = {
-  principal: DEFAULT_INVESTMENT_AMOUNT,
-  lockInYears: DEFAULT_LOCK_IN_YEARS,
-  payoutType: "interest-only",
-  frequency: "quarterly",
-  rateText: String(DEFAULT_ANNUAL_RATE_PERCENT),
-};
 
 const PAYOUT_TYPE_HINTS: Record<PayoutType, string> = {
   "interest-only": "Interest each period. Full principal returned at maturity.",
   "interest-and-principal": "Equal principal installments plus interest on the remaining balance.",
 };
 
-const FREQUENCIES = Object.keys(FREQUENCY_LABELS) as PayoutFrequency[];
 const PAYOUT_TYPES = Object.keys(PAYOUT_TYPE_LABELS) as PayoutType[];
+
+const STANDARD_RATES_TEXT = FREQUENCY_ORDER.map(
+  (f) => `${FREQUENCY_LABELS[f]} ${formatPercent(standardRate(f))}`,
+).join(", ");
 
 const selectClass =
   "block w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30";
@@ -65,10 +54,10 @@ function SelectChevron() {
   );
 }
 
-function sameInputs(form: FormState, schedule: PayoutSchedule | null): boolean {
-  if (!schedule) return true;
+function sameInputs(form: FormState, scenarios: ScenarioSet | null): boolean {
+  if (!scenarios) return true;
   const rate = validateRate(form.rateText);
-  const i = schedule.inputs;
+  const i = scenarios.selected.inputs;
   return (
     rate.ok &&
     rate.value === i.annualRatePercent &&
@@ -80,9 +69,9 @@ function sameInputs(form: FormState, schedule: PayoutSchedule | null): boolean {
 }
 
 export function PayoutCalculator() {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [form, setForm] = useState<FormState>(initialFormState);
   const [rateError, setRateError] = useState<string | null>(null);
-  const [schedule, setSchedule] = useState<PayoutSchedule | null>(null);
+  const [scenarios, setScenarios] = useState<ScenarioSet | null>(null);
   const [isPending, startTransition] = useTransition();
   const rateInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLElement>(null);
@@ -90,21 +79,45 @@ export function PayoutCalculator() {
   const ids = {
     lockIn: useId(),
     frequency: useId(),
+    frequencyHint: useId(),
     rate: useId(),
     rateHint: useId(),
     rateError: useId(),
   };
 
   useEffect(() => {
-    if (schedule && focusResultsRef.current) {
+    if (scenarios && focusResultsRef.current) {
       focusResultsRef.current = false;
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       resultsRef.current?.focus({ preventScroll: true });
     }
-  }, [schedule]);
+  }, [scenarios]);
 
-  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+  function update<K extends "principal" | "lockInYears" | "payoutType">(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleFrequencyChange(frequency: PayoutFrequency) {
+    const next = withFrequency(form, frequency);
+    setForm(next);
+    // The rate may have changed to a valid standard rate; refresh any error.
+    if (rateError) {
+      const result = validateRate(next.rateText);
+      setRateError(result.ok ? null : result.error);
+    }
+  }
+
+  function handleRateChange(text: string) {
+    setForm((prev) => withRateText(prev, text));
+    if (rateError) {
+      const result = validateRate(text);
+      setRateError(result.ok ? null : result.error);
+    }
+  }
+
+  function handleUseStandardRate() {
+    setForm((prev) => withStandardRate(prev));
+    setRateError(null);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -119,26 +132,27 @@ export function PayoutCalculator() {
     const startDate = toIsoDate(new Date());
     startTransition(() => {
       focusResultsRef.current = true;
-      setSchedule(
-        calculatePayoutSchedule({
-          principal: form.principal,
-          annualRatePercent: rate.value,
-          lockInYears: form.lockInYears,
-          payoutType: form.payoutType,
-          frequency: form.frequency,
-          startDate,
-        }),
-      );
+      const selected = calculatePayoutSchedule({
+        principal: form.principal,
+        annualRatePercent: rate.value,
+        lockInYears: form.lockInYears,
+        payoutType: form.payoutType,
+        frequency: form.frequency,
+        startDate,
+      });
+      setScenarios(buildScenarios(selected));
     });
   }
 
   function handleReset() {
-    setForm(DEFAULT_FORM);
+    setForm(initialFormState());
     setRateError(null);
-    setSchedule(null);
+    setScenarios(null);
   }
 
-  const isStale = !sameInputs(form, schedule);
+  const isStale = !sameInputs(form, scenarios);
+  const frequencyLabel = FREQUENCY_LABELS[form.frequency];
+  const standard = formatPercent(standardRate(form.frequency));
 
   return (
     <div className="space-y-8">
@@ -214,10 +228,11 @@ export function PayoutCalculator() {
                 <select
                   id={ids.frequency}
                   value={form.frequency}
-                  onChange={(e) => update("frequency", e.target.value as PayoutFrequency)}
+                  onChange={(e) => handleFrequencyChange(e.target.value as PayoutFrequency)}
+                  aria-describedby={ids.frequencyHint}
                   className={selectClass}
                 >
-                  {FREQUENCIES.map((f) => (
+                  {FREQUENCY_ORDER.map((f) => (
                     <option key={f} value={f}>
                       {FREQUENCY_LABELS[f]}
                     </option>
@@ -225,6 +240,9 @@ export function PayoutCalculator() {
                 </select>
                 <SelectChevron />
               </div>
+              <p id={ids.frequencyHint} className="mt-1.5 text-xs text-slate-500">
+                Standard rates: {STANDARD_RATES_TEXT}.
+              </p>
             </div>
 
             {/* E. Annual interest rate */}
@@ -240,13 +258,7 @@ export function PayoutCalculator() {
                   inputMode="decimal"
                   autoComplete="off"
                   value={form.rateText}
-                  onChange={(e) => {
-                    update("rateText", e.target.value);
-                    if (rateError) {
-                      const result = validateRate(e.target.value);
-                      setRateError(result.ok ? null : result.error);
-                    }
-                  }}
+                  onChange={(e) => handleRateChange(e.target.value)}
                   onBlur={() => {
                     const result = validateRate(form.rateText);
                     setRateError(result.ok ? null : result.error);
@@ -271,9 +283,20 @@ export function PayoutCalculator() {
                 <p id={ids.rateError} role="alert" className="mt-1.5 text-xs font-medium text-red-700">
                   {rateError}
                 </p>
+              ) : form.rateCustomized ? (
+                <p id={ids.rateHint} className="mt-1.5 text-xs text-slate-500">
+                  Custom rate. Standard {frequencyLabel} rate is {standard}.{" "}
+                  <button
+                    type="button"
+                    onClick={handleUseStandardRate}
+                    className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+                  >
+                    Use {standard}
+                  </button>
+                </p>
               ) : (
                 <p id={ids.rateHint} className="mt-1.5 text-xs text-slate-500">
-                  Simple interest, from 0% to 100%.
+                  Standard {frequencyLabel} rate. You can change it (0% to 100%).
                 </p>
               )}
             </div>
@@ -332,9 +355,7 @@ export function PayoutCalculator() {
         </div>
       </form>
 
-      {schedule && (
-        <PayoutResults ref={resultsRef} schedule={schedule} isStale={isStale} />
-      )}
+      {scenarios && <PayoutResults ref={resultsRef} scenarios={scenarios} isStale={isStale} />}
     </div>
   );
 }

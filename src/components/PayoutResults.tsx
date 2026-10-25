@@ -1,39 +1,68 @@
 "use client";
 
-import type { Ref } from "react";
-import { csvFileName, scheduleToCsv } from "@/lib/csv";
+import { useState, type Ref } from "react";
+import { DISCLAIMER } from "@/lib/disclaimer";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
-import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS, type PayoutSchedule } from "@/lib/payout";
-
-export const DISCLAIMER =
-  "This calculator provides illustrative estimates based on the selected assumptions. Actual returns, payment timing, taxes, fees, and principal repayment may differ. This calculator is not a guarantee of investment performance or a substitute for professional financial advice.";
-
-function downloadCsv(schedule: PayoutSchedule) {
-  const blob = new Blob([scheduleToCsv(schedule)], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = csvFileName(schedule);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
+import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
+import { usesStandardRate, type ScenarioSet } from "@/lib/scenarios";
+import { ScenarioComparison } from "./ScenarioComparison";
 
 const MONTHS_LABEL: Record<number, string> = { 4: "3 months", 2: "6 months", 1: "12 months" };
 
+async function downloadExcel(scenarios: ScenarioSet) {
+  // Loaded on demand so the spreadsheet library is not part of the page load.
+  const { buildExcelFile, XLSX_MIME_TYPE } = await import("@/lib/excel");
+  const { data, fileName } = await buildExcelFile(scenarios);
+  const url = URL.createObjectURL(new Blob([data], { type: XLSX_MIME_TYPE }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function sheetCountText(scenarios: ScenarioSet): string {
+  const sheets = 2 + scenarios.longerFrequencies.length + 1;
+  return `${sheets} sheets: your schedule, ${
+    scenarios.longerFrequencies.length > 0
+      ? `${scenarios.longerFrequencies.map((s) => FREQUENCY_LABELS[s.inputs.frequency]).join(" and ")} payouts, `
+      : ""
+  }${PAYOUT_TYPE_LABELS[scenarios.otherPayoutType.inputs.payoutType]}, and a comparison.`;
+}
+
 interface Props {
-  schedule: PayoutSchedule;
+  scenarios: ScenarioSet;
   isStale: boolean;
   ref?: Ref<HTMLElement>;
 }
 
-export function PayoutResults({ schedule, isStale, ref }: Props) {
+export function PayoutResults({ scenarios, isStale, ref }: Props) {
+  const schedule = scenarios.selected;
   const { inputs, rows, totals, periodsPerYear } = schedule;
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  async function handleDownload() {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await downloadExcel(scenarios);
+    } catch {
+      setDownloadError("The Excel file could not be created. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const details = [
     { label: "Original investment", value: formatDollars(inputs.principal) },
-    { label: "Annual interest rate", value: formatPercent(inputs.annualRatePercent) },
+    {
+      label: "Annual interest rate",
+      value: formatPercent(inputs.annualRatePercent),
+      note: usesStandardRate(schedule) ? `Standard ${FREQUENCY_LABELS[inputs.frequency]} rate` : "Custom rate",
+    },
     { label: "Lock-in period", value: formatYears(inputs.lockInYears) },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[inputs.payoutType] },
     { label: "Payout frequency", value: FREQUENCY_LABELS[inputs.frequency] },
@@ -62,17 +91,29 @@ export function PayoutResults({ schedule, isStale, ref }: Props) {
             {formatIsoDate(inputs.startDate)}.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => downloadCsv(schedule)}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm transition hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:self-auto"
-        >
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-            <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
-            <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
-          </svg>
-          Download CSV
-        </button>
+        <div className="flex flex-col items-start gap-1 sm:items-end">
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            aria-describedby="excel-download-note"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm transition hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          >
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+              <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+              <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+            </svg>
+            {downloading ? "Preparing Excel…" : "Download Excel"}
+          </button>
+          <p id="excel-download-note" className="max-w-xs text-xs text-slate-500 sm:text-right">
+            {sheetCountText(scenarios)}
+          </p>
+          {downloadError && (
+            <p role="alert" className="text-xs font-medium text-red-700">
+              {downloadError}
+            </p>
+          )}
+        </div>
       </div>
 
       {isStale && (
@@ -110,7 +151,12 @@ export function PayoutResults({ schedule, isStale, ref }: Props) {
           {details.map((item) => (
             <div key={item.label}>
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{item.label}</dt>
-              <dd className="mt-1 text-base font-semibold text-slate-900">{item.value}</dd>
+              <dd className="mt-1 text-base font-semibold text-slate-900">
+                {item.value}
+                {item.note && (
+                  <span className="mt-0.5 block text-xs font-normal text-slate-500">{item.note}</span>
+                )}
+              </dd>
             </div>
           ))}
         </dl>
@@ -188,6 +234,8 @@ export function PayoutResults({ schedule, isStale, ref }: Props) {
           </table>
         </div>
       </div>
+
+      <ScenarioComparison scenarios={scenarios} />
 
       <div className="space-y-3 text-sm text-slate-600">
         <p>

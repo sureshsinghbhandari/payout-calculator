@@ -16,16 +16,15 @@ export function formatCents(cents: number): string {
   return usd.format(cents / 100);
 }
 
+/** Formats a cents difference with an explicit sign, e.g. 100000 -> "+$1,000.00". */
+export function formatSignedCents(cents: number): string {
+  if (cents === 0) return usd.format(0);
+  return `${cents > 0 ? "+" : "−"}${usd.format(Math.abs(cents) / 100)}`;
+}
+
 /** Formats a whole-dollar amount without cents, e.g. 50000 -> "$50,000". */
 export function formatDollars(dollars: number): string {
   return usdWhole.format(dollars);
-}
-
-/** Plain decimal string for CSV, e.g. 62500 -> "625.00". */
-export function centsToDecimalString(cents: number): string {
-  const sign = cents < 0 ? "-" : "";
-  const abs = Math.abs(cents);
-  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {

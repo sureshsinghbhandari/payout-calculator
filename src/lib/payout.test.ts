@@ -9,8 +9,7 @@ import {
   type PayoutSchedule,
   type PayoutType,
 } from "./payout";
-import { scheduleToCsv } from "./csv";
-import { centsToDecimalString, formatCents } from "./format";
+import { formatCents, formatSignedCents } from "./format";
 
 const START = "2026-01-15";
 
@@ -222,8 +221,8 @@ describe("rounding", () => {
   it("formats cents to two decimals", () => {
     expect(formatCents(62_500)).toBe("$625.00");
     expect(formatCents(2_562_500)).toBe("$25,625.00");
-    expect(centsToDecimalString(3)).toBe("0.03");
-    expect(centsToDecimalString(2_562_505)).toBe("25625.05");
+    expect(formatCents(3)).toBe("$0.03");
+    expect(formatCents(2_562_505)).toBe("$25,625.05");
   });
 });
 
@@ -301,16 +300,10 @@ describe("payout dates", () => {
   });
 });
 
-describe("CSV export", () => {
-  it("includes a header, one line per payout and a totals line", () => {
-    const s = run({ principal: 25_000 });
-    const lines = scheduleToCsv(s).trimEnd().split("\r\n");
-    const headerIndex = lines.findIndex((l) => l.startsWith("Payout Number,"));
-    expect(headerIndex).toBeGreaterThan(0);
-    const body = lines.slice(headerIndex + 1);
-    expect(body).toHaveLength(5);
-    expect(body[0]).toBe("1,2026-04-15,25000.00,625.00,0.00,625.00,25000.00");
-    expect(body[3]).toBe("4,2027-01-15,25000.00,625.00,25000.00,25625.00,0.00");
-    expect(body[4]).toBe("Total,,,2500.00,25000.00,27500.00,");
+describe("formatSignedCents", () => {
+  it("shows an explicit sign", () => {
+    expect(formatSignedCents(100_000)).toBe("+$1,000.00");
+    expect(formatSignedCents(-62_550)).toBe("−$625.50");
+    expect(formatSignedCents(0)).toBe("$0.00");
   });
 });
