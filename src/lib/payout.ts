@@ -172,7 +172,13 @@ export function calculatePayoutSchedule(inputs: PayoutInputs): PayoutSchedule {
     // period of interest on the original principal; the final installment
     // absorbs any rounding remainder so the installments sum to that total.
     const totalInterest = simpleInterestCents(principalCents, rateUnits, lockInYears, 1);
-    const periodInterest = simpleInterestCents(principalCents, rateUnits, 1, periodsPerYear);
+    let periodInterest = simpleInterestCents(principalCents, rateUnits, 1, periodsPerYear);
+    if (periodInterest * (totalPeriods - 1) > totalInterest) {
+      // Only at tiny rates (a few cents per period) could rounding each period
+      // up leave the final installment negative. Round down instead; the final
+      // installment is then never smaller than the others.
+      periodInterest = Math.floor((principalCents * rateUnits) / (100 * RATE_SCALE * periodsPerYear));
+    }
     for (let k = 1; k <= totalPeriods; k++) {
       const isFinal = k === totalPeriods;
       const interest = isFinal ? totalInterest - periodInterest * (totalPeriods - 1) : periodInterest;

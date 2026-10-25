@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_RATE_BY_FREQUENCY } from "./config";
 import {
+  canUseStandardRate,
   initialFormState,
   isStandardRate,
   standardRate,
@@ -60,11 +61,26 @@ describe("rate follows the frequency until the visitor changes it", () => {
     expect(form.rateText).toBe("9");
   });
 
-  it("treats a typed rate that equals the new frequency's standard rate as standard", () => {
+  it("keeps a typed rate through a round trip, even when it matches another standard rate", () => {
     let form = withRateText(initialFormState(), "10");
     expect(form.rateCustomized).toBe(true);
     form = withFrequency(form, "yearly");
-    expect(form).toMatchObject({ rateText: "10", rateCustomized: false });
+    expect(form).toMatchObject({ rateText: "10", rateCustomized: true });
+    expect(canUseStandardRate(form)).toBe(false); // 10% is already the Yearly standard
+    form = withFrequency(form, "quarterly");
+    expect(form).toMatchObject({ frequency: "quarterly", rateText: "10", rateCustomized: true });
+    expect(canUseStandardRate(form)).toBe(true);
+
+    let nine = withRateText(initialFormState(), "9");
+    nine = withFrequency(withFrequency(withFrequency(nine, "half-yearly"), "yearly"), "quarterly");
+    expect(nine.rateText).toBe("9");
+  });
+
+  it("offers the standard rate only when the rate differs from it", () => {
+    expect(canUseStandardRate(initialFormState())).toBe(false);
+    expect(canUseStandardRate(withRateText(initialFormState(), "12"))).toBe(true);
+    expect(canUseStandardRate(withRateText(initialFormState(), ""))).toBe(true);
+    expect(canUseStandardRate(withRateText(initialFormState(), "150"))).toBe(true);
   });
 
   it("can switch back to the standard rate", () => {

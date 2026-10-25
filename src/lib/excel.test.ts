@@ -236,6 +236,7 @@ describe("Excel workbook", () => {
     ]);
 
     const pairHeader = findRow(ws, "Payout No.");
+    expect(rowValues(ws, pairHeader)[4]).toBe("Interest and Principal minus Interest Only");
     expect(rowValues(ws, pairHeader + 1).slice(2)).toEqual([500, 6_750, 6_250]);
     expect(rowValues(ws, pairHeader + 4).slice(2)).toEqual([25_500, 6_375, -19_125]);
     expect(rowValues(ws, pairHeader + 5)[0]).toBe("Total");
@@ -253,5 +254,10 @@ describe("Excel workbook", () => {
       "Quarterly",
       "Interest and Principal",
     ]);
+    // The payout-by-payout column keeps a fixed, labelled direction.
+    const pairHeader = findRow(ws, "Payout No.");
+    expect(rowValues(ws, pairHeader)[4]).toBe("Interest and Principal minus Interest Only");
+    expect(rowValues(ws, findRow(ws, "Total", pairHeader))[4]).toBe(-750);
+    expect(sheetText(ws)).toContain("whichever one you selected");
   });
 });

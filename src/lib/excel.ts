@@ -286,6 +286,8 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   addParagraph(ws, DISCLAIMER, columns, 46, "Disclaimer:");
 }
 
+export const PAIR_DIFFERENCE_HEADER = "Interest and Principal minus Interest Only";
+
 const COMPARISON_HEADERS = [
   "Scenario",
   "Payout Frequency",
@@ -416,10 +418,10 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
     "Payout Date",
     "Interest Only Payout",
     "Interest and Principal Payout",
-    "Difference",
+    PAIR_DIFFERENCE_HEADER,
   ]);
   styleHeader(pairHeader, 5);
-  pairHeader.height = 46;
+  pairHeader.height = 62;
   interestOnly.rows.forEach((io, i) => {
     const ip = amortizing.rows[i];
     const row = ws.addRow([
@@ -447,11 +449,17 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
   setFormat(pairTotals.getCell(3), CURRENCY);
   setFormat(pairTotals.getCell(4), CURRENCY);
   setFormat(pairTotals.getCell(5), SIGNED_CURRENCY);
+  addParagraph(
+    ws,
+    "In this table, the last column is the Interest and Principal payout minus the Interest Only payout, whichever one you selected. Negative means Interest and Principal pays less on that date.",
+    columns,
+    32,
+  );
   ws.addRow([]);
 
   addParagraph(
     ws,
-    "Difference vs Your Selection is the scenario's total paid minus the total paid by your selection. Positive means the scenario pays more over the full term.",
+    "In the two tables above, Difference vs Your Selection is the scenario's total paid minus the total paid by your selection. Positive means the scenario pays more over the full term.",
     columns,
     32,
   );

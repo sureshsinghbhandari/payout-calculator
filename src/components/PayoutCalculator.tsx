@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, useTransition, type FormEvent } fro
 import { INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
 import { formatDollars, formatPercent, formatYears } from "@/lib/format";
 import {
+  canUseStandardRate,
   initialFormState,
   standardRate,
   withFrequency,
@@ -118,6 +119,8 @@ export function PayoutCalculator() {
   function handleUseStandardRate() {
     setForm((prev) => withStandardRate(prev));
     setRateError(null);
+    // The button disappears once the rate is standard, so keep focus on the field.
+    rateInputRef.current?.focus();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -153,6 +156,7 @@ export function PayoutCalculator() {
   const isStale = !sameInputs(form, scenarios);
   const frequencyLabel = FREQUENCY_LABELS[form.frequency];
   const standard = formatPercent(standardRate(form.frequency));
+  const offerStandard = canUseStandardRate(form);
 
   return (
     <div className="space-y-8">
@@ -279,26 +283,33 @@ export function PayoutCalculator() {
                 </span>
               </div>
               {/* The error replaces the hint so the layout does not shift. */}
-              {rateError ? (
-                <p id={ids.rateError} role="alert" className="mt-1.5 text-xs font-medium text-red-700">
-                  {rateError}
-                </p>
-              ) : form.rateCustomized ? (
-                <p id={ids.rateHint} className="mt-1.5 text-xs text-slate-500">
-                  Custom rate. Standard {frequencyLabel} rate is {standard}.{" "}
-                  <button
-                    type="button"
-                    onClick={handleUseStandardRate}
-                    className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
-                  >
-                    Use {standard}
-                  </button>
-                </p>
-              ) : (
-                <p id={ids.rateHint} className="mt-1.5 text-xs text-slate-500">
-                  Standard {frequencyLabel} rate. You can change it (0% to 100%).
-                </p>
-              )}
+              <p className="mt-1.5 text-xs leading-5">
+                {rateError ? (
+                  <span id={ids.rateError} role="alert" className="font-medium text-red-700">
+                    {rateError}
+                  </span>
+                ) : (
+                  <span id={ids.rateHint} className="text-slate-500">
+                    {offerStandard
+                      ? `Custom rate. Standard ${frequencyLabel} rate is ${standard}.`
+                      : `Standard ${frequencyLabel} rate. You can change it (0% to 100%).`}
+                  </span>
+                )}
+                {offerStandard && (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      // Keep focus in the rate field so its blur check does not run mid-click.
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={handleUseStandardRate}
+                      className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+                    >
+                      Use {standard}
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
           </div>
 

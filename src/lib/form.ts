@@ -21,7 +21,10 @@ export interface FormState {
   frequency: PayoutFrequency;
   /** Raw text of the rate field. */
   rateText: string;
-  /** True when the rate differs from the standard rate for the frequency. */
+  /**
+   * True when the visitor typed a rate other than the standard rate at the
+   * time. A typed rate is kept when the frequency changes.
+   */
   rateCustomized: boolean;
 }
 
@@ -50,12 +53,19 @@ export function initialFormState(): FormState {
   };
 }
 
-/** Changes the frequency; the rate moves to the new standard rate unless customized. */
+/**
+ * Changes the frequency. The rate moves to the new standard rate unless the
+ * visitor typed their own rate, which is then kept as it is. Only typing or
+ * choosing the standard rate changes `rateCustomized`.
+ */
 export function withFrequency(form: FormState, frequency: PayoutFrequency): FormState {
-  if (form.rateCustomized) {
-    return { ...form, frequency, rateCustomized: !isStandardRate(form.rateText, frequency) };
-  }
+  if (form.rateCustomized) return { ...form, frequency };
   return { ...form, frequency, rateText: standardRateText(frequency), rateCustomized: false };
+}
+
+/** Whether to offer switching to the standard rate for the current frequency. */
+export function canUseStandardRate(form: FormState): boolean {
+  return form.rateCustomized && !isStandardRate(form.rateText, form.frequency);
 }
 
 /** Records a typed rate. Typing the standard rate counts as following it again. */

@@ -89,7 +89,7 @@ The Excel workbook contains these sheets:
 
 ## Local development
 
-Requires Node.js 20.9 or newer.
+Requires Node.js 20.19+ or 22.12+ (the versions the test tooling supports).
 
 ```bash
 npm install

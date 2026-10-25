@@ -40,6 +40,8 @@ function expectReconciled(schedule: PayoutSchedule) {
 
   for (const [i, row] of rows.entries()) {
     expect(row.payoutNumber).toBe(i + 1);
+    expect(row.interestCents).toBeGreaterThanOrEqual(0);
+    expect(row.principalRepaymentCents).toBeGreaterThanOrEqual(0);
     expect(Number.isInteger(row.interestCents)).toBe(true);
     expect(Number.isInteger(row.principalRepaymentCents)).toBe(true);
     expect(row.totalPayoutCents).toBe(row.interestCents + row.principalRepaymentCents);
@@ -204,6 +206,34 @@ describe("zero interest", () => {
 });
 
 describe("rounding", () => {
+  it.each([
+    [100_000, 0.0001],
+    [25_000, 0.0001],
+    [25_000, 0.0004],
+    [50_000, 0.0002],
+  ])("never pays negative interest: $%d at %d%%, 2 years, quarterly, Interest Only", (principal, rate) => {
+    // e.g. $100,000 at 0.0001%: 2.5 cents a quarter, 20 cents in total.
+    const s = run({ principal, annualRatePercent: rate, lockInYears: 2, frequency: "quarterly" });
+    const interest = s.rows.map((r) => r.interestCents);
+    expect(Math.min(...interest)).toBeGreaterThanOrEqual(0);
+    expect(interest.at(-1)!).toBeGreaterThanOrEqual(interest[0]);
+    expect(s.totals.interestCents).toBe(Math.round((principal * 100 * rate * 2) / 100));
+    expectReconciled(s);
+  });
+
+  it("keeps every installment non-negative across tiny rates", () => {
+    for (const principal of [25_000, 50_000, 75_000, 100_000]) {
+      for (let units = 0; units <= 200; units++) {
+        const rate = units / 10_000; // 0% to 0.02% in 0.0001% steps
+        for (const frequency of ["quarterly", "half-yearly", "yearly"] as const) {
+          for (const payoutType of ["interest-only", "interest-and-principal"] as const) {
+            expectReconciled(run({ principal, annualRatePercent: rate, lockInYears: 2, frequency, payoutType }));
+          }
+        }
+      }
+    }
+  });
+
   it("rounds half a cent up", () => {
     // 2,500,000 cents x 0.0001% = 2.5 cents -> 3 cents.
     const s = run({ principal: 25_000, annualRatePercent: 0.0001, frequency: "yearly" });
