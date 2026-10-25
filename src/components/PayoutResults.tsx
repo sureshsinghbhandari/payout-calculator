@@ -2,14 +2,15 @@
 
 import { useState, type Ref } from "react";
 import { DISCLAIMER } from "@/lib/disclaimer";
-import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
-import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
-import { usesStandardRate, type ScenarioSet } from "@/lib/scenarios";
+import { formatCents, formatDollars, formatIsoDate, formatIsoDateLong, formatYears } from "@/lib/format";
+import { FREQUENCY_LABELS, interestStartDelayText, PAYOUT_TYPE_LABELS } from "@/lib/payout";
+import type { PublicScenarioSet } from "@/lib/scenarios";
 import { ScenarioComparison } from "./ScenarioComparison";
 
+const START_DELAY = interestStartDelayText();
 const MONTHS_LABEL: Record<number, string> = { 4: "3 months", 2: "6 months", 1: "12 months" };
 
-async function downloadExcel(scenarios: ScenarioSet) {
+async function downloadExcel(scenarios: PublicScenarioSet) {
   // Loaded on demand so the spreadsheet library is not part of the page load.
   const { buildExcelFile, XLSX_MIME_TYPE } = await import("@/lib/excel");
   const { data, fileName } = await buildExcelFile(scenarios);
@@ -23,7 +24,7 @@ async function downloadExcel(scenarios: ScenarioSet) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function sheetCountText(scenarios: ScenarioSet): string {
+function sheetCountText(scenarios: PublicScenarioSet): string {
   const sheets = 2 + scenarios.longerFrequencies.length + 1;
   return `${sheets} sheets: your schedule, ${
     scenarios.longerFrequencies.length > 0
@@ -33,14 +34,14 @@ function sheetCountText(scenarios: ScenarioSet): string {
 }
 
 interface Props {
-  scenarios: ScenarioSet;
+  scenarios: PublicScenarioSet;
   isStale: boolean;
   ref?: Ref<HTMLElement>;
 }
 
 export function PayoutResults({ scenarios, isStale, ref }: Props) {
   const schedule = scenarios.selected;
-  const { inputs, rows, totals, periodsPerYear } = schedule;
+  const { inputs, rows, totals, periodsPerYear, startDate } = schedule;
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -58,11 +59,8 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
 
   const details = [
     { label: "Original investment", value: formatDollars(inputs.principal) },
-    {
-      label: "Annual interest rate",
-      value: formatPercent(inputs.annualRatePercent),
-      note: usesStandardRate(schedule) ? `Standard ${FREQUENCY_LABELS[inputs.frequency]} rate` : "Custom rate",
-    },
+    { label: "Investment date", value: formatIsoDate(inputs.investmentDate) },
+    { label: "Interest starts", value: formatIsoDate(schedule.startDate) },
     { label: "Lock-in period", value: formatYears(inputs.lockInYears) },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[inputs.payoutType] },
     { label: "Payout frequency", value: FREQUENCY_LABELS[inputs.frequency] },
@@ -87,8 +85,8 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
             Your payout schedule
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            {rows.length} {rows.length === 1 ? "payout" : "payouts"} starting from{" "}
-            {formatIsoDate(inputs.startDate)}.
+            {rows.length} {rows.length === 1 ? "payout" : "payouts"}. Interest starts{" "}
+            {formatIsoDateLong(startDate)}.
           </p>
         </div>
         <div className="flex flex-col items-start gap-1 sm:items-end">
@@ -147,16 +145,11 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
             </div>
           ))}
         </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-200 p-5 sm:grid-cols-3 lg:grid-cols-5">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-200 p-5 sm:grid-cols-3">
           {details.map((item) => (
             <div key={item.label}>
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{item.label}</dt>
-              <dd className="mt-1 text-base font-semibold text-slate-900">
-                {item.value}
-                {item.note && (
-                  <span className="mt-0.5 block text-xs font-normal text-slate-500">{item.note}</span>
-                )}
-              </dd>
+              <dd className="mt-1 text-base font-semibold text-slate-900">{item.value}</dd>
             </div>
           ))}
         </dl>
@@ -174,8 +167,8 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
           >
             <table className="w-full min-w-[760px] border-collapse text-sm">
               <caption className="sr-only">
-                Payout schedule for a {formatDollars(inputs.principal)} investment at{" "}
-                {formatPercent(inputs.annualRatePercent)}, all amounts in US dollars
+                Payout schedule for a {formatDollars(inputs.principal)} investment, all amounts in US
+                dollars
               </caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
@@ -241,15 +234,17 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
 
       <div className="space-y-3 text-sm text-slate-600">
         <p>
-          <span className="font-semibold text-slate-700">How dates are set:</span> the schedule starts
-          on the date you submitted the form, {formatIsoDate(inputs.startDate)}. Each payout falls{" "}
-          {MONTHS_LABEL[periodsPerYear]} after the previous one. When that day does not exist in a
-          month, the payout falls on the last day of that month.
+          <span className="font-semibold text-slate-700">How dates are set:</span> you invested on{" "}
+          {formatIsoDateLong(inputs.investmentDate)}. Interest starts {START_DELAY} after that,{" "}
+          {formatIsoDateLong(startDate)}, counting Monday to Friday as business days (public holidays
+          are not taken into account). Payouts then fall every {MONTHS_LABEL[periodsPerYear]}, counted
+          from the interest start date. When that day does not exist in a month, the payout falls on
+          the last day of that month. Payout dates are not moved for weekends.
         </p>
         <p>
           <span className="font-semibold text-slate-700">How amounts are calculated:</span> simple
-          interest, never compounded. Interest for each period is the annual rate times the principal
-          outstanding before that payout, divided by {periodsPerYear}. Amounts are rounded to the cent,
+          interest, never compounded. Interest for each period is the annual rate for the chosen payout
+          period times the principal outstanding before that payout, divided by {periodsPerYear}. Amounts are rounded to the cent,
           and the final payout absorbs any rounding difference so the totals reconcile.
         </p>
       </div>

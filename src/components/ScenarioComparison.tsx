@@ -2,12 +2,16 @@ import {
   formatCents,
   formatDollars,
   formatIsoDate,
-  formatPercent,
   formatSignedCents,
   formatYears,
 } from "@/lib/format";
-import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS, type PayoutSchedule } from "@/lib/payout";
-import { differenceInCents, scheduleMetrics, type ScenarioSet } from "@/lib/scenarios";
+import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
+import {
+  differenceInCents,
+  scheduleMetrics,
+  type PublicSchedule,
+  type PublicScenarioSet,
+} from "@/lib/scenarios";
 
 function SelectionBadge() {
   return (
@@ -23,7 +27,7 @@ function differenceClass(cents: number): string {
   return "text-slate-600";
 }
 
-function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
+function LongerPeriods({ scenarios }: { scenarios: PublicScenarioSet }) {
   const { selected, longerFrequencies } = scenarios;
   const inputs = selected.inputs;
   const all = [selected, ...longerFrequencies];
@@ -33,8 +37,8 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
       <div className="p-5 pb-3">
         <h3 className="text-base font-semibold text-slate-900">Longer payout periods</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Same payout type ({PAYOUT_TYPE_LABELS[inputs.payoutType]}), paid less often. Each longer
-          period uses its standard rate.
+          Same payout type ({PAYOUT_TYPE_LABELS[inputs.payoutType]}), paid less often. Each payout
+          period has its own interest rate.
         </p>
       </div>
       {longerFrequencies.length === 0 ? (
@@ -49,7 +53,7 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
           role="region"
           aria-label="Longer payout period comparison, scrolls horizontally"
         >
-          <table className="w-full min-w-[820px] border-collapse text-sm">
+          <table className="w-full min-w-[700px] border-collapse text-sm">
             <caption className="sr-only">
               Totals for your selection and for longer payout periods, in US dollars
             </caption>
@@ -57,9 +61,6 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
               <tr className="border-y border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                 <th scope="col" className="px-4 py-3 text-left font-semibold">
                   Payout frequency
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Annual rate
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
                   Payouts
@@ -95,7 +96,6 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
                       {FREQUENCY_LABELS[schedule.inputs.frequency]}
                       {isSelected && <SelectionBadge />}
                     </th>
-                    <td className="px-4 py-3 text-right">{formatPercent(schedule.inputs.annualRatePercent)}</td>
                     <td className="px-4 py-3 text-right">{m.payouts}</td>
                     <td className="px-4 py-3 text-right">{formatCents(m.firstPayoutCents)}</td>
                     <td className="px-4 py-3 text-right">{formatCents(m.finalPayoutCents)}</td>
@@ -124,14 +124,14 @@ function LongerPeriods({ scenarios }: { scenarios: ScenarioSet }) {
   );
 }
 
-function principalReturnText(schedule: PayoutSchedule): string {
+function principalReturnText(schedule: PublicSchedule): string {
   if (schedule.rows.length === 1) return "At maturity, in one payout";
   return schedule.inputs.payoutType === "interest-only"
     ? "All at maturity"
     : `In ${schedule.rows.length} equal installments`;
 }
 
-function PayoutTypeCard({ schedule, isSelected }: { schedule: PayoutSchedule; isSelected: boolean }) {
+function PayoutTypeCard({ schedule, isSelected }: { schedule: PublicSchedule; isSelected: boolean }) {
   const m = scheduleMetrics(schedule);
   const items = [
     { label: "Total interest", value: formatCents(m.totalInterestCents) },
@@ -164,7 +164,7 @@ function PayoutTypeCard({ schedule, isSelected }: { schedule: PayoutSchedule; is
   );
 }
 
-function PayoutTypes({ scenarios }: { scenarios: ScenarioSet }) {
+function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
   const { selected, otherPayoutType } = scenarios;
   const inputs = selected.inputs;
   const [interestOnly, amortizing] =
@@ -186,8 +186,7 @@ function PayoutTypes({ scenarios }: { scenarios: ScenarioSet }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h3 className="text-base font-semibold text-slate-900">Interest Only vs Interest and Principal</h3>
       <p className="mt-1 text-sm text-slate-600">
-        Same payout frequency ({FREQUENCY_LABELS[inputs.frequency]}) and rate (
-        {formatPercent(inputs.annualRatePercent)}).
+        Same payout frequency ({FREQUENCY_LABELS[inputs.frequency]}) and interest rate.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <PayoutTypeCard schedule={interestOnly} isSelected={interestOnly === selected} />
@@ -279,7 +278,7 @@ function PayoutTypes({ scenarios }: { scenarios: ScenarioSet }) {
   );
 }
 
-export function ScenarioComparison({ scenarios }: { scenarios: ScenarioSet }) {
+export function ScenarioComparison({ scenarios }: { scenarios: PublicScenarioSet }) {
   const inputs = scenarios.selected.inputs;
   return (
     <section aria-labelledby="compare-heading" className="space-y-4 pt-2">

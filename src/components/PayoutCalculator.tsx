@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useTransition, type FormEvent } from "react";
-import { INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
-import { formatDollars, formatPercent, formatYears } from "@/lib/format";
 import {
-  canUseStandardRate,
-  initialFormState,
-  standardRate,
-  withFrequency,
-  withRateText,
-  withStandardRate,
-  type FormState,
-} from "@/lib/form";
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type FormEvent,
+} from "react";
+import { calculateQuoteAction } from "@/app/actions";
+import { INVESTMENT_AMOUNTS, INVESTMENT_DATE_MAX, INVESTMENT_DATE_MIN, LOCK_IN_YEARS } from "@/lib/config";
+import { effectiveInvestmentDate, initialFormState, type FormState } from "@/lib/form";
+import { formatDollars, formatIsoDateLong, formatYears } from "@/lib/format";
 import {
-  calculatePayoutSchedule,
   FREQUENCY_LABELS,
+  interestStartDate,
+  interestStartDelayText,
   PAYOUT_TYPE_LABELS,
   toIsoDate,
-  validateRate,
+  validateInvestmentDate,
   type PayoutFrequency,
   type PayoutType,
 } from "@/lib/payout";
-import { buildScenarios, FREQUENCY_ORDER, type ScenarioSet } from "@/lib/scenarios";
+import { FREQUENCY_ORDER, type PublicScenarioSet } from "@/lib/scenarios";
 import { PayoutResults } from "./PayoutResults";
 
 const PAYOUT_TYPE_HINTS: Record<PayoutType, string> = {
@@ -30,13 +32,13 @@ const PAYOUT_TYPE_HINTS: Record<PayoutType, string> = {
 };
 
 const PAYOUT_TYPES = Object.keys(PAYOUT_TYPE_LABELS) as PayoutType[];
+const START_DELAY = interestStartDelayText();
 
-const STANDARD_RATES_TEXT = FREQUENCY_ORDER.map(
-  (f) => `${FREQUENCY_LABELS[f]} ${formatPercent(standardRate(f))}`,
-).join(", ");
-
-const selectClass =
-  "block w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30";
+const fieldClass =
+  "block w-full rounded-lg border bg-white py-2.5 pl-3 text-base text-slate-900 shadow-sm transition focus:outline-none focus:ring-2";
+const okFieldClass = "border-slate-300 focus:border-blue-700 focus:ring-blue-700/30";
+const errorFieldClass = "border-red-600 focus:border-red-600 focus:ring-red-600/30";
+const selectClass = `${fieldClass} ${okFieldClass} appearance-none pr-10`;
 
 function SelectChevron() {
   return (
@@ -55,13 +57,18 @@ function SelectChevron() {
   );
 }
 
-function sameInputs(form: FormState, scenarios: ScenarioSet | null): boolean {
+const noopSubscribe = () => () => {};
+
+/** Today's date in the visitor's time zone; empty during server rendering. */
+function useToday(): string {
+  return useSyncExternalStore(noopSubscribe, () => toIsoDate(new Date()), () => "");
+}
+
+function sameInputs(form: FormState, investmentDate: string, scenarios: PublicScenarioSet | null): boolean {
   if (!scenarios) return true;
-  const rate = validateRate(form.rateText);
   const i = scenarios.selected.inputs;
   return (
-    rate.ok &&
-    rate.value === i.annualRatePercent &&
+    investmentDate === i.investmentDate &&
     form.principal === i.principal &&
     form.lockInYears === i.lockInYears &&
     form.payoutType === i.payoutType &&
@@ -70,20 +77,21 @@ function sameInputs(form: FormState, scenarios: ScenarioSet | null): boolean {
 }
 
 export function PayoutCalculator() {
+  const today = useToday();
   const [form, setForm] = useState<FormState>(initialFormState);
-  const [rateError, setRateError] = useState<string | null>(null);
-  const [scenarios, setScenarios] = useState<ScenarioSet | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [scenarios, setScenarios] = useState<PublicScenarioSet | null>(null);
   const [isPending, startTransition] = useTransition();
-  const rateInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLElement>(null);
   const focusResultsRef = useRef(false);
   const ids = {
+    date: useId(),
+    dateHint: useId(),
+    dateError: useId(),
     lockIn: useId(),
     frequency: useId(),
-    frequencyHint: useId(),
-    rate: useId(),
-    rateHint: useId(),
-    rateError: useId(),
   };
 
   useEffect(() => {
@@ -94,69 +102,64 @@ export function PayoutCalculator() {
     }
   }, [scenarios]);
 
-  function update<K extends "principal" | "lockInYears" | "payoutType">(key: K, value: FormState[K]) {
+  const investmentDate = effectiveInvestmentDate(form, today);
+  const dateCheck = investmentDate ? validateInvestmentDate(investmentDate) : null;
+  const startDate = dateCheck?.ok ? interestStartDate(dateCheck.value) : null;
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleFrequencyChange(frequency: PayoutFrequency) {
-    const next = withFrequency(form, frequency);
-    setForm(next);
-    // The rate may have changed to a valid standard rate; refresh any error.
-    if (rateError) {
-      const result = validateRate(next.rateText);
-      setRateError(result.ok ? null : result.error);
+  function handleDateChange(value: string) {
+    update("investmentDate", value);
+    if (dateError) {
+      const result = validateInvestmentDate(value);
+      setDateError(result.ok ? null : result.error);
     }
-  }
-
-  function handleRateChange(text: string) {
-    setForm((prev) => withRateText(prev, text));
-    if (rateError) {
-      const result = validateRate(text);
-      setRateError(result.ok ? null : result.error);
-    }
-  }
-
-  function handleUseStandardRate() {
-    setForm((prev) => withStandardRate(prev));
-    setRateError(null);
-    // The button disappears once the rate is standard, so keep focus on the field.
-    rateInputRef.current?.focus();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const rate = validateRate(form.rateText);
-    if (!rate.ok) {
-      setRateError(rate.error);
-      rateInputRef.current?.focus();
+    const date = validateInvestmentDate(investmentDate);
+    if (!date.ok) {
+      setDateError(date.error);
+      dateInputRef.current?.focus();
       return;
     }
-    setRateError(null);
-    const startDate = toIsoDate(new Date());
-    startTransition(() => {
-      focusResultsRef.current = true;
-      const selected = calculatePayoutSchedule({
-        principal: form.principal,
-        annualRatePercent: rate.value,
-        lockInYears: form.lockInYears,
-        payoutType: form.payoutType,
-        frequency: form.frequency,
-        startDate,
-      });
-      setScenarios(buildScenarios(selected));
+    setDateError(null);
+    setSubmitError(null);
+    const request = {
+      principal: form.principal,
+      lockInYears: form.lockInYears,
+      payoutType: form.payoutType,
+      frequency: form.frequency,
+      investmentDate: date.value,
+    };
+    startTransition(async () => {
+      let message = "The calculator is temporarily unavailable. Please try again.";
+      try {
+        const response = await calculateQuoteAction(request);
+        if (response.ok) {
+          focusResultsRef.current = true;
+          setScenarios(response.result);
+          return;
+        }
+        message = response.error;
+      } catch {
+        // Network failure: keep the generic message.
+      }
+      setSubmitError(message);
     });
   }
 
   function handleReset() {
     setForm(initialFormState());
-    setRateError(null);
+    setDateError(null);
+    setSubmitError(null);
     setScenarios(null);
   }
 
-  const isStale = !sameInputs(form, scenarios);
-  const frequencyLabel = FREQUENCY_LABELS[form.frequency];
-  const standard = formatPercent(standardRate(form.frequency));
-  const offerStandard = canUseStandardRate(form);
+  const isStale = !sameInputs(form, investmentDate, scenarios);
 
   return (
     <div className="space-y-8">
@@ -177,7 +180,7 @@ export function PayoutCalculator() {
         </div>
 
         <div className="space-y-7">
-          {/* A. Investment amount */}
+          {/* Investment amount */}
           <fieldset>
             <legend className="text-sm font-semibold text-slate-900">Investment amount</legend>
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -201,7 +204,42 @@ export function PayoutCalculator() {
           </fieldset>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {/* B. Lock-in period */}
+            {/* Investment date */}
+            <div>
+              <label htmlFor={ids.date} className="text-sm font-semibold text-slate-900">
+                Investment date
+              </label>
+              <input
+                ref={dateInputRef}
+                id={ids.date}
+                type="date"
+                min={INVESTMENT_DATE_MIN}
+                max={INVESTMENT_DATE_MAX}
+                value={investmentDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                onBlur={() => {
+                  const result = validateInvestmentDate(investmentDate);
+                  setDateError(result.ok ? null : result.error);
+                }}
+                aria-invalid={dateError ? true : undefined}
+                aria-describedby={dateError ? ids.dateError : ids.dateHint}
+                className={`mt-2 pr-3 ${fieldClass} ${dateError ? errorFieldClass : okFieldClass}`}
+              />
+              {/* The error replaces the hint so the layout does not shift. */}
+              {dateError ? (
+                <p id={ids.dateError} role="alert" className="mt-1.5 text-xs font-medium leading-5 text-red-700">
+                  {dateError}
+                </p>
+              ) : (
+                <p id={ids.dateHint} className="mt-1.5 text-xs leading-5 text-slate-500">
+                  {startDate
+                    ? `Interest starts ${formatIsoDateLong(startDate)}, ${START_DELAY} after this date.`
+                    : `Interest starts ${START_DELAY} after this date.`}
+                </p>
+              )}
+            </div>
+
+            {/* Lock-in period */}
             <div>
               <label htmlFor={ids.lockIn} className="text-sm font-semibold text-slate-900">
                 Lock-in period
@@ -223,7 +261,7 @@ export function PayoutCalculator() {
               </div>
             </div>
 
-            {/* D. Payout period */}
+            {/* Payout period */}
             <div>
               <label htmlFor={ids.frequency} className="text-sm font-semibold text-slate-900">
                 Payout period
@@ -232,8 +270,7 @@ export function PayoutCalculator() {
                 <select
                   id={ids.frequency}
                   value={form.frequency}
-                  onChange={(e) => handleFrequencyChange(e.target.value as PayoutFrequency)}
-                  aria-describedby={ids.frequencyHint}
+                  onChange={(e) => update("frequency", e.target.value as PayoutFrequency)}
                   className={selectClass}
                 >
                   {FREQUENCY_ORDER.map((f) => (
@@ -244,76 +281,10 @@ export function PayoutCalculator() {
                 </select>
                 <SelectChevron />
               </div>
-              <p id={ids.frequencyHint} className="mt-1.5 text-xs text-slate-500">
-                Standard rates: {STANDARD_RATES_TEXT}.
-              </p>
-            </div>
-
-            {/* E. Annual interest rate */}
-            <div>
-              <label htmlFor={ids.rate} className="text-sm font-semibold text-slate-900">
-                Annual interest rate
-              </label>
-              <div className="relative mt-2">
-                <input
-                  ref={rateInputRef}
-                  id={ids.rate}
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  value={form.rateText}
-                  onChange={(e) => handleRateChange(e.target.value)}
-                  onBlur={() => {
-                    const result = validateRate(form.rateText);
-                    setRateError(result.ok ? null : result.error);
-                  }}
-                  aria-invalid={rateError ? true : undefined}
-                  aria-describedby={rateError ? ids.rateError : ids.rateHint}
-                  className={`block w-full rounded-lg border bg-white py-2.5 pl-3 pr-10 text-base tabular-nums text-slate-900 shadow-sm transition focus:outline-none focus:ring-2 ${
-                    rateError
-                      ? "border-red-600 focus:border-red-600 focus:ring-red-600/30"
-                      : "border-slate-300 focus:border-blue-700 focus:ring-blue-700/30"
-                  }`}
-                />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-base text-slate-500"
-                >
-                  %
-                </span>
-              </div>
-              {/* The error replaces the hint so the layout does not shift. */}
-              <p className="mt-1.5 text-xs leading-5">
-                {rateError ? (
-                  <span id={ids.rateError} role="alert" className="font-medium text-red-700">
-                    {rateError}
-                  </span>
-                ) : (
-                  <span id={ids.rateHint} className="text-slate-500">
-                    {offerStandard
-                      ? `Custom rate. Standard ${frequencyLabel} rate is ${standard}.`
-                      : `Standard ${frequencyLabel} rate. You can change it (0% to 100%).`}
-                  </span>
-                )}
-                {offerStandard && (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      // Keep focus in the rate field so its blur check does not run mid-click.
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={handleUseStandardRate}
-                      className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
-                    >
-                      Use {standard}
-                    </button>
-                  </>
-                )}
-              </p>
             </div>
           </div>
 
-          {/* C. Payout type */}
+          {/* Payout type */}
           <fieldset>
             <legend className="text-sm font-semibold text-slate-900">Payout type</legend>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -344,8 +315,8 @@ export function PayoutCalculator() {
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600 sm:max-w-md">
-            Payout dates are counted from the day you submit. The first payout falls one period after
-            that date.
+            Interest starts {START_DELAY} after your investment date, counting Monday to Friday as
+            business days. The first payout falls one period after that.
           </p>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <button
@@ -364,6 +335,11 @@ export function PayoutCalculator() {
             </button>
           </div>
         </div>
+        {submitError && (
+          <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+            {submitError}
+          </p>
+        )}
       </form>
 
       {scenarios && <PayoutResults ref={resultsRef} scenarios={scenarios} isStale={isStale} />}

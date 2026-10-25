@@ -6,7 +6,15 @@
  * (well inside Number.MAX_SAFE_INTEGER) and fully deterministic.
  * Interest is simple interest; it is never compounded.
  */
-import { MAX_RATE_DECIMALS } from "./config";
+import {
+  INTEREST_START_BUSINESS_DAYS,
+  INVESTMENT_DATE_MAX,
+  INVESTMENT_DATE_MIN,
+  MAX_RATE_DECIMALS,
+} from "./config";
+import { addBusinessDays, addMonths, isValidIsoDate } from "./dates";
+
+export { addMonths, isValidIsoDate, toIsoDate } from "./dates";
 
 export type PayoutType = "interest-only" | "interest-and-principal";
 export type PayoutFrequency = "quarterly" | "half-yearly" | "yearly";
@@ -36,8 +44,8 @@ export interface PayoutInputs {
   lockInYears: number;
   payoutType: PayoutType;
   frequency: PayoutFrequency;
-  /** Schedule start date as YYYY-MM-DD. */
-  startDate: string;
+  /** Date the money is invested, as YYYY-MM-DD. */
+  investmentDate: string;
 }
 
 export interface PayoutRow {
@@ -59,6 +67,8 @@ export interface PayoutTotals {
 
 export interface PayoutSchedule {
   inputs: PayoutInputs;
+  /** Date interest starts (the next business day after the investment date), YYYY-MM-DD. */
+  startDate: string;
   periodsPerYear: number;
   totalPeriods: number;
   rows: PayoutRow[];
@@ -114,37 +124,36 @@ function simpleInterestCents(
   return divRoundHalfUp(principalCents * rateUnits * yearsNum, 100 * RATE_SCALE * yearsDen);
 }
 
-function pad(value: number, width: number): string {
-  return String(value).padStart(width, "0");
+export type DateValidation = { ok: true; value: string } | { ok: false; error: string };
+
+/** Validates the investment-date field (YYYY-MM-DD, within the allowed range). */
+export function validateInvestmentDate(input: string): DateValidation {
+  const text = input.trim();
+  if (text === "") return { ok: false, error: "Enter an investment date." };
+  if (!isValidIsoDate(text)) return { ok: false, error: "Enter a valid investment date." };
+  if (text < INVESTMENT_DATE_MIN || text > INVESTMENT_DATE_MAX) {
+    return {
+      ok: false,
+      error: `Choose a date between ${INVESTMENT_DATE_MIN.slice(0, 4)} and ${INVESTMENT_DATE_MAX.slice(0, 4)}.`,
+    };
+  }
+  return { ok: true, value: text };
 }
 
-export function isValidIsoDate(iso: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
-  const [y, m, d] = iso.split("-").map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+/** "the next business day", or "3 business days" etc. when configured differently. */
+export function interestStartDelayText(): string {
+  return INTEREST_START_BUSINESS_DAYS === 1
+    ? "the next business day"
+    : `${INTEREST_START_BUSINESS_DAYS} business days`;
 }
 
-/**
- * Adds whole months to a YYYY-MM-DD date. If the start day does not exist in
- * the target month (e.g. Jan 31 + 1 month), the last day of that month is used.
- */
-export function addMonths(iso: string, months: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const targetMonthIndex = m - 1 + months;
-  const year = y + Math.floor(targetMonthIndex / 12);
-  const month = ((targetMonthIndex % 12) + 12) % 12;
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return `${pad(year, 4)}-${pad(month + 1, 2)}-${pad(Math.min(d, lastDay), 2)}`;
-}
-
-/** A date in the visitor's local time zone as YYYY-MM-DD. */
-export function toIsoDate(date: Date): string {
-  return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1, 2)}-${pad(date.getDate(), 2)}`;
+/** The date interest starts: the configured number of business days after the investment date. */
+export function interestStartDate(investmentDate: string): string {
+  return addBusinessDays(investmentDate, INTEREST_START_BUSINESS_DAYS);
 }
 
 export function calculatePayoutSchedule(inputs: PayoutInputs): PayoutSchedule {
-  const { principal, annualRatePercent, lockInYears, payoutType, frequency, startDate } = inputs;
+  const { principal, annualRatePercent, lockInYears, payoutType, frequency, investmentDate } = inputs;
 
   if (!Number.isInteger(principal) || principal <= 0) {
     throw new RangeError("Principal must be a positive whole-dollar amount.");
@@ -159,7 +168,9 @@ export function calculatePayoutSchedule(inputs: PayoutInputs): PayoutSchedule {
   if (payoutType !== "interest-only" && payoutType !== "interest-and-principal") {
     throw new RangeError("Unknown payout type.");
   }
-  if (!isValidIsoDate(startDate)) throw new RangeError("Start date must be YYYY-MM-DD.");
+  const date = validateInvestmentDate(investmentDate);
+  if (!date.ok) throw new RangeError(date.error);
+  const startDate = interestStartDate(date.value);
 
   const rateUnits = Math.round(rate.value * RATE_SCALE);
   const principalCents = principal * 100;
@@ -225,7 +236,8 @@ export function calculatePayoutSchedule(inputs: PayoutInputs): PayoutSchedule {
   );
 
   return {
-    inputs: { ...inputs, annualRatePercent: rate.value },
+    inputs: { ...inputs, annualRatePercent: rate.value, investmentDate: date.value },
+    startDate,
     periodsPerYear,
     totalPeriods,
     rows,

@@ -12,21 +12,19 @@
  */
 import * as ExcelJSModule from "exceljs";
 import type { Cell, Row, Workbook, Worksheet } from "exceljs";
-import { DEFAULT_RATE_BY_FREQUENCY } from "./config";
-import { formatPercent, formatYears } from "./format";
+import { formatYears } from "./format";
 import {
   FREQUENCY_LABELS,
+  interestStartDelayText,
   PAYOUT_TYPE_LABELS,
   type PayoutRow,
-  type PayoutSchedule,
   type PayoutType,
 } from "./payout";
 import {
   differenceInCents,
-  FREQUENCY_ORDER,
   scheduleMetrics,
-  usesStandardRate,
-  type ScenarioSet,
+  type PublicSchedule,
+  type PublicScenarioSet,
 } from "./scenarios";
 import { DISCLAIMER } from "./disclaimer";
 
@@ -46,7 +44,6 @@ const MUTED_TEXT = "FF475569";
 
 const CURRENCY = '"$"#,##0.00';
 const SIGNED_CURRENCY = '+"$"#,##0.00;-"$"#,##0.00;"$"0.00';
-const PERCENT = "0.00##%";
 const DATE = "mmm d, yyyy";
 
 export const SELECTION_SHEET_NAME = "Your Selection";
@@ -59,21 +56,13 @@ const PAYOUT_TYPE_SHEET_NAMES: Record<PayoutType, string> = {
 
 export interface ScheduleSheetSpec {
   name: string;
-  schedule: PayoutSchedule;
+  schedule: PublicSchedule;
   /** One-line description shown under the sheet title. */
   subtitle: string;
-  /** Where the rate comes from, e.g. "Standard Yearly rate". */
-  rateBasis: string;
-}
-
-function selectionRateBasis(schedule: PayoutSchedule): string {
-  return usesStandardRate(schedule)
-    ? `Standard ${FREQUENCY_LABELS[schedule.inputs.frequency]} rate`
-    : "Rate you entered";
 }
 
 /** Decides which schedule sheets the workbook contains, in order. */
-export function planScheduleSheets(set: ScenarioSet): ScheduleSheetSpec[] {
+export function planScheduleSheets(set: PublicScenarioSet): ScheduleSheetSpec[] {
   const selected = set.selected.inputs;
   const selectedFrequency = FREQUENCY_LABELS[selected.frequency];
   const selectedType = PAYOUT_TYPE_LABELS[selected.payoutType];
@@ -84,7 +73,6 @@ export function planScheduleSheets(set: ScenarioSet): ScheduleSheetSpec[] {
       name: SELECTION_SHEET_NAME,
       schedule: set.selected,
       subtitle: `Your selection: ${selectedFrequency} payouts, ${selectedType}`,
-      rateBasis: selectionRateBasis(set.selected),
     },
     ...set.longerFrequencies.map((schedule) => {
       const frequency = FREQUENCY_LABELS[schedule.inputs.frequency];
@@ -92,19 +80,17 @@ export function planScheduleSheets(set: ScenarioSet): ScheduleSheetSpec[] {
         name: `${frequency} Payout`,
         schedule,
         subtitle: `Scenario: ${frequency} payouts instead of ${selectedFrequency}, ${selectedType}`,
-        rateBasis: `Standard ${frequency} rate`,
       };
     }),
     {
       name: PAYOUT_TYPE_SHEET_NAMES[other.payoutType],
       schedule: set.otherPayoutType,
       subtitle: `Scenario: ${PAYOUT_TYPE_LABELS[other.payoutType]} instead of ${selectedType}, ${selectedFrequency} payouts`,
-      rateBasis: "Same rate as your selection",
     },
   ];
 }
 
-export function excelFileName(schedule: PayoutSchedule): string {
+export function excelFileName(schedule: PublicSchedule): string {
   const { inputs } = schedule;
   return `payout-schedule-${inputs.principal}-${inputs.lockInYears}y-${inputs.payoutType}-${inputs.frequency}.xlsx`;
 }
@@ -181,20 +167,37 @@ function addDetail(ws: Worksheet, label: string, value: string | number | Date, 
   return row;
 }
 
-/** Adds a wrapped paragraph spanning `columns` columns. */
-function addParagraph(ws: Worksheet, text: string, columns: number, height: number, bold?: string) {
-  const row = ws.addRow([bold ? `${bold} ${text}` : text]);
+const LINE_HEIGHT_PT = 15;
+
+/**
+ * Row height (points) that fits `text` wrapped across merged columns whose
+ * widths add up to `totalWidth` Excel width units. Excel does not auto-size
+ * merged cells, so the height is estimated generously: about one character
+ * per width unit per line.
+ */
+export function paragraphHeight(text: string, totalWidth: number): number {
+  const charsPerLine = Math.max(20, Math.floor(totalWidth));
+  const lines = Math.max(1, Math.ceil(text.length / charsPerLine));
+  return lines * LINE_HEIGHT_PT + 4;
+}
+
+/** Adds a wrapped paragraph spanning `columns` columns, tall enough to show all of it. */
+function addParagraph(ws: Worksheet, text: string, columns: number, bold?: string) {
+  const content = bold ? `${bold} ${text}` : text;
+  const row = ws.addRow([content]);
   ws.mergeCells(row.number, 1, row.number, columns);
   const cell = row.getCell(1);
   cell.alignment = { wrapText: true, vertical: "top" };
   cell.font = { color: { argb: MUTED_TEXT } };
-  row.height = height;
+  let totalWidth = 0;
+  for (let c = 1; c <= columns; c++) totalWidth += ws.getColumn(c).width ?? 9;
+  row.height = paragraphHeight(content, totalWidth);
   return row;
 }
 
-function datesNote(schedule: PayoutSchedule): string {
+function datesNote(schedule: PublicSchedule): string {
   const months = 12 / schedule.periodsPerYear;
-  return `Payout dates: the schedule starts on the date the form was submitted. Each payout falls ${months} months after the previous one. When that day does not exist in a month, the payout falls on the last day of that month.`;
+  return `Payout dates: interest starts ${interestStartDelayText()} after the investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the interest start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
 }
 
 const SCHEDULE_HEADERS = [
@@ -229,12 +232,11 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   ws.addRow([]);
 
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
-  addDetail(ws, "Annual interest rate", inputs.annualRatePercent / 100, PERCENT);
-  addDetail(ws, "Rate basis", spec.rateBasis);
   addDetail(ws, "Lock-in period", formatYears(inputs.lockInYears));
   addDetail(ws, "Payout type", PAYOUT_TYPE_LABELS[inputs.payoutType]);
   addDetail(ws, "Payout frequency", FREQUENCY_LABELS[inputs.frequency]);
-  addDetail(ws, "Schedule start date", isoToExcelDate(inputs.startDate), DATE);
+  addDetail(ws, "Investment date", isoToExcelDate(inputs.investmentDate), DATE);
+  addDetail(ws, "Interest start date", isoToExcelDate(schedule.startDate), DATE);
   addDetail(ws, "Total interest payable", dollars(totals.interestCents), CURRENCY);
   addDetail(ws, "Total principal returned", dollars(totals.principalCents), CURRENCY);
   addDetail(ws, "Total amount paid", dollars(totals.payoutCents), CURRENCY).font = { bold: true };
@@ -276,14 +278,13 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   for (let c = 4; c <= columns; c++) setFormat(totalsRow.getCell(c), CURRENCY);
 
   ws.addRow([]);
-  addParagraph(ws, datesNote(schedule), columns, 32);
+  addParagraph(ws, datesNote(schedule), columns);
   addParagraph(
     ws,
-    "Amounts: simple interest, never compounded. Interest for each period is the annual rate times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
+    "Amounts: simple interest, never compounded. Interest for each period is the annual rate for the payout period times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
     columns,
-    46,
   );
-  addParagraph(ws, DISCLAIMER, columns, 46, "Disclaimer:");
+  addParagraph(ws, DISCLAIMER, columns, "Disclaimer:");
 }
 
 export const PAIR_DIFFERENCE_HEADER = "Interest and Principal minus Interest Only";
@@ -292,7 +293,6 @@ const COMPARISON_HEADERS = [
   "Scenario",
   "Payout Frequency",
   "Payout Type",
-  "Annual Rate",
   "Number of Payouts",
   "First Payout",
   "Final Payout",
@@ -304,8 +304,8 @@ const COMPARISON_HEADERS = [
 function addComparisonRow(
   ws: Worksheet,
   label: string,
-  schedule: PayoutSchedule,
-  baseline: PayoutSchedule,
+  schedule: PublicSchedule,
+  baseline: PublicSchedule,
   isSelected: boolean,
 ) {
   const m = scheduleMetrics(schedule);
@@ -313,7 +313,6 @@ function addComparisonRow(
     label,
     FREQUENCY_LABELS[schedule.inputs.frequency],
     PAYOUT_TYPE_LABELS[schedule.inputs.payoutType],
-    schedule.inputs.annualRatePercent / 100,
     m.payouts,
     dollars(m.firstPayoutCents),
     dollars(m.finalPayoutCents),
@@ -321,15 +320,14 @@ function addComparisonRow(
     dollars(m.totalPaidCents),
     dollars(differenceInCents(schedule, baseline)),
   ]);
-  setFormat(row.getCell(4), PERCENT);
-  row.getCell(5).alignment = { horizontal: "center" };
-  for (let c = 6; c <= 9; c++) setFormat(row.getCell(c), CURRENCY);
-  setFormat(row.getCell(10), SIGNED_CURRENCY);
+  row.getCell(4).alignment = { horizontal: "center" };
+  for (let c = 5; c <= 8; c++) setFormat(row.getCell(c), CURRENCY);
+  setFormat(row.getCell(9), SIGNED_CURRENCY);
   styleBodyRow(row, COMPARISON_HEADERS.length, isSelected ? SELECTED_FILL : undefined);
   if (isSelected) row.getCell(1).font = { bold: true, color: { argb: NAVY_TEXT } };
 }
 
-function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
+function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   const { selected } = set;
   const inputs = selected.inputs;
   const columns = COMPARISON_HEADERS.length;
@@ -342,7 +340,6 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
     { width: 26 },
     { width: 17 },
     { width: 23 },
-    { width: 13 },
     { width: 12 },
     { width: 15 },
     { width: 15 },
@@ -352,28 +349,20 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
   ];
 
   styleTitle(ws.addRow(["Payout Scenario Comparison"]));
-  styleSubtitle(ws.addRow(["Every scenario uses the same investment, lock-in period and start date as your selection."]));
+  styleSubtitle(ws.addRow(["Every scenario uses the same investment, lock-in period and investment date as your selection."]));
   ws.addRow([]);
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
   addDetail(ws, "Lock-in period", formatYears(inputs.lockInYears));
-  addDetail(ws, "Schedule start date", isoToExcelDate(inputs.startDate), DATE);
-  addDetail(
-    ws,
-    "Your selection",
-    `${selectedFrequency}, ${selectedType}, ${formatPercent(inputs.annualRatePercent)}`,
-  );
-  addDetail(
-    ws,
-    "Standard rates",
-    FREQUENCY_ORDER.map((f) => `${FREQUENCY_LABELS[f]} ${formatPercent(DEFAULT_RATE_BY_FREQUENCY[f])}`).join(", "),
-  );
+  addDetail(ws, "Investment date", isoToExcelDate(inputs.investmentDate), DATE);
+  addDetail(ws, "Interest start date", isoToExcelDate(selected.startDate), DATE);
+  addDetail(ws, "Your selection", `${selectedFrequency}, ${selectedType}`);
   ws.addRow([]);
 
   // Section 1: longer payout periods.
   styleSectionHeading(ws.addRow(["Longer payout periods"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout type (${selectedType}), paid less often. Each longer period uses its standard rate.`,
+      `Same payout type (${selectedType}), paid less often. Each payout period has its own interest rate.`,
     ]),
   );
   if (set.longerFrequencies.length === 0) {
@@ -395,11 +384,11 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
   styleSectionHeading(ws.addRow(["Interest Only vs Interest and Principal"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout frequency (${selectedFrequency}) and rate (${formatPercent(inputs.annualRatePercent)}).`,
+      `Same payout frequency (${selectedFrequency}) and interest rate.`,
     ]),
   );
   styleHeader(ws.addRow(COMPARISON_HEADERS), columns);
-  const byType: PayoutSchedule[] = [selected, set.otherPayoutType].sort((a, b) =>
+  const byType: PublicSchedule[] = [selected, set.otherPayoutType].sort((a, b) =>
     a.inputs.payoutType === "interest-only" ? -1 : b.inputs.payoutType === "interest-only" ? 1 : 0,
   );
   for (const schedule of byType) {
@@ -412,7 +401,7 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
   const interestOnly = byType[0];
   const amortizing = byType[1];
   styleSectionHeading(ws.addRow(["Payout by payout: Interest Only vs Interest and Principal"]));
-  styleSubtitle(ws.addRow([`${selectedFrequency} payouts at ${formatPercent(inputs.annualRatePercent)}.`]));
+  styleSubtitle(ws.addRow([`${selectedFrequency} payouts.`]));
   const pairHeader = ws.addRow([
     "Payout No.",
     "Payout Date",
@@ -453,7 +442,6 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
     ws,
     "In this table, the last column is the Interest and Principal payout minus the Interest Only payout, whichever one you selected. Negative means Interest and Principal pays less on that date.",
     columns,
-    32,
   );
   ws.addRow([]);
 
@@ -461,13 +449,12 @@ function writeComparisonSheet(workbook: Workbook, set: ScenarioSet) {
     ws,
     "In the two tables above, Difference vs Your Selection is the scenario's total paid minus the total paid by your selection. Positive means the scenario pays more over the full term.",
     columns,
-    32,
   );
-  addParagraph(ws, DISCLAIMER, columns, 32, "Disclaimer:");
+  addParagraph(ws, DISCLAIMER, columns, "Disclaimer:");
 }
 
 /** Builds the workbook in memory. */
-export function buildWorkbook(set: ScenarioSet): Workbook {
+export function buildWorkbook(set: PublicScenarioSet): Workbook {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Investment Payout Calculator";
   workbook.title = "Investment Payout Schedule";
@@ -477,7 +464,7 @@ export function buildWorkbook(set: ScenarioSet): Workbook {
 }
 
 /** Builds the workbook and serializes it to .xlsx bytes. */
-export async function buildExcelFile(set: ScenarioSet): Promise<{ data: ArrayBuffer; fileName: string }> {
+export async function buildExcelFile(set: PublicScenarioSet): Promise<{ data: ArrayBuffer; fileName: string }> {
   const buffer = await buildWorkbook(set).xlsx.writeBuffer();
   return { data: buffer as ArrayBuffer, fileName: excelFileName(set.selected) };
 }

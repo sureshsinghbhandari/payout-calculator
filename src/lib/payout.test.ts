@@ -11,7 +11,8 @@ import {
 } from "./payout";
 import { formatCents, formatSignedCents } from "./format";
 
-const START = "2026-01-15";
+// Invested Wednesday Jan 14, 2026, so interest starts Thursday Jan 15, 2026.
+const INVESTED = "2026-01-14";
 
 function run(overrides: Partial<PayoutInputs>): PayoutSchedule {
   return calculatePayoutSchedule({
@@ -20,7 +21,7 @@ function run(overrides: Partial<PayoutInputs>): PayoutSchedule {
     lockInYears: 1,
     payoutType: "interest-only",
     frequency: "quarterly",
-    startDate: START,
+    investmentDate: INVESTED,
     ...overrides,
   });
 }
@@ -293,7 +294,9 @@ describe("validateRate", () => {
   it("calculatePayoutSchedule throws on other invalid inputs", () => {
     expect(() => run({ principal: 0 })).toThrow(RangeError);
     expect(() => run({ lockInYears: 0 })).toThrow(RangeError);
-    expect(() => run({ startDate: "2026-02-30" })).toThrow(RangeError);
+    expect(() => run({ investmentDate: "2026-02-30" })).toThrow(RangeError);
+    expect(() => run({ investmentDate: "" })).toThrow(RangeError);
+    expect(() => run({ investmentDate: "1999-12-31" })).toThrow(RangeError);
     expect(() => run({ frequency: "monthly" as PayoutFrequency })).toThrow(RangeError);
   });
 });
@@ -319,11 +322,14 @@ describe("payout dates", () => {
   });
 
   it("clamps to month end without drifting", () => {
-    expect(run({ startDate: "2026-01-31" }).rows.map((r) => r.payoutDate)).toEqual([
-      "2026-04-30",
-      "2026-07-31",
-      "2026-10-31",
-      "2027-01-31",
+    // Invested Tuesday Dec 30, 2025, so interest starts Wednesday Dec 31, 2025.
+    const s = run({ investmentDate: "2025-12-30" });
+    expect(s.startDate).toBe("2025-12-31");
+    expect(s.rows.map((r) => r.payoutDate)).toEqual([
+      "2026-03-31",
+      "2026-06-30",
+      "2026-09-30",
+      "2026-12-31",
     ]);
     expect(addMonths("2027-08-31", 6)).toBe("2028-02-29");
     expect(addMonths("2026-11-30", 3)).toBe("2027-02-28");

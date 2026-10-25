@@ -1,21 +1,25 @@
 # Investment Payout Calculator
 
 A public, no-login web calculator that shows the payout schedule for a fixed-term
-investment. Visitors pick an investment amount, lock-in period, payout type, payout
-frequency and annual interest rate. They get a payout-by-payout table with totals,
-comparisons with other scenarios, and an Excel download.
+investment. Visitors pick an investment amount, investment date, lock-in period, payout
+type and payout frequency. They get a payout-by-payout table with totals, comparisons
+with other scenarios, and an Excel download.
 
-**Live site:** https://payout-calculator-steel.vercel.app
+Interest rates are set by an admin on a password-protected admin page and are never
+shown to visitors.
+
+- **Live site:** https://payout-calculator-steel.vercel.app
+- **Admin page:** https://payout-calculator-steel.vercel.app/admin
 
 This is an illustrative calculator prototype. It does not collect payments, register
-investors or store any personal or financial information. All calculations run in the
-visitor's browser.
+investors or store any visitor information.
 
 ## Tech stack
 
-- Next.js (App Router) with TypeScript
+- Next.js (App Router, Cache Components) with TypeScript
 - Tailwind CSS
-- React state for inputs and results
+- Server Actions for the calculation and the admin page
+- Vercel Blob (private store) for the interest rates
 - ExcelJS for the Excel download, loaded only when the button is clicked
 - Vitest for tests
 - Vercel for hosting
@@ -24,49 +28,38 @@ visitor's browser.
 
 | Path | Purpose |
 | --- | --- |
-| `src/lib/config.ts` | Defaults: standard rate per payout frequency, amounts, lock-in periods |
-| `src/lib/payout.ts` | Calculation engine and rate validation |
-| `src/lib/form.ts` | How the rate field follows the payout frequency |
-| `src/lib/scenarios.ts` | Longer-payout-period and other-payout-type scenarios |
+| `src/lib/config.ts` | Defaults: starting rates, amounts, lock-in periods, form defaults, business-day offset |
+| `src/lib/payout.ts` | Calculation engine, investment-date and rate validation |
+| `src/lib/dates.ts` | Date helpers and business days (Monday to Friday) |
+| `src/lib/scenarios.ts` | Comparison scenarios, and removing rates from results |
+| `src/lib/rates.ts` | Rate table validation and the stored rates format |
+| `src/lib/quote.ts` | Server-side validation of calculation requests |
 | `src/lib/excel.ts` | Excel workbook export |
-| `src/lib/format.ts` | Currency, date and percent formatting |
+| `src/lib/disclaimer.ts` | Disclaimer text |
+| `src/lib/server/rates-store.ts` | Reads and saves rates in Vercel Blob (server only) |
+| `src/lib/server/session.ts`, `admin-auth.ts` | Admin password check and session cookie (server only) |
+| `src/app/actions.ts` | Public Server Action that calculates a quote |
+| `src/app/admin/` | Admin page and its Server Actions |
+| `src/components/` | Calculator form, results, comparisons, admin forms |
 | `src/lib/*.test.ts` | Automated tests |
-| `src/components/PayoutCalculator.tsx` | Input form |
-| `src/components/PayoutResults.tsx` | Summary, schedule table, Excel button, disclaimer |
-| `src/components/ScenarioComparison.tsx` | Scenario comparisons on the results page |
-| `src/app/page.tsx` | Page layout |
 
-## Interest rates
+## How it works
 
-Each payout frequency has a standard annual rate:
-
-| Payout frequency | Standard rate |
-| --- | --- |
-| Quarterly | 8% |
-| Half-Yearly | 9% |
-| Yearly | 10% |
-
-The rate field fills in the standard rate for the selected frequency and updates when
-the frequency changes. Visitors can type any rate from 0% to 100%. Once they do, their
-rate is kept when the frequency changes, and a link restores the standard rate.
-
-## Scenario comparisons
-
-After calculating, the results page and the Excel file compare the selection with:
-
-- **Longer payout periods:** the same payout type, paid less often, each at its
-  standard rate. Quarterly compares Half-Yearly and Yearly. Half-Yearly compares Yearly.
-  Yearly has no longer period.
-- **The other payout type:** Interest Only vs Interest and Principal at the same
-  frequency and rate.
-
-The Excel workbook contains these sheets:
-
-1. `Your Selection`: the calculated schedule.
-2. One `<Frequency> Payout` sheet per longer payout period.
-3. One sheet for the other payout type.
-4. `Comparison`: totals for every scenario side by side, plus a payout-by-payout
-   comparison of the two payout types.
+- **Defaults:** $100,000, 2 years, Yearly payouts, Interest Only, invested today. Reset
+  returns to these.
+- **Investment date:** interest starts on the next business day after the investment
+  date. Business days are Monday to Friday; public holidays are not taken into account.
+  Payouts then fall every 3, 6 or 12 months, counted from the interest start date, and
+  are not moved if they land on a weekend.
+- **Rates:** each payout frequency has its own annual rate. The browser never receives
+  the rates. When a visitor clicks Calculate Payout, the server reads the current rates,
+  calculates the schedule and the comparison scenarios, and sends back only the results.
+- **Scenario comparisons:** the results page and the Excel file compare the selection
+  with longer payout periods (same payout type, each at its own rate) and with the other
+  payout type (same frequency and rate). Quarterly compares Half-Yearly and Yearly;
+  Half-Yearly compares Yearly; Yearly has no longer period.
+- **Excel workbook sheets:** `Your Selection`, one `<Frequency> Payout` sheet per longer
+  payout period, one sheet for the other payout type, and `Comparison`.
 
 ## Calculation rules
 
@@ -76,27 +69,59 @@ The Excel workbook contains these sheets:
 - **Interest Only:** every payout is one period of interest on the original principal.
   The final payout adds the full principal. Total interest = principal x rate x years.
 - **Interest and Principal:** principal is returned in equal installments. Each payout's
-  interest = outstanding principal before that payout x rate / periods per year, so
-  interest falls as principal is repaid.
-- Money is calculated in whole cents with integer math, so results are exact and
-  deterministic. Values are rounded half-up to the cent. The final payout absorbs any
-  rounding difference, so totals always reconcile and the remaining principal ends at
-  exactly $0.00.
-- The rate must be between 0 and 100, with at most 4 decimal places.
-- The schedule starts on the date the visitor submits the form. Each payout falls one
-  period later. If that day does not exist in a month (for example the 31st), the last
-  day of the month is used.
+  interest = outstanding principal before that payout x rate / periods per year.
+- Money is calculated in whole cents with integer math. Values are rounded half-up to
+  the cent, and the final payout absorbs any rounding difference, so totals reconcile and
+  the remaining principal ends at exactly $0.00.
+
+## Managing interest rates (admin)
+
+1. Open `/admin` on the live site and sign in with the admin password.
+2. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
+   places) and select **Save rates**.
+3. New calculations use the saved rates immediately. The page keeps a history of the
+   last 20 saves.
+
+Until the first save, the starting rates in `src/lib/config.ts`
+(`DEFAULT_RATE_BY_FREQUENCY`: Quarterly 8%, Half-Yearly 9%, Yearly 10%) are used.
+Production uses its own rates file; preview deployments and local development use
+separate files, so testing never changes the live rates.
+
+## Admin setup
+
+The admin page needs these environment variables in the Vercel project:
+
+| Variable | Purpose |
+| --- | --- |
+| `ADMIN_PASSWORD` | The admin password, at least 12 characters. Set it yourself. |
+| `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, used to sign the session cookie. |
+| `BLOB_READ_WRITE_TOKEN` | Access to the private Blob store `payout-calculator-rates`. Added automatically when the store was connected. |
+
+To set or change the admin password, run this and type the password when asked, then
+redeploy:
+
+```bash
+npx vercel env add ADMIN_PASSWORD production --sensitive
+npx vercel deploy --prod
+```
+
+To change an existing password, remove it first with `npx vercel env rm ADMIN_PASSWORD
+production`. Changing the password or the session secret signs every admin out.
+
+For local development, put `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` in
+`.env.development.local`, and run `npx vercel env pull .env.local` for the Blob token.
+Both files are git-ignored.
 
 ## Local development
 
-Requires Node.js 20.19+ or 22.12+ (the versions the test tooling supports).
+Requires Node.js 20.19+ or 22.12+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Then open http://localhost:3000 (and http://localhost:3000/admin).
 
 ### Checks
 
@@ -107,36 +132,22 @@ npm test            # Vitest tests
 npm run build       # Production build
 ```
 
-## Changing the default interest rates
+## Changing defaults
 
-1. Open `src/lib/config.ts`.
-2. Change the numbers in `DEFAULT_RATE_BY_FREQUENCY`, for example `quarterly: 8.5`.
-3. Update the expected rates in `src/lib/form.test.ts`, then run `npm test` and
-   `npm run build`.
-4. Commit, push and redeploy (see below).
-
-The same file holds the investment amount options and the default amount, lock-in
-period, payout frequency and payout type.
+`src/lib/config.ts` holds the starting rates, the investment amount options, the default
+amount, lock-in period, payout frequency and payout type, the accepted investment-date
+range, and `INTEREST_START_BUSINESS_DAYS` (how many business days after the investment
+date interest starts). After a change, run the checks above and redeploy.
 
 ## Deploying updates
 
 The site is hosted on Vercel as the `payout-calculator` project.
-
-**From your machine with the Vercel CLI:**
 
 ```bash
 npx vercel login          # first time only
 npx vercel deploy --prod
 ```
 
-**Automatic deploys from GitHub:** connect the repository once, either in the Vercel
-dashboard (Project Settings, then Git) or with `npx vercel git connect`. After that,
-every push to `main` deploys to production:
-
-```bash
-git add -A
-git commit -m "Describe the change"
-git push origin main
-```
-
-Run the checks above before deploying.
+**Automatic deploys from GitHub:** connect the repository once in the Vercel dashboard
+(Project Settings, then Git) or with `npx vercel git connect`. After that, every push to
+`main` deploys to production.

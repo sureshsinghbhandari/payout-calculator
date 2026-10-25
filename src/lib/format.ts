@@ -40,6 +40,20 @@ export function formatIsoDate(iso: string): string {
   return dateFormatter.format(new Date(Date.UTC(y, m - 1, d)));
 }
 
+const longDateFormatter = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+/** Formats YYYY-MM-DD with the weekday, e.g. "Mon, Oct 26, 2026". */
+export function formatIsoDateLong(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return longDateFormatter.format(new Date(Date.UTC(y, m - 1, d)));
+}
+
 export function formatPercent(value: number): string {
   return `${value.toLocaleString("en-US", { maximumFractionDigits: 4 })}%`;
 }

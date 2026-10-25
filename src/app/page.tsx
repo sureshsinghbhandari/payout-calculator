@@ -24,9 +24,9 @@ export default function Home() {
             Investment Payout Calculator
           </h1>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
-            See how a fixed-term investment pays out over time. Pick an amount, lock-in period and
-            payout schedule to get a payout-by-payout breakdown of interest and principal, based on
-            simple interest.
+            See how a fixed-term investment pays out over time. Pick an amount, investment date,
+            lock-in period and payout schedule to get a payout-by-payout breakdown of interest and
+            principal, based on simple interest.
           </p>
         </div>
 
@@ -35,8 +35,8 @@ export default function Home() {
 
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-6 text-xs leading-relaxed text-slate-500 sm:px-6">
-          Illustrative calculator only. This is not an offer to invest. Calculations run entirely in
-          your browser, and nothing you enter is collected or stored.
+          Illustrative calculator only. This is not an offer to invest. Your selections are sent
+          to our server only to calculate the schedule and are not stored.
         </div>
       </footer>
     </div>
