@@ -78,11 +78,19 @@ investors or store any visitor information.
 
 ## Managing interest rates (admin)
 
-1. Open `/admin` on the live site and sign in with the admin password.
-2. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
-   places) and select **Save rates**.
-3. New calculations use the saved rates immediately. The page keeps a history of the
+1. Open `/admin` on the live site and sign in with the admin password. You land on
+   **Inquiries**.
+2. Select the settings (gear) icon in the header, then **Interest rates**
+   (`/admin/settings/rates`).
+3. The rates are shown locked. Select **Unlock to edit** and enter the admin password
+   again.
+4. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
+   places) and select **Save rates**. Saving locks the rates again; editing also locks
+   by itself after 10 minutes, or when you select **Lock**.
+5. New calculations use the saved rates immediately. The page keeps a history of the
    last 20 saves.
+
+The settings menu also has **Sign out**.
 
 Until the first save, the starting rates in `src/lib/config.ts`
 (`DEFAULT_RATE_BY_FREQUENCY`: Quarterly 8%, Half-Yearly 9%, Yearly 10%) are used.
@@ -95,7 +103,7 @@ separate files, so testing never changes the live rates.
   asks for name, email, an optional phone number and an optional message.
 - Inquiries are stored privately in Vercel Blob (one file per inquiry, separate folders for
   production, preview and local) with a snapshot of the plan and its totals.
-- Admins see them at `/admin/inquiries` (the **Inquiries** tab), newest first, and can
+- Admins see them at `/admin/inquiries` (the admin home page after signing in), newest first, and can
   mark each one as contacted or delete it.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
 - Email notifications are not set up yet.

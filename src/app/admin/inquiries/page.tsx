@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { AdminCard, AdminFrame, AdminTabs } from "@/components/admin/AdminFrame";
+import { AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { InquiryActions } from "@/components/admin/InquiryActions";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { inquiryReference, type StoredInquiry } from "@/lib/inquiry";
@@ -17,11 +17,9 @@ export const metadata: Metadata = {
 
 export default function InquiriesPage() {
   return (
-    <AdminFrame>
-      <Suspense fallback={<p className="text-sm text-slate-600">Loading…</p>}>
-        <InquiriesContent />
-      </Suspense>
-    </AdminFrame>
+    <Suspense fallback={<AdminLoading />}>
+      <InquiriesContent />
+    </Suspense>
   );
 }
 
@@ -108,8 +106,7 @@ async function InquiriesContent() {
   const newCount = data?.inquiries.filter((i) => i.status === "new").length ?? 0;
 
   return (
-    <div>
-      <AdminTabs active="inquiries" />
+    <AdminFrame signedIn>
       <div className="mb-5">
         <h1 className="text-2xl font-semibold text-slate-900">Inquiries</h1>
         <p className="mt-1 text-sm text-slate-600">
@@ -141,6 +138,6 @@ async function InquiriesContent() {
           ))}
         </ul>
       )}
-    </div>
+    </AdminFrame>
   );
 }

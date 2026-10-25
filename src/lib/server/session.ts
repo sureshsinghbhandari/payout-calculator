@@ -69,3 +69,31 @@ export function verifySessionToken(
   if (!Number.isSafeInteger(expires) || expires * 1000 <= nowMs) return false;
   return safeEqual(parts[2], signature(`${parts[0]}.${parts[1]}`, config));
 }
+
+/**
+ * Short-lived tokens for a specific purpose (e.g. "rates-unlock"), signed with
+ * the same key: "<scope>.<expiry seconds>.<signature>".
+ */
+export function createScopedToken(
+  config: { password: string; secret: string },
+  scope: string,
+  nowMs: number,
+  ttlSeconds: number,
+): string {
+  const expires = Math.floor(nowMs / 1000) + ttlSeconds;
+  const payload = `${scope}.${expires}`;
+  return `${payload}.${signature(payload, config)}`;
+}
+
+export function verifyScopedToken(
+  token: string,
+  config: { password: string; secret: string },
+  scope: string,
+  nowMs: number,
+): boolean {
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts[0] !== scope || !/^\d+$/.test(parts[1])) return false;
+  const expires = Number(parts[1]);
+  if (!Number.isSafeInteger(expires) || expires * 1000 <= nowMs) return false;
+  return safeEqual(parts[2], signature(`${parts[0]}.${parts[1]}`, config));
+}

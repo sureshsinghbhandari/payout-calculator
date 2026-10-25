@@ -10,7 +10,10 @@ import {
   checkAdminPassword,
   endAdminSession,
   isAdmin,
+  isRatesUnlocked,
+  lockRates,
   startAdminSession,
+  unlockRates,
 } from "@/lib/server/admin-auth";
 import { isInquiryId } from "@/lib/inquiry";
 import { deleteInquiry, setInquiryStatus } from "@/lib/server/inquiry-store";
@@ -43,12 +46,46 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   }
   loginThrottle.reset(client);
   await startAdminSession();
-  redirect("/admin");
+  redirect("/admin/inquiries");
 }
 
 export async function logoutAction(): Promise<void> {
+  await lockRates();
   await endAdminSession();
   redirect("/admin");
+}
+
+export interface UnlockState {
+  error?: string;
+}
+
+const RATES_PAGE = "/admin/settings/rates";
+
+/** Re-checks the admin password before rates can be edited. */
+export async function unlockRatesAction(_prev: UnlockState, formData: FormData): Promise<UnlockState> {
+  if (!(await isAdmin())) return { error: "Your session has ended. Sign in again." };
+
+  const client = clientKey(await headers());
+  const waitMs = loginThrottle.blockedFor(client, Date.now());
+  if (waitMs > 0) {
+    const minutes = Math.ceil(waitMs / 60_000);
+    return { error: `Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` };
+  }
+
+  const password = formData.get("password");
+  if (typeof password !== "string" || !checkAdminPassword(password)) {
+    loginThrottle.recordFailure(client, Date.now());
+    await new Promise((resolve) => setTimeout(resolve, FAILED_LOGIN_DELAY_MS));
+    return { error: "Incorrect password." };
+  }
+  loginThrottle.reset(client);
+  await unlockRates();
+  redirect(RATES_PAGE);
+}
+
+export async function lockRatesAction(): Promise<void> {
+  await lockRates();
+  redirect(RATES_PAGE);
 }
 
 export interface SaveRatesState {
@@ -62,6 +99,9 @@ export interface SaveRatesState {
 export async function saveRatesAction(_prev: SaveRatesState, formData: FormData): Promise<SaveRatesState> {
   if (!(await isAdmin())) {
     return { status: "error", message: "Your session has ended. Sign in again to change rates." };
+  }
+  if (!(await isRatesUnlocked())) {
+    return { status: "error", message: "Editing is locked. Unlock the rates with your password, then save again." };
   }
 
   const values: Partial<Record<PayoutFrequency, string>> = {};
@@ -84,10 +124,10 @@ export async function saveRatesAction(_prev: SaveRatesState, formData: FormData)
     return { status: "error", message: "The rates could not be saved. Please try again.", values };
   }
 
-  // New quotes use the new rates immediately; refresh this page's history.
+  // New quotes use the new rates immediately. Editing locks again after a save.
   updateTag(RATES_TAG);
-  refresh();
-  return { status: "saved", message: "Rates saved. New calculations use them immediately." };
+  await lockRates();
+  redirect(`${RATES_PAGE}?saved=1`);
 }
 
 /** Marks an inquiry as new or contacted (admin only). */
