@@ -147,7 +147,7 @@ describe("Excel workbook", () => {
       "Comparison",
     ]);
     expect(sheetText(workbook.getWorksheet(COMPARISON_SHEET_NAME)!)).toContain(
-      "Yearly is the longest payout period available",
+      "Yearly is the longest payout term available",
     );
   });
 
@@ -178,10 +178,10 @@ describe("Excel workbook", () => {
     const ws = workbook.getWorksheet(SELECTION_SHEET_NAME)!;
 
     expect(detail(ws, "Original investment")).toBe(25_000);
-    expect(isoOf(detail(ws, "Investment date"))).toBe("2026-01-14");
+    expect(isoOf(detail(ws, "Planned investment date"))).toBe("2026-01-14");
     expect(isoOf(detail(ws, "Interest start date"))).toBe("2026-01-15");
     expect(detail(ws, "Payout type")).toBe("Interest Only");
-    expect(detail(ws, "Payout frequency")).toBe("Quarterly");
+    expect(detail(ws, "Payout term")).toBe("Quarterly");
     expect(detail(ws, "Total interest payable")).toBe(2_000);
     expect(detail(ws, "Total amount paid")).toBe(27_000);
 
@@ -211,13 +211,13 @@ describe("Excel workbook", () => {
 
     const text = sheetText(ws);
     expect(text).toContain("not a guarantee of investment performance");
-    expect(text).toContain("next business day after the investment date");
+    expect(text).toContain("next business day after the planned investment date");
   });
 
   it("writes longer-period sheets at their own rates without showing them", async () => {
     const { workbook } = await roundTrip({});
     const half = workbook.getWorksheet("Half-Yearly Payout")!;
-    expect(detail(half, "Payout frequency")).toBe("Half-Yearly");
+    expect(detail(half, "Payout term")).toBe("Half-Yearly");
     expect(detail(half, "Payout type")).toBe("Interest Only");
     // $25,000 x 9% / 2 = $1,125 per half-year.
     expect(detail(half, "Total interest payable")).toBe(2_250);
@@ -241,14 +241,14 @@ describe("Excel workbook", () => {
   it("writes a comparison sheet with differences against the selection", async () => {
     const { workbook } = await roundTrip({});
     const ws = workbook.getWorksheet(COMPARISON_SHEET_NAME)!;
-    expect(isoOf(detail(ws, "Investment date"))).toBe("2026-01-14");
+    expect(isoOf(detail(ws, "Planned investment date"))).toBe("2026-01-14");
     expect(isoOf(detail(ws, "Interest start date"))).toBe("2026-01-15");
     expect(detail(ws, "Your selection")).toBe("Quarterly, Interest Only");
 
     const longerHeader = findRow(ws, "Scenario");
     expect(rowValues(ws, longerHeader)).toEqual([
       "Scenario",
-      "Payout Frequency",
+      "Payout Term",
       "Payout Type",
       "Number of Payouts",
       "First Payout",

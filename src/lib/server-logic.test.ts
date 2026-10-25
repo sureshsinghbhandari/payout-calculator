@@ -36,14 +36,14 @@ describe("parseQuoteInputs (server-side validation of public requests)", () => {
     ["text", "Invalid request."],
     [{ ...valid, principal: 30_000 }, "Choose one of the listed investment amounts."],
     [{ ...valid, principal: "100000" }, "Choose one of the listed investment amounts."],
-    [{ ...valid, lockInYears: 3 }, "Choose a lock-in period of 1 or 2 years."],
-    [{ ...valid, frequency: "monthly" }, "Choose a payout period."],
-    [{ ...valid, frequency: "toString" }, "Choose a payout period."],
+    [{ ...valid, lockInYears: 3 }, "Choose a term of 1 or 2 years."],
+    [{ ...valid, frequency: "monthly" }, "Choose a payout term."],
+    [{ ...valid, frequency: "toString" }, "Choose a payout term."],
     [{ ...valid, payoutType: "principal-only" }, "Choose a payout type."],
     [{ ...valid, payoutType: "__proto__" }, "Choose a payout type."],
-    [{ ...valid, investmentDate: "" }, "Enter an investment date."],
-    [{ ...valid, investmentDate: "2026-02-30" }, "Enter a valid investment date."],
-    [{ ...valid, investmentDate: 20261025 }, "Enter an investment date."],
+    [{ ...valid, investmentDate: "" }, "Enter a planned investment date."],
+    [{ ...valid, investmentDate: "2026-02-30" }, "Enter a valid planned investment date."],
+    [{ ...valid, investmentDate: 20261025 }, "Enter a planned investment date."],
   ])("rejects %j", (input, error) => {
     expect(parseQuoteInputs(input)).toEqual({ ok: false, error });
   });
@@ -163,7 +163,7 @@ describe("disclaimer", () => {
       "This calculator is not a guarantee of investment performance or a substitute for professional financial advice.",
     );
     expect(DISCLAIMER).toContain(
-      "Interest is assumed to start on the next business day after the investment date, counting Monday to Friday as business days; public holidays are not taken into account.",
+      "Interest is assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account.",
     );
   });
 });

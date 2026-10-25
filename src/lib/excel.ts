@@ -197,7 +197,7 @@ function addParagraph(ws: Worksheet, text: string, columns: number, bold?: strin
 
 function datesNote(schedule: PublicSchedule): string {
   const months = 12 / schedule.periodsPerYear;
-  return `Payout dates: interest starts ${interestStartDelayText()} after the investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the interest start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
+  return `Payout dates: interest starts ${interestStartDelayText()} after the planned investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the interest start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
 }
 
 const SCHEDULE_HEADERS = [
@@ -232,10 +232,10 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   ws.addRow([]);
 
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
-  addDetail(ws, "Lock-in period", formatYears(inputs.lockInYears));
+  addDetail(ws, "Term", formatYears(inputs.lockInYears));
   addDetail(ws, "Payout type", PAYOUT_TYPE_LABELS[inputs.payoutType]);
-  addDetail(ws, "Payout frequency", FREQUENCY_LABELS[inputs.frequency]);
-  addDetail(ws, "Investment date", isoToExcelDate(inputs.investmentDate), DATE);
+  addDetail(ws, "Payout term", FREQUENCY_LABELS[inputs.frequency]);
+  addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
   addDetail(ws, "Interest start date", isoToExcelDate(schedule.startDate), DATE);
   addDetail(ws, "Total interest payable", dollars(totals.interestCents), CURRENCY);
   addDetail(ws, "Total principal returned", dollars(totals.principalCents), CURRENCY);
@@ -281,7 +281,7 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   addParagraph(ws, datesNote(schedule), columns);
   addParagraph(
     ws,
-    "Amounts: simple interest, never compounded. Interest for each period is the annual rate for the payout period times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
+    "Amounts: simple interest, never compounded. Interest for each period is the annual rate for the payout term times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
     columns,
   );
   addParagraph(ws, DISCLAIMER, columns, "Disclaimer:");
@@ -291,7 +291,7 @@ export const PAIR_DIFFERENCE_HEADER = "Interest and Principal minus Interest Onl
 
 const COMPARISON_HEADERS = [
   "Scenario",
-  "Payout Frequency",
+  "Payout Term",
   "Payout Type",
   "Number of Payouts",
   "First Payout",
@@ -349,26 +349,26 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   ];
 
   styleTitle(ws.addRow(["Payout Scenario Comparison"]));
-  styleSubtitle(ws.addRow(["Every scenario uses the same investment, lock-in period and investment date as your selection."]));
+  styleSubtitle(ws.addRow(["Every scenario uses the same investment amount, term and planned investment date as your selection."]));
   ws.addRow([]);
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
-  addDetail(ws, "Lock-in period", formatYears(inputs.lockInYears));
-  addDetail(ws, "Investment date", isoToExcelDate(inputs.investmentDate), DATE);
+  addDetail(ws, "Term", formatYears(inputs.lockInYears));
+  addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
   addDetail(ws, "Interest start date", isoToExcelDate(selected.startDate), DATE);
   addDetail(ws, "Your selection", `${selectedFrequency}, ${selectedType}`);
   ws.addRow([]);
 
   // Section 1: longer payout periods.
-  styleSectionHeading(ws.addRow(["Longer payout periods"]));
+  styleSectionHeading(ws.addRow(["Longer payout terms"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout type (${selectedType}), paid less often. Each payout period has its own interest rate.`,
+      `Same payout type (${selectedType}), paid less often. Each payout term has its own interest rate.`,
     ]),
   );
   if (set.longerFrequencies.length === 0) {
     styleSubtitle(
       ws.addRow([
-        `${selectedFrequency} is the longest payout period available, so there is no longer-period scenario.`,
+        `${selectedFrequency} is the longest payout term available, so there is no longer-term scenario.`,
       ]),
     );
   } else {
@@ -384,7 +384,7 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   styleSectionHeading(ws.addRow(["Interest Only vs Interest and Principal"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout frequency (${selectedFrequency}) and interest rate.`,
+      `Same payout term (${selectedFrequency}) and interest rate.`,
     ]),
   );
   styleHeader(ws.addRow(COMPARISON_HEADERS), columns);

@@ -87,6 +87,7 @@ export function PayoutCalculator() {
   const resultsRef = useRef<HTMLElement>(null);
   const focusResultsRef = useRef(false);
   const ids = {
+    amount: useId(),
     date: useId(),
     dateHint: useId(),
     dateError: useId(),
@@ -180,34 +181,33 @@ export function PayoutCalculator() {
         </div>
 
         <div className="space-y-7">
-          {/* Investment amount */}
-          <fieldset>
-            <legend className="text-sm font-semibold text-slate-900">Investment amount</legend>
-            <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {INVESTMENT_AMOUNTS.map((amount) => (
-                <label
-                  key={amount}
-                  className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-3 py-4 text-center text-base font-semibold text-slate-800 shadow-sm transition hover:border-blue-400 has-[:checked]:border-blue-800 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-900 has-[:checked]:ring-1 has-[:checked]:ring-blue-800 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-700 has-[:focus-visible]:ring-offset-2"
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Investment amount */}
+            <div>
+              <label htmlFor={ids.amount} className="text-sm font-semibold text-slate-900">
+                Investment amount
+              </label>
+              <div className="relative mt-2">
+                <select
+                  id={ids.amount}
+                  value={form.principal}
+                  onChange={(e) => update("principal", Number(e.target.value))}
+                  className={`${selectClass} tabular-nums`}
                 >
-                  <input
-                    type="radio"
-                    name="principal"
-                    value={amount}
-                    checked={form.principal === amount}
-                    onChange={() => update("principal", amount)}
-                    className="sr-only"
-                  />
-                  <span className="tabular-nums">{formatDollars(amount)}</span>
-                </label>
-              ))}
+                  {INVESTMENT_AMOUNTS.map((amount) => (
+                    <option key={amount} value={amount}>
+                      {formatDollars(amount)}
+                    </option>
+                  ))}
+                </select>
+                <SelectChevron />
+              </div>
             </div>
-          </fieldset>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Investment date */}
+            {/* Planned investment date */}
             <div>
               <label htmlFor={ids.date} className="text-sm font-semibold text-slate-900">
-                Investment date
+                Planned investment date
               </label>
               <input
                 ref={dateInputRef}
@@ -239,10 +239,10 @@ export function PayoutCalculator() {
               )}
             </div>
 
-            {/* Lock-in period */}
+            {/* Term */}
             <div>
               <label htmlFor={ids.lockIn} className="text-sm font-semibold text-slate-900">
-                Lock-in period
+                Term
               </label>
               <div className="relative mt-2">
                 <select
@@ -261,10 +261,10 @@ export function PayoutCalculator() {
               </div>
             </div>
 
-            {/* Payout period */}
+            {/* Payout term */}
             <div>
               <label htmlFor={ids.frequency} className="text-sm font-semibold text-slate-900">
-                Payout period
+                Payout term
               </label>
               <div className="relative mt-2">
                 <select
@@ -315,7 +315,7 @@ export function PayoutCalculator() {
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600 sm:max-w-md">
-            Interest starts {START_DELAY} after your investment date, counting Monday to Friday as
+            Interest starts {START_DELAY} after your planned investment date, counting Monday to Friday as
             business days. The first payout falls one period after that.
           </p>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">

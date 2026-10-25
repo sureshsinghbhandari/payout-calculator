@@ -18,11 +18,11 @@ export function parseQuoteInputs(input: unknown): QuoteParse {
   }
   const lockInYears = raw.lockInYears;
   if (typeof lockInYears !== "number" || !(LOCK_IN_YEARS as readonly number[]).includes(lockInYears)) {
-    return { ok: false, error: "Choose a lock-in period of 1 or 2 years." };
+    return { ok: false, error: "Choose a term of 1 or 2 years." };
   }
   const frequency = raw.frequency;
   if (typeof frequency !== "string" || !Object.hasOwn(PERIODS_PER_YEAR, frequency)) {
-    return { ok: false, error: "Choose a payout period." };
+    return { ok: false, error: "Choose a payout term." };
   }
   const payoutType = raw.payoutType;
   if (typeof payoutType !== "string" || !Object.hasOwn(PAYOUT_TYPE_LABELS, payoutType)) {

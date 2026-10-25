@@ -46,11 +46,11 @@ describe("validateInvestmentDate", () => {
   });
 
   it.each([
-    ["", "Enter an investment date."],
-    ["   ", "Enter an investment date."],
-    ["25/10/2026", "Enter a valid investment date."],
-    ["2026-02-30", "Enter a valid investment date."],
-    ["2026-13-01", "Enter a valid investment date."],
+    ["", "Enter a planned investment date."],
+    ["   ", "Enter a planned investment date."],
+    ["25/10/2026", "Enter a valid planned investment date."],
+    ["2026-02-30", "Enter a valid planned investment date."],
+    ["2026-13-01", "Enter a valid planned investment date."],
     ["1999-12-31", "Choose a date between 2000 and 2099."],
     ["2100-01-01", "Choose a date between 2000 and 2099."],
   ])("rejects %j", (input, error) => {

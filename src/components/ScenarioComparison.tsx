@@ -35,15 +35,15 @@ function LongerPeriods({ scenarios }: { scenarios: PublicScenarioSet }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="p-5 pb-3">
-        <h3 className="text-base font-semibold text-slate-900">Longer payout periods</h3>
+        <h3 className="text-base font-semibold text-slate-900">Longer payout terms</h3>
         <p className="mt-1 text-sm text-slate-600">
           Same payout type ({PAYOUT_TYPE_LABELS[inputs.payoutType]}), paid less often. Each payout
-          period has its own interest rate.
+          term has its own interest rate.
         </p>
       </div>
       {longerFrequencies.length === 0 ? (
         <p className="mx-5 mb-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-          You selected {FREQUENCY_LABELS[inputs.frequency]} payouts, the longest payout period
+          You selected {FREQUENCY_LABELS[inputs.frequency]} payouts, the longest payout term
           available, so there is no longer-period scenario to compare.
         </p>
       ) : (
@@ -51,16 +51,16 @@ function LongerPeriods({ scenarios }: { scenarios: PublicScenarioSet }) {
           className="relative overflow-x-auto rounded-b-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
           tabIndex={0}
           role="region"
-          aria-label="Longer payout period comparison, scrolls horizontally"
+          aria-label="Longer payout term comparison, scrolls horizontally"
         >
           <table className="w-full min-w-[700px] border-collapse text-sm">
             <caption className="sr-only">
-              Totals for your selection and for longer payout periods, in US dollars
+              Totals for your selection and for longer payout terms, in US dollars
             </caption>
             <thead>
               <tr className="border-y border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
                 <th scope="col" className="px-4 py-3 text-left font-semibold">
-                  Payout frequency
+                  Payout term
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
                   Payouts
@@ -186,7 +186,7 @@ function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h3 className="text-base font-semibold text-slate-900">Interest Only vs Interest and Principal</h3>
       <p className="mt-1 text-sm text-slate-600">
-        Same payout frequency ({FREQUENCY_LABELS[inputs.frequency]}) and interest rate.
+        Same payout term ({FREQUENCY_LABELS[inputs.frequency]}) and interest rate.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <PayoutTypeCard schedule={interestOnly} isSelected={interestOnly === selected} />
@@ -288,7 +288,7 @@ export function ScenarioComparison({ scenarios }: { scenarios: PublicScenarioSet
         </h2>
         <p className="mt-1 text-sm text-slate-600">
           The same {formatDollars(inputs.principal)} investment for{" "}
-          {formatYears(inputs.lockInYears).toLowerCase()}, with a longer payout period or the other
+          {formatYears(inputs.lockInYears).toLowerCase()}, with a longer payout term or the other
           payout type. The Excel download includes each scenario as its own sheet.
         </p>
       </div>

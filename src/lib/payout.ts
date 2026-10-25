@@ -129,8 +129,8 @@ export type DateValidation = { ok: true; value: string } | { ok: false; error: s
 /** Validates the investment-date field (YYYY-MM-DD, within the allowed range). */
 export function validateInvestmentDate(input: string): DateValidation {
   const text = input.trim();
-  if (text === "") return { ok: false, error: "Enter an investment date." };
-  if (!isValidIsoDate(text)) return { ok: false, error: "Enter a valid investment date." };
+  if (text === "") return { ok: false, error: "Enter a planned investment date." };
+  if (!isValidIsoDate(text)) return { ok: false, error: "Enter a valid planned investment date." };
   if (text < INVESTMENT_DATE_MIN || text > INVESTMENT_DATE_MAX) {
     return {
       ok: false,
@@ -159,12 +159,12 @@ export function calculatePayoutSchedule(inputs: PayoutInputs): PayoutSchedule {
     throw new RangeError("Principal must be a positive whole-dollar amount.");
   }
   if (!Number.isInteger(lockInYears) || lockInYears <= 0) {
-    throw new RangeError("Lock-in period must be a positive whole number of years.");
+    throw new RangeError("Term must be a positive whole number of years.");
   }
   const rate = validateRate(annualRatePercent);
   if (!rate.ok) throw new RangeError(rate.error);
   const periodsPerYear = PERIODS_PER_YEAR[frequency];
-  if (periodsPerYear === undefined) throw new RangeError("Unknown payout frequency.");
+  if (periodsPerYear === undefined) throw new RangeError("Unknown payout term.");
   if (payoutType !== "interest-only" && payoutType !== "interest-and-principal") {
     throw new RangeError("Unknown payout type.");
   }

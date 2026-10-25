@@ -80,7 +80,7 @@ async function AdminContent() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Interest rates</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Annual simple-interest rate for each payout period. Visitors never see these rates.
+            Annual simple-interest rate for each payout term. Visitors never see these rates.
           </p>
         </div>
         <form action={logoutAction}>

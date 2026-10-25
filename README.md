@@ -1,8 +1,8 @@
 # Investment Payout Calculator
 
 A public, no-login web calculator that shows the payout schedule for a fixed-term
-investment. Visitors pick an investment amount, investment date, lock-in period, payout
-type and payout frequency. They get a payout-by-payout table with totals, comparisons
+investment. Visitors pick an investment amount from a list, a planned investment date,
+a term, a payout term and a payout type. They get a payout-by-payout table with totals, comparisons
 with other scenarios, and an Excel download.
 
 Interest rates are set by an admin on a password-protected admin page and are never
@@ -28,7 +28,7 @@ investors or store any visitor information.
 
 | Path | Purpose |
 | --- | --- |
-| `src/lib/config.ts` | Defaults: starting rates, amounts, lock-in periods, form defaults, business-day offset |
+| `src/lib/config.ts` | Defaults: starting rates, amounts, terms, form defaults, business-day offset |
 | `src/lib/payout.ts` | Calculation engine, investment-date and rate validation |
 | `src/lib/dates.ts` | Date helpers and business days (Monday to Friday) |
 | `src/lib/scenarios.ts` | Comparison scenarios, and removing rates from results |
@@ -45,27 +45,29 @@ investors or store any visitor information.
 
 ## How it works
 
+- **Labels:** Investment amount (a list), Planned investment date, Term (1 or 2 years),
+  Payout term (Quarterly, Half-Yearly or Yearly) and Payout type.
 - **Defaults:** $100,000, 2 years, Yearly payouts, Interest Only, invested today. Reset
   returns to these.
-- **Investment date:** interest starts on the next business day after the investment
-  date. Business days are Monday to Friday; public holidays are not taken into account.
+- **Planned investment date:** interest starts on the next business day after the
+  planned investment date. Business days are Monday to Friday; public holidays are not taken into account.
   Payouts then fall every 3, 6 or 12 months, counted from the interest start date, and
   are not moved if they land on a weekend.
-- **Rates:** each payout frequency has its own annual rate. The browser never receives
+- **Rates:** each payout term has its own annual rate. The browser never receives
   the rates. When a visitor clicks Calculate Payout, the server reads the current rates,
   calculates the schedule and the comparison scenarios, and sends back only the results.
 - **Scenario comparisons:** the results page and the Excel file compare the selection
-  with longer payout periods (same payout type, each at its own rate) and with the other
+  with longer payout terms (same payout type, each at its own rate) and with the other
   payout type (same frequency and rate). Quarterly compares Half-Yearly and Yearly;
   Half-Yearly compares Yearly; Yearly has no longer period.
 - **Excel workbook sheets:** `Your Selection`, one `<Frequency> Payout` sheet per longer
-  payout period, one sheet for the other payout type, and `Comparison`.
+  payout term, one sheet for the other payout type, and `Comparison`.
 
 ## Calculation rules
 
 - Simple interest only. Interest is never compounded.
 - Periods per year: Quarterly 4, Half-Yearly 2, Yearly 1.
-- Total payout periods = lock-in years x periods per year.
+- Total payouts = term in years x payouts per year.
 - **Interest Only:** every payout is one period of interest on the original principal.
   The final payout adds the full principal. Total interest = principal x rate x years.
 - **Interest and Principal:** principal is returned in equal installments. Each payout's
@@ -145,7 +147,7 @@ npm run build       # Production build
 ## Changing defaults
 
 `src/lib/config.ts` holds the starting rates, the investment amount options, the default
-amount, lock-in period, payout frequency and payout type, the accepted investment-date
+amount, term, payout term and payout type, the accepted planned-investment-date
 range, and `INTEREST_START_BUSINESS_DAYS` (how many business days after the investment
 date interest starts). After a change, run the checks above and redeploy.
 

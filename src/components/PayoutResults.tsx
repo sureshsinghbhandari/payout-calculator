@@ -59,11 +59,11 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
 
   const details = [
     { label: "Original investment", value: formatDollars(inputs.principal) },
-    { label: "Investment date", value: formatIsoDate(inputs.investmentDate) },
+    { label: "Planned investment date", value: formatIsoDate(inputs.investmentDate) },
     { label: "Interest starts", value: formatIsoDate(schedule.startDate) },
-    { label: "Lock-in period", value: formatYears(inputs.lockInYears) },
+    { label: "Term", value: formatYears(inputs.lockInYears) },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[inputs.payoutType] },
-    { label: "Payout frequency", value: FREQUENCY_LABELS[inputs.frequency] },
+    { label: "Payout term", value: FREQUENCY_LABELS[inputs.frequency] },
   ];
 
   const headline = [
@@ -234,7 +234,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
 
       <div className="space-y-3 text-sm text-slate-600">
         <p>
-          <span className="font-semibold text-slate-700">How dates are set:</span> you invested on{" "}
+          <span className="font-semibold text-slate-700">How dates are set:</span> your planned investment date is{" "}
           {formatIsoDateLong(inputs.investmentDate)}. Interest starts {START_DELAY} after that,{" "}
           {formatIsoDateLong(startDate)}, counting Monday to Friday as business days (public holidays
           are not taken into account). Payouts then fall every {MONTHS_LABEL[periodsPerYear]}, counted
