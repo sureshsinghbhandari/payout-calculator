@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { inquiryReference, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
@@ -16,10 +17,18 @@ function formatTimestamp(iso: string): string {
 const STATUS_STYLES: Record<InquiryStatus, { label: string; badge: string; border: string }> = {
   new: { label: "New", badge: "bg-blue-900 text-white", border: "border-blue-300" },
   contacted: { label: "Contacted", badge: "bg-slate-200 text-slate-700", border: "border-slate-200" },
+  converted: { label: "Converted", badge: "bg-emerald-100 text-emerald-800", border: "border-emerald-200" },
   deleted: { label: "Deleted", badge: "bg-red-100 text-red-800", border: "border-slate-200" },
 };
 
-export function InquiryCard({ inquiry }: { inquiry: StoredInquiry }) {
+export interface InquiryPermissions {
+  status: boolean;
+  remove: boolean;
+  convert: boolean;
+  investors: boolean;
+}
+
+export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; permissions: InquiryPermissions }) {
   const { plan } = inquiry;
   const style = STATUS_STYLES[inquiry.status];
   const details = [
@@ -28,7 +37,8 @@ export function InquiryCard({ inquiry }: { inquiry: StoredInquiry }) {
     { label: "Term locked", value: formatYears(plan.lockInYears) },
     { label: "Payout term", value: FREQUENCY_LABELS[plan.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[plan.payoutType] },
-    { label: "Rate at the time", value: formatPercent(plan.annualRatePercent) },
+    // Sales Admins do not see interest rates.
+    ...(permissions.investors ? [{ label: "Rate at the time", value: formatPercent(plan.annualRatePercent) }] : []),
     { label: "Total interest", value: formatCents(plan.totalInterestCents) },
     { label: "Total amount paid", value: formatCents(plan.totalPaidCents) },
   ];
@@ -46,9 +56,34 @@ export function InquiryCard({ inquiry }: { inquiry: StoredInquiry }) {
           <p className="mt-0.5 text-xs text-slate-500">
             Received {formatTimestamp(inquiry.createdAt)} · Ref {inquiryReference(inquiry.id)}
             {inquiry.status === "deleted" && inquiry.deletedAt && <> · Deleted {formatTimestamp(inquiry.deletedAt)}</>}
+            {inquiry.status === "converted" && inquiry.convertedAt && <> · Converted {formatTimestamp(inquiry.convertedAt)}</>}
           </p>
         </div>
-        <InquiryActions id={inquiry.id} status={inquiry.status} name={inquiry.name} />
+        <div className="flex flex-wrap items-center gap-2">
+          {inquiry.status === "contacted" && permissions.convert && (
+            <Link
+              href={`/admin/inquiries/${inquiry.id}/convert`}
+              className="rounded-lg bg-blue-900 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+            >
+              Convert to investor
+            </Link>
+          )}
+          {inquiry.status === "converted" && inquiry.investorId && permissions.investors && (
+            <Link
+              href={`/admin/investors/${inquiry.investorId}`}
+              className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+            >
+              View investor
+            </Link>
+          )}
+          <InquiryActions
+            id={inquiry.id}
+            status={inquiry.status}
+            name={inquiry.name}
+            canChangeStatus={permissions.status}
+            canDelete={permissions.remove}
+          />
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">

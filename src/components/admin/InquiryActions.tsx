@@ -21,8 +21,18 @@ function SubmitButton({ children, tone }: { children: React.ReactNode; tone: "pr
   );
 }
 
-export function InquiryActions({ id, status, name }: { id: string; status: InquiryStatus; name: string }) {
+interface Props {
+  id: string;
+  status: InquiryStatus;
+  name: string;
+  canChangeStatus: boolean;
+  canDelete: boolean;
+}
+
+export function InquiryActions({ id, status, name, canChangeStatus, canDelete }: Props) {
+  if (status === "converted") return null;
   if (status === "deleted") {
+    if (!canDelete) return null;
     return (
       <form action={restoreInquiryAction}>
         <input type="hidden" name="id" value={id} />
@@ -33,11 +43,14 @@ export function InquiryActions({ id, status, name }: { id: string; status: Inqui
 
   return (
     <div className="flex flex-wrap gap-2">
+      {canChangeStatus && (
       <form action={setInquiryStatusAction}>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="status" value={status === "new" ? "contacted" : "new"} />
         <SubmitButton tone="primary">{status === "new" ? "Mark as contacted" : "Mark as new"}</SubmitButton>
       </form>
+      )}
+      {canDelete && (
       <form
         action={deleteInquiryAction}
         onSubmit={(e) => {
@@ -49,6 +62,7 @@ export function InquiryActions({ id, status, name }: { id: string; status: Inqui
         <input type="hidden" name="id" value={id} />
         <SubmitButton tone="danger">Delete</SubmitButton>
       </form>
+      )}
     </div>
   );
 }

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { LockedRates, RatesEditor, RatesHistory } from "@/components/admin/RatesEditor";
-import { adminConfig, isAdmin, isRatesUnlocked, RATES_UNLOCK_SECONDS } from "@/lib/server/admin-auth";
+import { toPublicAdmin } from "@/lib/accounts";
+import { isRatesUnlocked, RATES_UNLOCK_SECONDS, requireAdminPage } from "@/lib/server/auth";
 import { isRateStorageConfigured, readStoredRatesForAdmin, type StoredRates } from "@/lib/server/rates-store";
 
 export const metadata: Metadata = {
@@ -25,11 +24,11 @@ export default function RatesSettingsPage({ searchParams }: { searchParams: Sear
 
 async function RatesContent({ searchParams }: { searchParams: SearchParams }) {
   await connection();
-  // Sign-in only happens on /admin (behind the firewall rate limit).
-  if (!adminConfig().ok || !(await isAdmin())) redirect("/admin");
+  // Sign-in only happens on /admin (behind the firewall rate limit). Master Admins only.
+  const user = await requireAdminPage("rates.manage");
 
   const savedNotice = (await searchParams).saved === "1";
-  const unlocked = await isRatesUnlocked();
+  const unlocked = await isRatesUnlocked(user);
 
   let stored: StoredRates | null = null;
   let storedInvalid = false;
@@ -40,14 +39,8 @@ async function RatesContent({ searchParams }: { searchParams: SearchParams }) {
   }
 
   return (
-    <AdminFrame signedIn>
-      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-slate-500">
-        <Link href="/admin/inquiries" className="hover:text-slate-800 hover:underline">
-          Admin
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span>Settings</span>
-      </nav>
+    <AdminFrame user={toPublicAdmin(user)}>
+      <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Settings" }, { label: "Interest rates" }]} />
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-900">Interest rates</h1>
         <p className="mt-1 text-sm text-slate-600">

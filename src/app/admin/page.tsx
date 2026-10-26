@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
-import { adminConfig, isAdmin } from "@/lib/server/admin-auth";
+import { authConfig, getCurrentAdmin, needsNewPassword } from "@/lib/server/auth";
 
 export const metadata: Metadata = {
   title: "Admin | Investment Payout Calculator",
@@ -23,27 +23,27 @@ export default function AdminPage() {
 async function AdminContent() {
   await connection();
 
-  if (!adminConfig().ok) {
+  if (!authConfig().ok) {
     return (
-      <AdminFrame signedIn={false}>
+      <AdminFrame user={null}>
         <AdminCard>
           <h1 className="text-xl font-semibold text-slate-900">Admin access is not set up</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Set the <code>ADMIN_PASSWORD</code> and <code>ADMIN_SESSION_SECRET</code> environment variables, then
-            redeploy. See the README for the steps.
+            Set the <code>ADMIN_SESSION_SECRET</code> environment variable, then redeploy. See the README for the steps.
           </p>
         </AdminCard>
       </AdminFrame>
     );
   }
 
-  if (await isAdmin()) redirect("/admin/inquiries");
+  const user = await getCurrentAdmin();
+  if (user) redirect(needsNewPassword(user) ? "/admin/account" : "/admin/inquiries");
 
   return (
-    <AdminFrame signedIn={false}>
+    <AdminFrame user={null}>
       <AdminCard>
-        <h1 className="text-xl font-semibold text-slate-900">Sign in</h1>
-        <p className="mt-1 text-sm text-slate-600">Enter the admin password to manage inquiries and interest rates.</p>
+        <h1 className="text-xl font-semibold text-slate-900">Admin sign in</h1>
+        <p className="mt-1 text-sm text-slate-600">Sign in with your username and password.</p>
         <AdminLoginForm />
       </AdminCard>
     </AdminFrame>

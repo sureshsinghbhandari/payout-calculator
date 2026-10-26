@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { adminConfig, isAdmin } from "@/lib/server/admin-auth";
+import { can, toPublicAdmin } from "@/lib/accounts";
+import { requireAdminPage } from "@/lib/server/auth";
 import { INQUIRY_LIST_LIMIT, isInquiryStorageConfigured, listInquiries } from "@/lib/server/inquiry-store";
 import { AdminCard, AdminFrame } from "./AdminFrame";
 import { InquiryCard } from "./InquiryCard";
@@ -10,7 +10,13 @@ import { InquiryCard } from "./InquiryCard";
 export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
   await connection();
   // Sign-in only happens on /admin (behind the firewall rate limit).
-  if (!adminConfig().ok || !(await isAdmin())) redirect("/admin");
+  const user = await requireAdminPage(view === "deleted" ? "inquiries.delete" : "inquiries.view");
+  const permissions = {
+    status: can(user.role, "inquiries.status"),
+    remove: can(user.role, "inquiries.delete"),
+    convert: can(user.role, "inquiries.convert"),
+    investors: can(user.role, "investors.manage"),
+  };
 
   let data: Awaited<ReturnType<typeof listInquiries>> | null = null;
   try {
@@ -26,9 +32,10 @@ export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
     .sort((a, b) => ((b.deletedAt ?? "") > (a.deletedAt ?? "") ? 1 : -1));
   const shown = view === "active" ? active : deleted;
   const newCount = active.filter((i) => i.status === "new").length;
+  const convertedCount = active.filter((i) => i.status === "converted").length;
 
   return (
-    <AdminFrame signedIn>
+    <AdminFrame user={toPublicAdmin(user)}>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">
@@ -38,12 +45,12 @@ export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
             {!data
               ? "Inquiries sent from the calculator."
               : view === "active"
-                ? `${active.length} ${active.length === 1 ? "inquiry" : "inquiries"}, ${newCount} new. Newest first.`
+                ? `${active.length} ${active.length === 1 ? "inquiry" : "inquiries"}, ${newCount} new, ${convertedCount} converted. Newest first.`
                 : `${deleted.length} deleted ${deleted.length === 1 ? "inquiry" : "inquiries"}, most recently deleted first. Restore one to move it back to Inquiries.`}
             {data && data.total > INQUIRY_LIST_LIMIT && ` Showing the newest ${INQUIRY_LIST_LIMIT} stored.`}
           </p>
         </div>
-        {view === "active" ? (
+        {view === "active" && !permissions.remove ? null : view === "active" ? (
           <Link
             href="/admin/inquiries/deleted"
             className="text-sm font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
@@ -81,7 +88,7 @@ export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
       ) : (
         <ul className="space-y-4">
           {shown.map((inquiry) => (
-            <InquiryCard key={inquiry.id} inquiry={inquiry} />
+            <InquiryCard key={inquiry.id} inquiry={inquiry} permissions={permissions} />
           ))}
         </ul>
       )}

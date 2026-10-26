@@ -81,17 +81,31 @@ async function updateInquiry(id: string, change: (inquiry: StoredInquiry) => Sto
   return true;
 }
 
-/** Marks an active inquiry as new or contacted. */
-export function setInquiryStatus(id: string, status: ActiveInquiryStatus): Promise<boolean> {
-  return updateInquiry(id, (inquiry) => (inquiry.status === "deleted" ? null : { ...inquiry, status }));
+/** One inquiry by id, or null. */
+export async function getInquiry(id: string): Promise<StoredInquiry | null> {
+  return (await readInquiry(pathnameFor(id)))?.inquiry ?? null;
 }
 
-/** Soft delete: the inquiry stays stored with status "deleted" and can be restored. */
+/** Marks an inquiry as new or contacted (not when deleted or converted). */
+export function setInquiryStatus(id: string, status: ActiveInquiryStatus): Promise<boolean> {
+  return updateInquiry(id, (inquiry) =>
+    inquiry.status === "new" || inquiry.status === "contacted" ? { ...inquiry, status } : null,
+  );
+}
+
+/** Soft delete: the inquiry stays stored with status "deleted" and can be restored. Converted inquiries cannot be deleted. */
 export function softDeleteInquiry(id: string, deletedAt: string): Promise<boolean> {
   return updateInquiry(id, (inquiry) =>
-    inquiry.status === "deleted"
-      ? null
-      : { ...inquiry, status: "deleted", deletedAt, statusBeforeDelete: inquiry.status },
+    inquiry.status === "new" || inquiry.status === "contacted"
+      ? { ...inquiry, status: "deleted", deletedAt, statusBeforeDelete: inquiry.status }
+      : null,
+  );
+}
+
+/** Marks a contacted inquiry as converted to the given investor. */
+export function markInquiryConverted(id: string, investorId: string, convertedAt: string): Promise<boolean> {
+  return updateInquiry(id, (inquiry) =>
+    inquiry.status === "contacted" ? { ...inquiry, status: "converted", investorId, convertedAt } : null,
   );
 }
 

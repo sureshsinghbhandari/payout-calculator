@@ -14,9 +14,9 @@ export const INQUIRY_LIMITS = {
 } as const;
 
 export type InquiryField = "name" | "email" | "phone" | "message";
-export type InquiryStatus = "new" | "contacted" | "deleted";
-/** Statuses an inquiry can have while it is not deleted. */
-export type ActiveInquiryStatus = Exclude<InquiryStatus, "deleted">;
+export type InquiryStatus = "new" | "contacted" | "converted" | "deleted";
+/** Statuses an admin can set directly with Mark as new / Mark as contacted. */
+export type ActiveInquiryStatus = "new" | "contacted";
 
 export interface InquiryContact {
   name: string;
@@ -43,6 +43,10 @@ export interface StoredInquiry extends InquiryContact {
   deletedAt?: string;
   /** Status to return to when a deleted inquiry is restored. */
   statusBeforeDelete?: ActiveInquiryStatus;
+  /** Investor created from this inquiry (status "converted"). */
+  investorId?: string;
+  /** When the inquiry was converted, ISO timestamp (UTC). */
+  convertedAt?: string;
   plan: InquiryPlan;
 }
 
@@ -158,7 +162,8 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   ) {
     throw new Error("Invalid inquiry plan.");
   }
-  const status: InquiryStatus = d.status === "contacted" || d.status === "deleted" ? d.status : "new";
+  const status: InquiryStatus =
+    d.status === "contacted" || d.status === "deleted" || d.status === "converted" ? d.status : "new";
   const deletedAt = str(d.deletedAt);
   const statusBeforeDelete = d.statusBeforeDelete === "contacted" ? "contacted" : "new";
   return {
@@ -166,6 +171,7 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     createdAt,
     status,
     ...(status === "deleted" ? { deletedAt: deletedAt ?? createdAt, statusBeforeDelete } : {}),
+    ...(status === "converted" ? { investorId: str(d.investorId) ?? undefined, convertedAt: str(d.convertedAt) ?? undefined } : {}),
     name,
     email,
     phone: str(d.phone) ?? "",

@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { logoutAction } from "@/app/admin/actions";
+import { can, ROLE_LABELS, type PublicAdmin } from "@/lib/accounts";
 
-/** Gear button in the admin header with links to settings and Sign out. */
-export function SettingsMenu() {
+/**
+ * Gear button in the admin header. Shows only what the admin's role allows:
+ * Sales Admins see Inquiries and their account; Master Admins see everything.
+ */
+export function SettingsMenu({ user }: { user: PublicAdmin }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -29,6 +33,15 @@ export function SettingsMenu() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  const links = [
+    { href: "/admin/inquiries", label: "Inquiries", permission: "inquiries.view" as const },
+    { href: "/admin/inquiries/deleted", label: "Deleted inquiries", permission: "inquiries.delete" as const },
+    { href: "/admin/investors", label: "Investors", permission: "investors.manage" as const },
+    { href: "/admin/settings/rates", label: "Interest rates", permission: "rates.manage" as const },
+    { href: "/admin/settings/users", label: "Users", permission: "users.manage" as const },
+    { href: "/admin/account", label: "My account", permission: null },
+  ];
 
   const itemClass =
     "block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none";
@@ -59,18 +72,22 @@ export function SettingsMenu() {
           id={menuId}
           role="menu"
           aria-label="Settings"
-          className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
         >
-          <p className="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Settings</p>
-          <Link role="menuitem" href="/admin/settings/rates" onClick={() => setOpen(false)} className={itemClass}>
-            Interest rates
-          </Link>
-          <Link role="menuitem" href="/admin/inquiries" onClick={() => setOpen(false)} className={itemClass}>
-            Inquiries
-          </Link>
-          <Link role="menuitem" href="/admin/inquiries/deleted" onClick={() => setOpen(false)} className={itemClass}>
-            Deleted inquiries
-          </Link>
+          <div className="px-3 pb-2 pt-1.5">
+            <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+            <p className="text-xs text-slate-500">
+              {user.username} · {ROLE_LABELS[user.role]}
+            </p>
+          </div>
+          <div className="mb-1 border-t border-slate-100" />
+          {links
+            .filter((l) => !l.permission || can(user.role, l.permission))
+            .map((l) => (
+              <Link key={l.href} role="menuitem" href={l.href} onClick={() => setOpen(false)} className={itemClass}>
+                {l.label}
+              </Link>
+            ))}
           <div className="my-1 border-t border-slate-100" />
           <form action={logoutAction}>
             <button role="menuitem" type="submit" className={itemClass}>

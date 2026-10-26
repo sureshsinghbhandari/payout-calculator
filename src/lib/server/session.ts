@@ -97,3 +97,44 @@ export function verifyScopedToken(
   if (!Number.isSafeInteger(expires) || expires * 1000 <= nowMs) return false;
   return safeEqual(parts[2], signature(`${parts[0]}.${parts[1]}`, config));
 }
+
+// ---------- multi-user sessions ----------
+
+export type AuthConfig = { ok: true; secret: string; bootstrapPassword: string | null } | { ok: false; reason: string };
+
+/**
+ * ADMIN_SESSION_SECRET signs every session. ADMIN_PASSWORD is now only the
+ * one-time bootstrap password for the first Master Admin (see accounts.ts).
+ */
+export function readAuthConfig(env: Record<string, string | undefined>): AuthConfig {
+  const secret = env.ADMIN_SESSION_SECRET ?? "";
+  if (secret.length < MIN_SECRET_LENGTH) {
+    return { ok: false, reason: `ADMIN_SESSION_SECRET is not set or is shorter than ${MIN_SECRET_LENGTH} characters.` };
+  }
+  const bootstrap = env.ADMIN_PASSWORD ?? "";
+  return { ok: true, secret, bootstrapPassword: bootstrap.length >= MIN_PASSWORD_LENGTH ? bootstrap : null };
+}
+
+function tokenSignature(secret: string, payload: string): string {
+  const key = createHmac("sha256", secret).update("payout-calculator-token").digest();
+  return createHmac("sha256", key).update(payload).digest("base64url");
+}
+
+/** Signs `fields` (no dots allowed) with an expiry: "<f1>.<f2>...<expiry>.<signature>". */
+export function signToken(secret: string, fields: string[], nowMs: number, ttlSeconds: number): string {
+  if (fields.some((f) => f === "" || f.includes("."))) throw new Error("Invalid token field.");
+  const payload = `${fields.join(".")}.${Math.floor(nowMs / 1000) + ttlSeconds}`;
+  return `${payload}.${tokenSignature(secret, payload)}`;
+}
+
+/** Returns the signed fields if the token is authentic and unexpired, otherwise null. */
+export function readToken(token: string, secret: string, nowMs: number): string[] | null {
+  const parts = token.split(".");
+  if (parts.length < 3) return null;
+  const sig = parts[parts.length - 1];
+  const expiry = parts[parts.length - 2];
+  if (!/^\d+$/.test(expiry) || Number(expiry) * 1000 <= nowMs) return null;
+  const payload = parts.slice(0, -1).join(".");
+  if (!safeEqual(sig, tokenSignature(secret, payload))) return null;
+  return parts.slice(0, -2);
+}

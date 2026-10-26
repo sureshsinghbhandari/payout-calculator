@@ -1,18 +1,19 @@
 # Investment Payout Calculator
 
-A public, no-login web calculator that shows the payout schedule for a fixed-term
-investment. Visitors pick an investment amount from a list, a planned investment date,
-a term, a payout term and a payout type. They get a payout-by-payout table with totals, comparisons
-with other scenarios, and an Excel download.
+A public web calculator that shows the payout schedule for a fixed-term investment.
+Visitors pick an investment amount from a list, a planned investment date, a term, a
+payout term and a payout type. They get a payout-by-payout table with totals,
+comparisons with other scenarios, an Excel download, and can send an inquiry.
 
-Interest rates are set by an admin on a password-protected admin page and are never
-shown to visitors.
+Behind it is an admin area with named users and roles (Master Admin, Sales Admin) for
+managing inquiries, investors and the interest rates, and an investor portal where
+investors sign in to see their investments.
 
 - **Live site:** https://payout-calculator-steel.vercel.app
-- **Admin page:** https://payout-calculator-steel.vercel.app/admin
+- **Admin:** https://payout-calculator-steel.vercel.app/admin
+- **Investor portal:** https://payout-calculator-steel.vercel.app/investor
 
-This is an illustrative calculator prototype. It does not collect payments, register
-investors or store any visitor information.
+Interest rates are never shown to visitors or investors.
 
 ## Tech stack
 
@@ -76,70 +77,116 @@ investors or store any visitor information.
   the cent, and the final payout absorbs any rounding difference, so totals reconcile and
   the remaining principal ends at exactly $0.00.
 
-## Managing interest rates (admin)
+## Admin users and roles
 
-1. Open `/admin` on the live site and sign in with the admin password. You land on
-   **Inquiries**.
-2. Select the settings (gear) icon in the header, then **Interest rates**
+Admins sign in at `/admin` with a **username and password**.
+
+| Role | Can do |
+| --- | --- |
+| **Master Admin** | Everything: inquiries (view, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users. |
+| **Sales Admin** | Inquiries only: view them and mark them contacted or new. They do not see interest rates. |
+
+Starting users (created automatically the first time the admin area is used):
+
+| Name | Username | Role |
+| --- | --- | --- |
+| Ashwin Patel | `apatel` | Master Admin |
+| Suresh Bhandari | `sbhandari` | Sales Admin |
+
+### Passwords
+
+Nobody's password is stored in the code or the README. People set their own:
+
+- **First Master Admin (apatel):** the first time, sign in as `apatel` with the
+  `ADMIN_PASSWORD` value from Vercel. You are asked to choose your own password straight
+  away; after that, `ADMIN_PASSWORD` no longer works for sign-in.
+- **Everyone else:** a Master Admin opens **Settings (gear) > Users** and either
+  - selects **Set temporary password** and types one (at least 12 characters). The
+    person must choose their own password the first time they sign in, or
+  - selects **Create setup link** and sends the one-time link (valid for 72 hours) to
+    the person, who opens it and chooses a password.
+- Anyone can change their own password under **Settings > My account**.
+- Passwords are at least 12 characters and stored only as scrypt hashes. Changing a
+  password signs out that person's other sessions.
+
+### Managing users (Master Admin)
+
+**Settings > Users** (`/admin/settings/users`): add users (name, username, role),
+change roles, disable or enable users, set temporary passwords and create setup links.
+There must always be at least one active Master Admin.
+
+## Investors
+
+1. When an inquiry is **Contacted**, a Master Admin selects **Convert to investor**.
+2. The form is pre-filled from the inquiry (name, email, phone and the plan) and can be
+   adjusted. The interest rate for the chosen payout term is fixed at that moment.
+3. The investor is created with a username, and the inquiry is marked **Converted**.
+4. On the investor's page (**Settings > Investors**), the Master Admin gives the investor
+   a **temporary password** (the investor must change it at first sign-in) or a
+   **setup link**. The Master Admin can reset an investor's password the same way at any
+   time, edit contact details and username, and disable or enable their login.
+
+### Investor portal
+
+Investors sign in at `/investor` with their username and password and see each
+investment: amount, planned investment date, interest start date, term locked, payout
+term and type, totals, the next payout, and the full payout schedule with each payout
+marked Paid or Upcoming by its scheduled date. The interest rate is not shown.
+
+## Managing interest rates (Master Admin)
+
+1. Sign in at `/admin`, open **Settings (gear) > Interest rates**
    (`/admin/settings/rates`).
-3. The rates are shown locked. Select **Unlock to edit** and enter the admin password
-   again.
-4. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
-   places) and select **Save rates**. Saving locks the rates again; editing also locks
-   by itself after 10 minutes, or when you select **Lock**.
-5. New calculations use the saved rates immediately. The page keeps a history of the
-   last 20 saves.
-
-The settings menu also has **Sign out**.
+2. The rates are shown locked. Select **Unlock to edit** and enter **your own password**.
+3. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
+   places) and select **Save rates**. Saving locks the rates again; editing also locks by
+   itself after 10 minutes, or when you select **Lock**.
+4. New calculations use the saved rates immediately. Existing investors keep the rate
+   fixed when they were converted. The page keeps a history of the last 20 saves.
 
 Until the first save, the starting rates in `src/lib/config.ts`
 (`DEFAULT_RATE_BY_FREQUENCY`: Quarterly 8%, Half-Yearly 9%, Yearly 10%) are used.
-Production uses its own rates file; preview deployments and local development use
-separate files, so testing never changes the live rates.
 
 ## Inquiries
 
 - After calculating, visitors can select **Send inquiry**. The form shows their plan and
   asks for name, email, an optional phone number and an optional message.
-- Inquiries are stored privately in Vercel Blob (one file per inquiry, separate folders for
-  production, preview and local) with a snapshot of the plan and its totals.
-- Admins see them at `/admin/inquiries` (the admin home page after signing in), newest first, and can
-  mark each one as contacted or delete it. Delete is a soft delete: the inquiry keeps
-  its data, gets the status "deleted" and moves to **Deleted inquiries**
-  (`/admin/inquiries/deleted`), where it can be restored.
+- Admins see them at `/admin/inquiries` (the admin home page), newest first. Statuses:
+  New, Contacted, Converted, Deleted.
+- Delete (Master Admin) is a soft delete: the inquiry keeps its data, gets the status
+  "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
+  can be restored.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
 - Email notifications are not set up yet.
 
-## Admin setup
+## Data storage
 
-The admin page needs these environment variables in the Vercel project:
+Everything is stored as private JSON files in the Vercel Blob store
+`payout-calculator-rates`: interest rates, inquiries (one file each), admin users and
+investors. Production, preview deployments and local development use separate folders,
+so testing never touches live data.
+
+## Environment variables
 
 | Variable | Purpose |
 | --- | --- |
-| `ADMIN_PASSWORD` | The admin password, at least 12 characters. Set it yourself. |
-| `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, used to sign the session cookie. |
-| `BLOB_READ_WRITE_TOKEN` | Access to the private Blob store `payout-calculator-rates`. Added automatically when the store was connected. |
+| `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, that signs all sign-in sessions. Required. |
+| `ADMIN_PASSWORD` | One-time bootstrap password for the first Master Admin (`apatel`), at least 12 characters. Not used once apatel has set a personal password. |
+| `BLOB_READ_WRITE_TOKEN` | Access to the private Blob store. Added automatically when the store was connected. |
 
-To set or change the admin password, run this and type the password when asked, then
-redeploy:
-
-```bash
-npx vercel env add ADMIN_PASSWORD production --sensitive
-npx vercel deploy --prod
-```
-
-To change an existing password, remove it first with `npx vercel env rm ADMIN_PASSWORD
-production`. Changing the password or the session secret signs every admin out.
+Set a value with `npx vercel env add NAME production --sensitive` (you type the value),
+then redeploy with `npx vercel deploy --prod`.
 
 ### Sign-in protection
 
-- The app locks a client out of sign-in for 15 minutes after 5 wrong passwords
-  (tracked per server instance), and waits 1 second after every wrong password.
+- Sign-in, password changes and unlocking rates lock a client out for 15 minutes after
+  5 wrong passwords (per server instance), with a 1-second wait after each wrong one.
 - A Vercel Firewall rule, **Admin sign-in rate limit**, allows at most 10 POST requests
-  to `/admin` (sign-in, saving rates, sign-out) per IP address per 5 minutes. An address
-  that goes over is blocked from those requests for 15 minutes. View or change it with
-  `npx vercel firewall status` and `npx vercel firewall rules list`, or in the Vercel
+  to `/admin` per IP address per 5 minutes, then blocks that address from them for 15
+  minutes. View or change it with `npx vercel firewall status`, or in the Vercel
   dashboard under Firewall.
+- Sessions are HTTP-only, SameSite=Strict, Secure cookies: `/admin` for admins and
+  `/investor` for investors, valid for 8 hours.
 
 For local development, put `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` in
 `.env.development.local`, and run `npx vercel env pull .env.local` for the Blob token.
