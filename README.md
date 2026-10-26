@@ -181,10 +181,14 @@ then redeploy with `npx vercel deploy --prod`.
 
 - Sign-in, password changes and unlocking rates lock a client out for 15 minutes after
   5 wrong passwords (per server instance), with a 1-second wait after each wrong one.
-- A Vercel Firewall rule, **Admin sign-in rate limit**, allows at most 10 POST requests
-  to `/admin` per IP address per 5 minutes, then blocks that address from them for 15
-  minutes. View or change it with `npx vercel firewall status`, or in the Vercel
-  dashboard under Firewall.
+- A Vercel Firewall rule, **Sign-in rate limit**, allows at most 20 POST requests per IP
+  address per 5 minutes to `/admin` (admin sign-in), `/investor` (investor sign-in and
+  password change) and `/setup` (setup links), counted together. An address that goes
+  over is blocked from those requests for 15 minutes. Admin work on other pages (for
+  example inquiries) does not count. The free (Hobby) plan allows one rate-limit rule,
+  which is why the three pages share it. View or change it with
+  `npx vercel firewall rules inspect "Sign-in rate limit"`, or in the Vercel dashboard
+  under Firewall.
 - Sessions are HTTP-only, SameSite=Strict, Secure cookies: `/admin` for admins and
   `/investor` for investors, valid for 8 hours.
 
