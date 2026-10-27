@@ -4,6 +4,7 @@
  * pass `toPublicAdmin` / `toPublicInvestor` results to client components.
  */
 import type { PayoutFrequency, PayoutType } from "./payout";
+import type { ChangeRequest, StoredBankDetails } from "./profile-requests";
 
 export type AdminRole = "master" | "sales";
 
@@ -142,6 +143,10 @@ export interface Investor extends Credentials {
   /** Inquiry this investor was converted from, if any. */
   sourceInquiryId: string | null;
   investments: Investment[];
+  /** Bank details for payouts (encrypted), or null until an approved change sets them. */
+  bankDetails: StoredBankDetails | null;
+  /** Changes the investor asked for in the portal: pending ones and recent decided ones. */
+  changeRequests: ChangeRequest[];
 }
 
 /**
@@ -186,6 +191,19 @@ export function validateEmailAddress(email: string, optional = false): string | 
   if (email === "") return optional ? null : "Enter an email address.";
   if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
     return "Enter a valid email address, like name@example.com.";
+  }
+  return null;
+}
+
+const PHONE_MAX = 25;
+const PHONE_PATTERN = /^[+()\-.\s\d]+$/;
+
+/** Checks a phone number: 7 to 15 digits, with + ( ) - . and spaces allowed. Empty is allowed. */
+export function validatePhoneNumber(phone: string): string | null {
+  if (phone === "") return null;
+  const digits = phone.replace(/\D/g, "").length;
+  if (phone.length > PHONE_MAX || !PHONE_PATTERN.test(phone) || digits < 7 || digits > 15) {
+    return "Enter a valid phone number, or leave it empty.";
   }
   return null;
 }

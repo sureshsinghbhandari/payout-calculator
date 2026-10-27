@@ -3,13 +3,16 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
+import { InvestorDocuments } from "@/components/investor/InvestorDocuments";
 import { InvestorCard, InvestorFrame, InvestorLoading } from "@/components/investor/InvestorFrame";
 import { InvestorLoginForm } from "@/components/investor/InvestorLoginForm";
 import { InvestorPasswordForm } from "@/components/investor/InvestorPasswordForm";
 import type { Investor } from "@/lib/accounts";
+import { toPublicDocument, type PublicDocument } from "@/lib/documents";
 import { formatIsoDateLong } from "@/lib/format";
 import { todayUtc } from "@/lib/investments";
 import { getCurrentInvestor } from "@/lib/server/auth";
+import { isDocumentStorageConfigured, listDocuments } from "@/lib/server/documents-store";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 
 export const metadata: Metadata = {
@@ -21,9 +24,13 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
+const headerButton =
+  "inline-flex items-center justify-center rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2";
+
 /**
  * Investor portal: sign-in, required password change, and the dashboard with
- * each investment's payout schedule. Interest rates are never shown here.
+ * each investment's payout schedule and the investor's documents. Interest
+ * rates are never shown here.
  */
 export default function InvestorPage({ searchParams }: { searchParams: SearchParams }) {
   return (
@@ -60,7 +67,25 @@ async function InvestorContent({ searchParams }: { searchParams: SearchParams })
   if (investor.mustChangePassword) return <PasswordView username={investor.username} required />;
   if (params.view === "password") return <PasswordView username={investor.username} required={false} />;
 
-  return <Dashboard investor={investor} today={todayUtc()} passwordChanged={params.changed === "1"} />;
+  return (
+    <Dashboard
+      investor={investor}
+      documents={await loadDocuments(investor.id)}
+      today={todayUtc()}
+      passwordChanged={params.changed === "1"}
+    />
+  );
+}
+
+/** The investor's own documents, or null when they could not be loaded. */
+async function loadDocuments(investorId: string): Promise<PublicDocument[] | null> {
+  if (!isDocumentStorageConfigured()) return [];
+  try {
+    return (await listDocuments(investorId)).map(toPublicDocument);
+  } catch (error) {
+    console.error("Listing investor documents failed", error);
+    return null;
+  }
 }
 
 function SignInView() {
@@ -116,7 +141,17 @@ function PasswordView({ username, required }: { username: string; required: bool
   );
 }
 
-function Dashboard({ investor, today, passwordChanged }: { investor: Investor; today: string; passwordChanged: boolean }) {
+function Dashboard({
+  investor,
+  documents,
+  today,
+  passwordChanged,
+}: {
+  investor: Investor;
+  documents: PublicDocument[] | null;
+  today: string;
+  passwordChanged: boolean;
+}) {
   const count = investor.investments.length;
 
   return (
@@ -143,12 +178,14 @@ function Dashboard({ investor, today, passwordChanged }: { investor: Investor; t
                 }, as of ${formatIsoDateLong(today)}.`}
           </p>
         </div>
-        <Link
-          href="/portal?view=password"
-          className="inline-flex shrink-0 items-center justify-center self-start rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:self-auto"
-        >
-          Change password
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+          <Link href="/portal/details" className={headerButton}>
+            Your details
+          </Link>
+          <Link href="/portal?view=password" className={headerButton}>
+            Change password
+          </Link>
+        </div>
       </div>
 
       {count === 0 ? (
@@ -166,6 +203,10 @@ function Dashboard({ investor, today, passwordChanged }: { investor: Investor; t
           ))}
         </div>
       )}
+
+      <div className="mt-12">
+        <InvestorDocuments documents={documents} />
+      </div>
     </InvestorFrame>
   );
 }
