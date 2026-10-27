@@ -6,11 +6,13 @@ import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
 import { InvestorCard, InvestorFrame, InvestorLoading } from "@/components/investor/InvestorFrame";
 import { InvestorLoginForm } from "@/components/investor/InvestorLoginForm";
 import { InvestorPasswordForm } from "@/components/investor/InvestorPasswordForm";
+import { TwoStepSignInForm } from "@/components/two-step/TwoStepSignInForm";
 import type { Investor } from "@/lib/accounts";
 import { formatIsoDateLong } from "@/lib/format";
 import { todayUtc } from "@/lib/investments";
-import { getCurrentInvestor } from "@/lib/server/auth";
+import { getCurrentInvestor, getPendingTwoStepInvestor } from "@/lib/server/auth";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
+import { cancelInvestorTwoStepAction, verifyInvestorTwoStepAction } from "./two-step-actions";
 
 export const metadata: Metadata = {
   title: "Investor portal | Investment Payout Calculator",
@@ -22,8 +24,9 @@ export const metadata: Metadata = {
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 /**
- * Investor portal: sign-in, required password change, and the dashboard with
- * each investment's payout schedule. Interest rates are never shown here.
+ * Investor portal: sign-in (with the two-step code when it is on), required
+ * password change, and the dashboard with each investment's payout schedule.
+ * Interest rates are never shown here.
  */
 export default function InvestorPage({ searchParams }: { searchParams: SearchParams }) {
   return (
@@ -37,9 +40,12 @@ async function InvestorContent({ searchParams }: { searchParams: SearchParams })
   await connection();
 
   let investor: Investor | null;
+  let pendingTwoStep: Investor | null = null;
   try {
     // Null when signed out, or when the session is no longer valid (e.g. the password changed elsewhere).
     investor = await getCurrentInvestor();
+    // The password was right; the code from the authenticator app is still needed.
+    if (!investor) pendingTwoStep = await getPendingTwoStepInvestor();
   } catch (error) {
     console.error("Loading the investor portal failed", error);
     return (
@@ -54,22 +60,29 @@ async function InvestorContent({ searchParams }: { searchParams: SearchParams })
     );
   }
 
-  if (!investor) return <SignInView />;
-
   const params = await searchParams;
+  if (!investor) {
+    return pendingTwoStep ? <TwoStepView username={pendingTwoStep.username} /> : <SignInView timedOut={params.timeout === "1"} />;
+  }
+
   if (investor.mustChangePassword) return <PasswordView username={investor.username} required />;
   if (params.view === "password") return <PasswordView username={investor.username} required={false} />;
 
   return <Dashboard investor={investor} today={todayUtc()} passwordChanged={params.changed === "1"} />;
 }
 
-function SignInView() {
+function SignInView({ timedOut }: { timedOut: boolean }) {
   return (
     <InvestorFrame signedIn={false}>
       <div className="mx-auto max-w-md">
         <InvestorCard>
           <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Investor sign in</h1>
           <p className="mt-1 text-sm text-slate-600">See your investments and payout schedule.</p>
+          {timedOut && (
+            <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Your sign-in timed out before the code was entered. Sign in again with your password.
+            </p>
+          )}
           <InvestorLoginForm />
           <p className="mt-6 border-t border-slate-200 pt-5 text-sm text-slate-600">
             Your login details come from our team. Contact us if you need help.
@@ -80,6 +93,26 @@ function SignInView() {
             Back to the calculator
           </Link>
         </p>
+      </div>
+    </InvestorFrame>
+  );
+}
+
+function TwoStepView({ username }: { username: string }) {
+  return (
+    <InvestorFrame signedIn={false}>
+      <div className="mx-auto max-w-md">
+        <InvestorCard>
+          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">Two-step sign-in</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Signing in as <span className="font-semibold text-slate-900">{username}</span>. Open your authenticator app and
+            enter the code it shows.
+          </p>
+          <TwoStepSignInForm action={verifyInvestorTwoStepAction} cancelAction={cancelInvestorTwoStepAction} />
+          <p className="mt-6 border-t border-slate-200 pt-5 text-sm text-slate-600">
+            Lost your phone and your recovery codes? Contact our team: they can reset two-step sign-in for you.
+          </p>
+        </InvestorCard>
       </div>
     </InvestorFrame>
   );
@@ -116,6 +149,9 @@ function PasswordView({ username, required }: { username: string; required: bool
   );
 }
 
+const accountLinkClass =
+  "inline-flex items-center justify-center rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2";
+
 function Dashboard({ investor, today, passwordChanged }: { investor: Investor; today: string; passwordChanged: boolean }) {
   const count = investor.investments.length;
 
@@ -143,12 +179,14 @@ function Dashboard({ investor, today, passwordChanged }: { investor: Investor; t
                 }, as of ${formatIsoDateLong(today)}.`}
           </p>
         </div>
-        <Link
-          href="/portal?view=password"
-          className="inline-flex shrink-0 items-center justify-center self-start rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:self-auto"
-        >
-          Change password
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+          <Link href="/portal?view=password" className={accountLinkClass}>
+            Change password
+          </Link>
+          <Link href="/portal/security" className={accountLinkClass}>
+            Sign-in security
+          </Link>
+        </div>
       </div>
 
       {count === 0 ? (

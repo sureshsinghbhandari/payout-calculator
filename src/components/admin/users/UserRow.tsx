@@ -5,11 +5,13 @@ import { useActionState, useId, useState } from "react";
 import {
   changeRoleAction,
   createSetupLinkAction,
+  resetUserTwoStepAction,
   setActiveAction,
   type ActionMessage,
   type SetupLinkState,
 } from "@/app/admin/settings/users/actions";
 import { ROLE_LABELS, type AdminRole, type PublicAdmin } from "@/lib/accounts";
+import { TwoStepResetForm } from "@/components/two-step/TwoStepResetForm";
 import { SetupLinkPanel } from "./SetupLinkPanel";
 import { TemporaryPasswordForm } from "./TemporaryPasswordForm";
 import { UserEmailForm } from "./UserEmailForm";
@@ -108,6 +110,21 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
             {signIn.detail && <span className="block text-xs text-slate-500">{signIn.detail}</span>}
           </span>
         </dd>
+        <dt className="sr-only">Two-step sign-in</dt>
+        <dd className="flex items-start gap-2 text-slate-800">
+          <span
+            aria-hidden="true"
+            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+              user.twoStepEnabled ? TONE_DOT.ok : user.role === "master" ? TONE_DOT.warn : TONE_DOT.muted
+            }`}
+          />
+          <span>
+            Two-step sign-in {user.twoStepEnabled ? "on" : "off"}
+            {!user.twoStepEnabled && user.role === "master" && (
+              <span className="block text-xs text-slate-500">Required for Master Admins: they are asked to set it up when they next sign in.</span>
+            )}
+          </span>
+        </dd>
         <dt className="sr-only">Email</dt>
         <dd className="break-all text-slate-700">
           {user.email ? (
@@ -128,7 +145,7 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
         {isSelf ? (
           <p className="text-sm text-slate-600">
             This is your account. You cannot change your own role or disable yourself; another Master Admin can. To
-            change your password, email address or alerts, go to{" "}
+            change your password, two-step sign-in, email address or alerts, go to{" "}
             <Link href="/admin/account" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
               My account
             </Link>
@@ -233,6 +250,14 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
                 onClose={() => setPasswordFormKey(null)}
               />
             )}
+
+            <TwoStepResetForm
+              action={resetUserTwoStepAction}
+              id={user.id}
+              name={user.name}
+              enabled={user.twoStepEnabled}
+              buttonClass={secondaryButton}
+            />
 
             <UserEmailForm userId={user.id} email={user.email} />
           </div>

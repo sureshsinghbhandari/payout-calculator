@@ -1,6 +1,7 @@
 /**
  * Admin users, roles and investors: shared types and pure helpers.
- * Secrets (password hashes, setup token hashes) never leave the server:
+ * Secrets (password hashes, setup token hashes, two-step secrets and recovery
+ * code hashes) never leave the server:
  * pass `toPublicAdmin` / `toPublicInvestor` results to client components.
  */
 import type { PayoutFrequency, PayoutType } from "./payout";
@@ -84,7 +85,27 @@ export interface Credentials {
   setupTokenHash: string | null;
   /** ISO timestamp when the setup token expires. */
   setupExpiresAt: string | null;
+  /**
+   * Two-step sign-in (authenticator app). The secret is encrypted (AES-256-GCM)
+   * and set only once the person confirmed it with a code; null while it is off.
+   */
+  totpSecret: string | null;
+  /** Encrypted secret of a setup that is not confirmed yet. */
+  totpPendingSecret: string | null;
+  /** ISO timestamp when two-step sign-in was turned on. */
+  totpEnabledAt: string | null;
+  /** Last 30-second time step a code was accepted for, so a code cannot be used twice. */
+  totpLastStep: number;
+  /** SHA-256 hashes of the unused one-time recovery codes. */
+  recoveryCodeHashes: string[];
 }
+
+/** Whether two-step sign-in is on for this account. */
+export function hasTwoStep(account: Pick<Credentials, "totpSecret">): boolean {
+  return Boolean(account.totpSecret);
+}
+
+export type AccountKind = "admin" | "investor";
 
 export interface AdminUser extends Credentials {
   id: string;
@@ -218,6 +239,7 @@ export interface PublicAdmin {
   hasPassword: boolean;
   mustChangePassword: boolean;
   setupExpiresAt: string | null;
+  twoStepEnabled: boolean;
 }
 
 export function toPublicAdmin(user: AdminUser): PublicAdmin {
@@ -233,6 +255,7 @@ export function toPublicAdmin(user: AdminUser): PublicAdmin {
     hasPassword: Boolean(user.passwordHash),
     mustChangePassword: user.mustChangePassword,
     setupExpiresAt: user.setupTokenHash ? user.setupExpiresAt : null,
+    twoStepEnabled: hasTwoStep(user),
   };
 }
 
@@ -262,6 +285,7 @@ export interface PublicInvestor {
   hasPassword: boolean;
   mustChangePassword: boolean;
   setupExpiresAt: string | null;
+  twoStepEnabled: boolean;
   investments: Investment[];
 }
 
@@ -279,6 +303,7 @@ export function toPublicInvestor(investor: Investor): PublicInvestor {
     hasPassword: Boolean(investor.passwordHash),
     mustChangePassword: investor.mustChangePassword,
     setupExpiresAt: investor.setupTokenHash ? investor.setupExpiresAt : null,
+    twoStepEnabled: hasTwoStep(investor),
     investments: investor.investments.map((i) => ({ ...i, payments: i.payments.map((p) => ({ ...p })) })),
   };
 }

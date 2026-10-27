@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import {
+  hasTwoStep,
   normalizeEmail,
   normalizeUsername,
   ROLE_LABELS,
@@ -22,6 +23,8 @@ import { requireAdminPermission } from "@/lib/server/auth";
 import { recordAudit } from "@/lib/server/audit-store";
 import { adminActor } from "@/lib/audit";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
+import { turnOffTwoStep } from "@/lib/server/two-step";
+import type { TwoStepResetState } from "@/lib/two-step";
 
 /**
  * Admin user management (Master Admin only). Every action checks the
@@ -296,5 +299,47 @@ export async function createSetupLinkAction(_prev: SetupLinkState, formData: For
     };
   } catch (error) {
     return failure(error, "The setup link could not be created.");
+  }
+}
+
+// ---------- two-step sign-in ----------
+
+/**
+ * Resets another user's two-step sign-in, e.g. when they lost their phone.
+ * They sign in with their password only; a Master Admin is then asked to set
+ * it up again straight away.
+ */
+export async function resetUserTwoStepAction(_prev: TwoStepResetState, formData: FormData): Promise<TwoStepResetState> {
+  const admin = await requireAdminPermission("users.manage");
+  if (!admin) return { status: "error", message: NO_PERMISSION };
+
+  const id = formData.get("id");
+  if (!isAdminId(id)) return { status: "error", message: "Something went wrong. Reload the page and try again." };
+  if (id === admin.id) {
+    return { status: "error", message: "To change your own two-step sign-in, use My account." };
+  }
+
+  try {
+    const user = await getAdminUser(id);
+    if (!user) return { status: "error", message: "User not found." };
+    if (!hasTwoStep(user)) return { status: "ok", message: `Two-step sign-in is already off for ${user.name}.` };
+    await turnOffTwoStep("admin", id);
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: "user.two_step_reset",
+      summary: `Reset two-step sign-in for ${user.name} (${user.username})`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
+    refresh();
+    return {
+      status: "ok",
+      message:
+        user.role === "master"
+          ? `Two-step sign-in reset for ${user.name}. They must set it up again with their new phone when they next sign in.`
+          : `Two-step sign-in reset for ${user.name}. They can sign in with their password only, and set it up again in My account.`,
+    };
+  } catch (error) {
+    return failure(error, "Two-step sign-in could not be reset.");
   }
 }

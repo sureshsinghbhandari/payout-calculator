@@ -6,14 +6,17 @@ import { AccountError, isAccountStorageConfigured, setInvestorPassword } from "@
 import {
   authConfig,
   endInvestorSession,
+  endTwoStepSignIn,
   getCurrentInvestor,
   startInvestorSession,
+  startTwoStepSignIn,
   verifyInvestorCredentials,
 } from "@/lib/server/auth";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
 import { recordAudit } from "@/lib/server/audit-store";
 import { investorActor, visitorActor } from "@/lib/audit";
+import { hasTwoStep } from "@/lib/accounts";
 import { todayUtc } from "@/lib/investments";
 import { buildStatementData, type StatementResult } from "@/lib/statement";
 
@@ -93,6 +96,11 @@ export async function investorLoginAction(_prev: InvestorLoginState, formData: F
   }
 
   loginThrottle.reset(client);
+  if (hasTwoStep(result.investor)) {
+    // The session starts only after the code from the authenticator app (see two-step-actions.ts).
+    await startTwoStepSignIn("investor", result.investor);
+    redirect(PORTAL);
+  }
   await startInvestorSession(result.investor);
   recordAudit({
     actor: investorActor(result.investor),
@@ -116,6 +124,7 @@ export async function investorLogoutAction(): Promise<void> {
     });
   }
   await endInvestorSession();
+  await endTwoStepSignIn("investor");
   redirect(PORTAL);
 }
 

@@ -281,6 +281,11 @@ async function addDemo(): Promise<void> {
     mustChangePassword: false,
     setupTokenHash: null,
     setupExpiresAt: null,
+    totpSecret: null,
+    totpPendingSecret: null,
+    totpEnabledAt: null,
+    totpLastStep: 0,
+    recoveryCodeHashes: [],
   };
 
   function event(when: Date, actor: AuditActor, category: AuditEvent["category"], action: string, summary: string, target?: AuditEvent["target"]): AuditEvent {

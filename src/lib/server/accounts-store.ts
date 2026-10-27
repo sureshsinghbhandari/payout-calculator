@@ -7,6 +7,7 @@ import {
   SEED_ADMINS,
   SETUP_LINK_HOURS,
   validateEmailAddress,
+  type AccountKind,
   type AdminRole,
   type AdminUser,
   type Credentials,
@@ -30,6 +31,8 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *     createInvestor, updateInvestor, setInvestorPassword, issueInvestorSetupToken
  *   Investments: addInvestment, setPayoutPayment, removePayoutPayment
  *   Setup links: findAccountBySetupToken
+ *   Two-step sign-in (admins and investors): setTwoStepPending, enableTwoStep,
+ *     disableTwoStep, markTotpStepUsed, spendRecoveryCode
  */
 const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
 const ADMINS_PATH = `accounts/${ENV}/admin-users.json`;
@@ -90,13 +93,26 @@ async function mutateDoc<T, R>(
 const str = (v: unknown) => (typeof v === "string" ? v : null);
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
+/** Stored recovery code hashes: SHA-256 in base64url (43 characters). Anything else is dropped. */
+function parseRecoveryHashes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && /^[A-Za-z0-9_-]{43}$/.test(v));
+}
+
 function parseCredentials(d: Record<string, unknown>): Credentials {
+  const totpSecret = str(d.totpSecret);
+  const lastStep = num(d.totpLastStep);
   return {
     passwordHash: str(d.passwordHash),
     passwordVersion: num(d.passwordVersion) ?? 0,
     mustChangePassword: d.mustChangePassword === true,
     setupTokenHash: str(d.setupTokenHash),
     setupExpiresAt: str(d.setupExpiresAt),
+    totpSecret,
+    totpPendingSecret: str(d.totpPendingSecret),
+    totpEnabledAt: totpSecret ? str(d.totpEnabledAt) : null,
+    totpLastStep: lastStep !== null && Number.isSafeInteger(lastStep) && lastStep > 0 ? lastStep : 0,
+    recoveryCodeHashes: totpSecret ? parseRecoveryHashes(d.recoveryCodeHashes) : [],
   };
 }
 
@@ -228,7 +244,16 @@ function blankCredentials(): Credentials {
     mustChangePassword: false,
     setupTokenHash: null,
     setupExpiresAt: null,
+    ...twoStepOff(),
   };
+}
+
+/** Two-step sign-in switched off. The last used time step is kept, so old codes stay used. */
+function twoStepOff(lastStep = 0): Pick<
+  Credentials,
+  "totpSecret" | "totpPendingSecret" | "totpEnabledAt" | "totpLastStep" | "recoveryCodeHashes"
+> {
+  return { totpSecret: null, totpPendingSecret: null, totpEnabledAt: null, totpLastStep: lastStep, recoveryCodeHashes: [] };
 }
 
 function seededAdmins(): AdminUser[] {
@@ -243,7 +268,10 @@ function seededAdmins(): AdminUser[] {
   }));
 }
 
-/** New password state: the hash, a bumped version (signs out old sessions), no setup link. */
+/**
+ * New password state: the hash, a bumped version (signs out old sessions), no
+ * setup link. Two-step sign-in stays as it is, so a reset never bypasses it.
+ */
 function withPassword<T extends Credentials>(account: T, passwordHash: string, mustChangePassword: boolean): T {
   return {
     ...account,
@@ -573,4 +601,93 @@ export async function findAccountBySetupToken(token: string, nowMs: number): Pro
   const investor = (await listInvestors()).find(valid);
   if (investor) return { kind: "investor", id: investor.id, name: investor.name, username: investor.username };
   return null;
+}
+
+// ---------- two-step sign-in ----------
+
+/** Applies `change` to one admin user's or investor's credentials and saves the result. */
+function mutateCredentials<R>(
+  kind: AccountKind,
+  id: string,
+  change: (account: Credentials) => { patch: Partial<Credentials>; result: R },
+): Promise<R> {
+  if (kind === "admin") {
+    return mutateAdmins((users) => {
+      let result!: R;
+      const next = updateAdmin(users, id, (u) => {
+        const changed = change(u);
+        result = changed.result;
+        return { ...u, ...changed.patch };
+      });
+      return { users: next, result };
+    });
+  }
+  return mutateInvestors((investors) => {
+    let result!: R;
+    const next = updateInvestorIn(investors, id, (i) => {
+      const changed = change(i);
+      result = changed.result;
+      return { ...i, ...changed.patch };
+    });
+    return { investors: next, result };
+  });
+}
+
+/** Starts (encrypted secret) or cancels (null) a two-step setup that still needs confirming. */
+export function setTwoStepPending(kind: AccountKind, id: string, encryptedSecret: string | null): Promise<void> {
+  return mutateCredentials(kind, id, () => ({ patch: { totpPendingSecret: encryptedSecret }, result: undefined }));
+}
+
+/**
+ * Turns two-step sign-in on with the pending secret, once the person entered a
+ * code for `step`. False when the setup changed meanwhile (e.g. restarted in
+ * another tab) or the step was already used.
+ */
+export function enableTwoStep(
+  kind: AccountKind,
+  id: string,
+  pendingSecret: string,
+  step: number,
+  recoveryCodeHashes: string[],
+): Promise<boolean> {
+  return mutateCredentials(kind, id, (account) => {
+    if (account.totpPendingSecret !== pendingSecret || step <= account.totpLastStep) return { patch: {}, result: false };
+    return {
+      patch: {
+        totpSecret: pendingSecret,
+        totpPendingSecret: null,
+        totpEnabledAt: new Date().toISOString(),
+        totpLastStep: step,
+        recoveryCodeHashes,
+      },
+      result: true,
+    };
+  });
+}
+
+/** Turns two-step sign-in off (by the person, or a reset by a Master Admin). */
+export function disableTwoStep(kind: AccountKind, id: string): Promise<void> {
+  return mutateCredentials(kind, id, (account) => ({ patch: twoStepOff(account.totpLastStep), result: undefined }));
+}
+
+/**
+ * Records that a code for `step` was used. False when that step (or a later
+ * one) was already used: the same code never works twice, even when two
+ * requests arrive at once (the write checks the file's ETag).
+ */
+export function markTotpStepUsed(kind: AccountKind, id: string, step: number): Promise<boolean> {
+  return mutateCredentials(kind, id, (account) =>
+    !account.totpSecret || step <= account.totpLastStep
+      ? { patch: {}, result: false }
+      : { patch: { totpLastStep: step }, result: true },
+  );
+}
+
+/** Uses up a recovery code by its hash. Returns how many are left, or null when it does not match an unused code. */
+export function spendRecoveryCode(kind: AccountKind, id: string, hash: string): Promise<number | null> {
+  return mutateCredentials(kind, id, (account) => {
+    if (!account.totpSecret || !account.recoveryCodeHashes.includes(hash)) return { patch: {}, result: null };
+    const left = account.recoveryCodeHashes.filter((h) => h !== hash);
+    return { patch: { recoveryCodeHashes: left }, result: left.length };
+  });
 }
