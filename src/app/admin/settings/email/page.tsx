@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
@@ -65,6 +66,14 @@ async function EmailSettingsContent() {
         inquiry, and customer replies appear on the inquiry. The provider is chosen with the{" "}
         <code className="rounded bg-slate-100 px-1">EMAIL_PROVIDER</code> setting in Vercel: <strong>gmail</strong> now,{" "}
         <strong>resend</strong> once there is a company domain.
+      </p>
+      <p className="mt-2 max-w-2xl text-sm text-slate-600">
+        Admins with an email address can get new inquiry alerts (My account), and admins and investors can reset a
+        forgotten password by email. The wording of these emails is on{" "}
+        <Link href="/admin/settings/email-templates" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+          Email templates
+        </Link>
+        .
       </p>
 
       <div className="mt-6 space-y-6">

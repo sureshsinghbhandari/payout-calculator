@@ -168,7 +168,8 @@ const PERCENTAGE = /\d\s*%|\bper\s*cent\b|\bpercent\b/i;
 
 /** Fills in placeholders. Unknown placeholders are left as they are; values are never re-scanned. */
 export function renderTemplate(template: EmailTemplate, values: Record<string, string>): EmailTemplate {
-  const fill = (text: string) => text.replace(PLACEHOLDER, (whole, name: string) => values[name] ?? whole);
+  const fill = (text: string) =>
+    text.replace(PLACEHOLDER, (whole, name: string) => (Object.hasOwn(values, name) ? values[name] : whole));
   return {
     // A subject is always one line.
     subject: fill(template.subject).replace(/\s*[\r\n]+\s*/g, " ").trim(),
