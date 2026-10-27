@@ -13,6 +13,7 @@ export const ROLE_LABELS: Record<AdminRole, string> = {
 };
 
 export type Permission =
+  | "dashboard.view"
   | "inquiries.view"
   | "inquiries.status"
   | "inquiries.delete"
@@ -27,6 +28,7 @@ export type Permission =
 
 const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
   master: [
+    "dashboard.view",
     "inquiries.view",
     "inquiries.status",
     "inquiries.delete",
@@ -39,7 +41,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "inquiries.purge",
   ],
   // Sales admins only work with inquiries: view them and mark them contacted.
-  sales: ["inquiries.view", "inquiries.status"],
+  // Their dashboard shows inquiry figures only (no money totals or rates).
+  sales: ["dashboard.view", "inquiries.view", "inquiries.status"],
 };
 
 export function can(role: AdminRole, permission: Permission): boolean {
