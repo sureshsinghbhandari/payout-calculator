@@ -3,6 +3,7 @@
 import { useFormStatus } from "react-dom";
 import { deleteInquiryAction, purgeInquiryAction, restoreInquiryAction, setInquiryStatusAction } from "@/app/admin/actions";
 import type { InquiryStatus } from "@/lib/inquiry";
+import { MarkContactedButton } from "./inquiry/MarkContactedButton";
 
 function SubmitButton({ children, tone }: { children: React.ReactNode; tone: "primary" | "danger" }) {
   const { pending } = useFormStatus();
@@ -58,11 +59,13 @@ export function InquiryActions({ id, status, name, canChangeStatus, canDelete, c
 
   return (
     <div className="flex flex-wrap gap-2">
-      {canChangeStatus && (
+      {/* Marking contacted asks for a note on how the customer was contacted. */}
+      {canChangeStatus && status === "new" && <MarkContactedButton inquiryId={id} name={name} />}
+      {canChangeStatus && status === "contacted" && (
       <form action={setInquiryStatusAction}>
         <input type="hidden" name="id" value={id} />
-        <input type="hidden" name="status" value={status === "new" ? "contacted" : "new"} />
-        <SubmitButton tone="primary">{status === "new" ? "Mark as contacted" : "Mark as new"}</SubmitButton>
+        <input type="hidden" name="status" value="new" />
+        <SubmitButton tone="primary">Mark as new</SubmitButton>
       </form>
       )}
       {canDelete && (

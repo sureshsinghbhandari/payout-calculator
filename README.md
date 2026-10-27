@@ -161,6 +161,10 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - **Search** by name, email, phone number (any part of the digits) or reference, and
   **filter** by status: Open (new and contacted, the default, so converted ones are
   hidden), New, Contacted, Converted or All.
+- **Mark as contacted** asks for a note first: the type (call, meeting or note) and what
+  was said. The note is required and is saved on the inquiry's activity, next to the status
+  change. (Emailing the customer from the inquiry's page also marks it contacted; the email
+  is the record there.)
 - Delete (Master Admin) is a soft delete: the inquiry keeps its data, gets the status
   "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
   can be restored.

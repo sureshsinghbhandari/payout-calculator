@@ -251,13 +251,16 @@ function inquiryId(formData: FormData): string | null {
   return typeof id === "string" && isInquiryId(id) ? id : null;
 }
 
-/** Marks an inquiry as new or contacted (Master and Sales Admins). */
+/**
+ * Marks a contacted inquiry as new again (Master and Sales Admins). Marking
+ * one as contacted goes through markContactedAction, which needs a note.
+ */
 export async function setInquiryStatusAction(formData: FormData): Promise<void> {
   const user = await requireAdminPermission("inquiries.status");
   if (!user) return;
   const id = inquiryId(formData);
   const status = formData.get("status");
-  if (!id || (status !== "new" && status !== "contacted")) return;
+  if (!id || status !== "new") return;
   try {
     const updated = await setInquiryStatus(id, status);
     if (updated) {
