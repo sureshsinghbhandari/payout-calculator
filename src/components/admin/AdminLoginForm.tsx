@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId } from "react";
 import { loginAction, type LoginState } from "@/app/admin/actions";
 
@@ -45,6 +46,14 @@ export function AdminLoginForm() {
           aria-describedby={state.error ? errorId : undefined}
           className={inputClass}
         />
+        <p className="mt-2 text-sm">
+          <Link
+            href="/admin/forgot-password"
+            className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </div>
       {state.error && (
         <p id={errorId} role="alert" className="text-sm font-medium text-red-700">
