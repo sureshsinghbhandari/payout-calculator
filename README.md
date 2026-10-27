@@ -88,8 +88,8 @@ Admins sign in at `/admin` with a **username and password**.
 
 | Role | Can do |
 | --- | --- |
-| **Master Admin** | Everything: inquiries (view, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users. |
-| **Sales Admin** | Inquiries only: view them and mark them contacted or new. They do not see interest rates. |
+| **Master Admin** | Everything: inquiries (view, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users, Email settings. |
+| **Sales Admin** | Inquiries only: view them, email the customer, and mark them contacted or new. They do not see interest rates. |
 
 Starting users (created automatically the first time the admin area is used):
 
@@ -162,7 +162,8 @@ Until the first save, the starting rates in `src/lib/config.ts`
   "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
   can be restored.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
-- Email notifications are not set up yet.
+- Each inquiry has its own page (**Emails** button) with the email conversation. See
+  [Email](#email).
 
 ## Audit log
 
@@ -171,15 +172,51 @@ time (UTC): admin and investor sign-ins (including failed attempts), password ch
 inquiries received, status changes, deletes and restores, conversions, investor and user
 changes, and interest rate unlocks and changes (with the old and new rates). Master
 Admins see it under **Settings > Audit log** (`/admin/settings/audit`), by month and by
-category. Customer email responses will be added with the Gmail integration. Events are
+category. Emails sent and customer replies are recorded too. Events are
 stored as one private file per month in Vercel Blob.
 
 ## Upcoming features
 
 **Settings > Upcoming features** (`/admin/settings/upcoming`, Master Admin) lists planned
-work by area with Now / Next / Later priorities, starting with linking a Gmail account,
-emailing inquiry acknowledgements with the reference number, and reading customer replies.
+work by area with Now / Next / Later priorities, starting with email (Resend), a company
+domain, inquiry acknowledgements and customer replies.
 The list lives in `src/lib/roadmap.ts`.
+
+## Email
+
+Email goes through [Resend](https://resend.com) (free plan: 3,000 emails a month, 100 a
+day, sent and received together). Resend was chosen over Gmail, Outlook and Yahoo: the app
+never gets access to a personal inbox, there is no sign-in that expires, and replies are
+pushed to the app straight away.
+
+- **Acknowledgement:** when an inquiry arrives, the visitor gets a thank-you email with
+  their reference number and the plan they asked about (no interest rate). It is sent
+  after the response, so the visitor never waits.
+- **Staff replies:** on an inquiry's page (`/admin/inquiries/<id>`), Master and Sales
+  Admins can email the customer. Sending marks a new inquiry as contacted.
+- **Customer replies:** every email has a Reply-To such as
+  `reply+<inquiry id>.<signature>@<EMAIL_REPLY_DOMAIN>`. Resend receives the reply and
+  posts it to the webhook `/api/email/inbound` (signature checked). The reply is matched by
+  that address, or by "Ref XXXXXXXX" in the subject, and shown on the inquiry with a
+  **Customer replied** badge on the list. Emails that match nothing are listed under
+  **Settings > Email**.
+- **Delivery:** bounces and failures are shown on the email and recorded in the audit log.
+- Emails are stored as one private file per inquiry in Vercel Blob (`emails/<env>/`), and
+  bodies are always shown as plain text.
+
+**Setting it up** (Settings > Email shows the status and the webhook details):
+
+1. In Resend, create a **Full access** API key. Add it in Vercel as `RESEND_API_KEY`.
+2. Add `EMAIL_FROM`. Until a domain is verified, use `onboarding@resend.dev` (Resend then
+   only delivers to the Resend account owner's address, which is fine for testing).
+3. In Resend, under Receiving, copy your `<id>.resend.app` domain, or later your own
+   reply subdomain, into `EMAIL_REPLY_DOMAIN`.
+4. In Resend, add a webhook to `https://payout-calculator-steel.vercel.app/api/email/inbound`
+   with the events `email.received`, `email.delivered`, `email.bounced`, `email.failed`
+   and `email.complained`. Add its signing secret as `RESEND_WEBHOOK_SECRET`.
+5. Redeploy, then send yourself a test from Settings > Email.
+6. To email any customer: buy a domain, add it in Resend, add the DNS records it shows,
+   and change `EMAIL_FROM` to an address on it (for example `inquiries@mail.<domain>`).
 
 ## Temporary: permanent delete
 
@@ -204,9 +241,9 @@ PowerPoint: `powershell -File docs/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -Image
 ## Data storage
 
 Everything is stored as private JSON files in the Vercel Blob store
-`payout-calculator-rates`: interest rates, inquiries (one file each), admin users and
-investors. Production, preview deployments and local development use separate folders,
-so testing never touches live data.
+`payout-calculator-rates`: interest rates, inquiries (one file each), admin users,
+investors, emails and the audit log. Production, preview deployments and local
+development use separate folders, so testing never touches live data.
 
 ## Environment variables
 
@@ -215,6 +252,10 @@ so testing never touches live data.
 | `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, that signs all sign-in sessions. Required. |
 | `ADMIN_PASSWORD` | One-time bootstrap password for the first Master Admin (`apatel`), at least 12 characters. Not used once apatel has set a personal password. |
 | `BLOB_READ_WRITE_TOKEN` | Access to the private Blob store. Added automatically when the store was connected. |
+| `RESEND_API_KEY` | Resend "Full access" API key. Optional: without it (or `EMAIL_FROM`) no email is sent. |
+| `EMAIL_FROM` | Sender, e.g. `Acme Investments <inquiries@mail.acme.com>`. The display name signs the acknowledgement. |
+| `EMAIL_REPLY_DOMAIN` | Domain that receives replies, e.g. `reply.acme.com` or the `<id>.resend.app` domain. |
+| `RESEND_WEBHOOK_SECRET` | Signing secret (`whsec_...`) of the Resend webhook. |
 
 Set a value with `npx vercel env add NAME production --sensitive` (you type the value),
 then redeploy with `npx vercel deploy --prod`.

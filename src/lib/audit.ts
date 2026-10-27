@@ -13,11 +13,8 @@ export interface AuditActor {
   role?: AdminRole;
 }
 
-/**
- * "customer" is reserved for customer email responses (coming with the Gmail
- * integration).
- */
-export type AuditCategory = "sign-in" | "inquiry" | "investor" | "user" | "rates" | "customer";
+/** "email" is emails sent by the app or staff; "customer" is emails received from customers. */
+export type AuditCategory = "sign-in" | "inquiry" | "investor" | "user" | "rates" | "email" | "customer";
 
 export const AUDIT_CATEGORY_LABELS: Record<AuditCategory, string> = {
   "sign-in": "Sign-in and passwords",
@@ -25,6 +22,7 @@ export const AUDIT_CATEGORY_LABELS: Record<AuditCategory, string> = {
   investor: "Investors",
   user: "Users",
   rates: "Interest rates",
+  email: "Emails sent",
   customer: "Customer responses",
 };
 
@@ -56,6 +54,8 @@ export function adminActor(user: Pick<AdminUser, "id" | "name" | "username" | "r
 export function investorActor(investor: Pick<Investor, "id" | "name" | "username">): AuditActor {
   return { kind: "investor", id: investor.id, name: investor.name, username: investor.username };
 }
+
+export const SYSTEM_ACTOR: AuditActor = { kind: "system", name: "System" };
 
 export function visitorActor(name: string, username?: string): AuditActor {
   return { kind: "visitor", name, ...(username ? { username } : {}) };

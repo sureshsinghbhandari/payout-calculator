@@ -48,6 +48,17 @@ export interface StoredInquiry extends InquiryContact {
   /** When the inquiry was converted, ISO timestamp (UTC). */
   convertedAt?: string;
   plan: InquiryPlan;
+  /** Summary of the email thread (the messages are stored separately). */
+  emails?: InquiryEmailSummary;
+}
+
+export interface InquiryEmailSummary {
+  /** Emails sent and received. */
+  count: number;
+  /** ISO timestamp (UTC) of the latest email. */
+  lastAt: string;
+  /** "in" when the customer wrote last, so a reply is due. */
+  lastDirection: "in" | "out";
 }
 
 export type InquiryParse =
@@ -165,6 +176,13 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   const status: InquiryStatus =
     d.status === "contacted" || d.status === "deleted" || d.status === "converted" ? d.status : "new";
   const deletedAt = str(d.deletedAt);
+  const emailData = (d.emails ?? null) as Record<string, unknown> | null;
+  const emailCount = num(emailData?.count);
+  const emailLastAt = str(emailData?.lastAt);
+  const emails: InquiryEmailSummary | undefined =
+    emailCount !== null && emailLastAt
+      ? { count: emailCount, lastAt: emailLastAt, lastDirection: emailData?.lastDirection === "in" ? "in" : "out" }
+      : undefined;
   const statusBeforeDelete = d.statusBeforeDelete === "contacted" ? "contacted" : "new";
   return {
     id,
@@ -187,5 +205,6 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
       totalInterestCents: values.totalInterestCents!,
       totalPaidCents: values.totalPaidCents!,
     },
+    ...(emails ? { emails } : {}),
   };
 }

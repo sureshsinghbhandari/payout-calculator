@@ -63,41 +63,53 @@ export const ROADMAP_CATEGORY_ORDER: RoadmapCategory[] = [
 export const ROADMAP: RoadmapItem[] = [
   // ---------- Email and messaging ----------
   {
-    id: "gmail-link",
-    title: "Link a Gmail account",
+    id: "email-setup",
+    title: "Send and receive email (Resend)",
+    category: "communication",
+    priority: "now",
+    status: "in-progress",
+    description:
+      "Email through Resend (chosen over Gmail, Outlook and Yahoo: no access to a personal inbox, no sign-in that expires, and replies arrive instantly). Settings > Email shows the status, the webhook details and a test button.",
+    outcome: "Emails to customers come from a company address, and replies come back into the app.",
+    needs: [
+      "A Resend account with a Full access API key, added to Vercel by the owner",
+      "The Resend webhook and its signing secret",
+      "Our own domain, so emails can go to any customer (until then Resend only sends to the account owner)",
+    ],
+  },
+  {
+    id: "company-domain",
+    title: "Company domain",
     category: "communication",
     priority: "now",
     status: "planned",
-    description: "Connect the team's Gmail account so the app can send emails and read replies from that mailbox.",
-    outcome: "Emails to customers come from the team's own Gmail address, and replies land in the same mailbox.",
-    needs: [
-      "A Google Cloud project with the Gmail API enabled",
-      "The Gmail account owner signs in once to approve access (in the browser, never shared with us)",
-      "A Master Admin screen to connect or disconnect the account",
-    ],
+    description:
+      "Buy a domain (about $11 a year) for the website and email, verify it in Resend, and point the site at it.",
+    outcome: "Customers see a company web address and get emails from it, which reads as more trustworthy.",
+    needs: ["The domain name to buy", "DNS records from Resend for sending and receiving"],
   },
   {
     id: "inquiry-acknowledgement",
     title: "Acknowledge inquiries by email",
     category: "communication",
     priority: "now",
-    status: "planned",
+    status: "in-progress",
     description:
       "As soon as an inquiry arrives, email the customer a thank-you with their reference number and what happens next.",
     outcome: "Every customer gets an immediate confirmation, recorded in the audit log.",
-    dependsOn: ["gmail-link"],
-    needs: ["The linked Gmail account", "Approved wording for the acknowledgement email"],
+    dependsOn: ["email-setup", "company-domain"],
+    needs: ["Approved wording for the acknowledgement email (a first version is live)"],
   },
   {
     id: "customer-responses",
-    title: "Customer responses from Gmail",
+    title: "Customer email replies",
     category: "communication",
     priority: "now",
-    status: "planned",
+    status: "in-progress",
     description:
-      "Read customers' email replies from the linked Gmail account and attach them to the matching inquiry by reference number.",
+      "Customers' replies arrive through the Resend webhook and are attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.",
     outcome: "Admins see the conversation on the inquiry; each response is recorded in the audit log under Customer responses.",
-    dependsOn: ["gmail-link", "inquiry-acknowledgement"],
+    dependsOn: ["email-setup", "inquiry-acknowledgement"],
   },
   {
     id: "new-inquiry-alerts",
@@ -106,7 +118,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "next",
     status: "planned",
     description: "Notify the sales team by email (and optionally Slack or Teams) the moment a new inquiry arrives.",
-    dependsOn: ["gmail-link"],
+    dependsOn: ["email-setup"],
   },
   {
     id: "email-templates",
@@ -116,7 +128,7 @@ export const ROADMAP: RoadmapItem[] = [
     status: "planned",
     description:
       "Editable templates for follow-ups, welcome-to-the-portal emails, password setup links and payout notices, with the customer's name and plan filled in.",
-    dependsOn: ["gmail-link"],
+    dependsOn: ["email-setup"],
   },
   {
     id: "payout-reminders",
@@ -125,7 +137,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "later",
     status: "planned",
     description: "Email investors a few days before each payout, and confirm when it has been paid.",
-    dependsOn: ["gmail-link", "record-payments"],
+    dependsOn: ["email-setup", "record-payments"],
   },
   {
     id: "sms-whatsapp",
@@ -190,7 +202,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "next",
     status: "planned",
     description: "Investors and staff reset their own password with an emailed link instead of asking an admin.",
-    dependsOn: ["gmail-link"],
+    dependsOn: ["email-setup"],
   },
   {
     id: "statements",

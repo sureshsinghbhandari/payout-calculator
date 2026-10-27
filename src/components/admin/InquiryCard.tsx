@@ -30,7 +30,16 @@ export interface InquiryPermissions {
   purge: boolean;
 }
 
-export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; permissions: InquiryPermissions }) {
+export function InquiryCard({
+  inquiry,
+  permissions,
+  showEmailLink = true,
+}: {
+  inquiry: StoredInquiry;
+  permissions: InquiryPermissions;
+  /** Link to the inquiry page with its emails (off on that page itself). */
+  showEmailLink?: boolean;
+}) {
   const { plan } = inquiry;
   const style = STATUS_STYLES[inquiry.status];
   const details = [
@@ -54,6 +63,11 @@ export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; 
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}>
               {style.label}
             </span>
+            {inquiry.emails?.lastDirection === "in" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                Customer replied
+              </span>
+            )}
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
             Received {formatTimestamp(inquiry.createdAt)} · Ref {inquiryReference(inquiry.id)}
@@ -62,6 +76,14 @@ export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; 
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {showEmailLink && (
+            <Link
+              href={`/admin/inquiries/${inquiry.id}`}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+            >
+              {inquiry.emails ? `Emails (${inquiry.emails.count})` : "Emails"}
+            </Link>
+          )}
           {inquiry.status === "contacted" && permissions.convert && (
             <Link
               href={`/admin/inquiries/${inquiry.id}/convert`}

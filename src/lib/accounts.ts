@@ -17,9 +17,11 @@ export type Permission =
   | "inquiries.status"
   | "inquiries.delete"
   | "inquiries.convert"
+  | "inquiries.email"
   | "investors.manage"
   | "rates.manage"
   | "users.manage"
+  | "email.manage"
   | "audit.view"
   | "roadmap.view"
   // TEMPORARY: permanent deletion of inquiries, to be removed before go-live.
@@ -31,15 +33,17 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "inquiries.status",
     "inquiries.delete",
     "inquiries.convert",
+    "inquiries.email",
     "investors.manage",
     "rates.manage",
     "users.manage",
+    "email.manage",
     "audit.view",
     "roadmap.view",
     "inquiries.purge",
   ],
-  // Sales admins only work with inquiries: view them and mark them contacted.
-  sales: ["inquiries.view", "inquiries.status"],
+  // Sales admins only work with inquiries: view them, email the customer and mark them contacted.
+  sales: ["inquiries.view", "inquiries.status", "inquiries.email"],
 };
 
 export function can(role: AdminRole, permission: Permission): boolean {

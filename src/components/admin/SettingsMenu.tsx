@@ -40,6 +40,7 @@ export function SettingsMenu({ user }: { user: PublicAdmin }) {
     { href: "/admin/investors", label: "Investors", permission: "investors.manage" as const },
     { href: "/admin/settings/rates", label: "Interest rates", permission: "rates.manage" as const },
     { href: "/admin/settings/users", label: "Users", permission: "users.manage" as const },
+    { href: "/admin/settings/email", label: "Email", permission: "email.manage" as const },
     { href: "/admin/settings/audit", label: "Audit log", permission: "audit.view" as const },
     { href: "/admin/settings/upcoming", label: "Upcoming features", permission: "roadmap.view" as const },
     { href: "/admin/account", label: "My account", permission: null },

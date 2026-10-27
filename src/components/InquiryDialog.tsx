@@ -31,6 +31,7 @@ function InquiryForm({ plan, onCancel }: FormProps) {
         <p role="status" className="text-sm leading-relaxed text-slate-700">
           We received your inquiry and will contact you soon. Your reference is{" "}
           <span className="font-semibold tabular-nums text-slate-900">{state.reference}</span>.
+          {state.emailed && " We have also emailed you a confirmation."}
         </p>
         <div className="flex justify-end">
           <button

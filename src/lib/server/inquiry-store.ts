@@ -1,6 +1,9 @@
 import "server-only";
-import { del, get, list, put } from "@vercel/blob";
+import { BlobPreconditionFailedError, del, get, list, put } from "@vercel/blob";
 import { isInquiryId, parseStoredInquiry, type ActiveInquiryStatus, type StoredInquiry } from "../inquiry";
+
+/** Rewrite attempts when two changes to the same inquiry overlap. */
+const UPDATE_ATTEMPTS = 4;
 
 /**
  * Inquiries are stored as one private JSON file each in Vercel Blob, so two
@@ -43,9 +46,7 @@ async function readInquiry(pathname: string): Promise<{ inquiry: StoredInquiry; 
   }
 }
 
-/** The newest inquiries first, and the total number stored. */
-export async function listInquiries(): Promise<{ inquiries: StoredInquiry[]; total: number }> {
-  if (!isInquiryStorageConfigured()) return { inquiries: [], total: 0 };
+async function listPathnames(): Promise<string[]> {
   const pathnames: string[] = [];
   let cursor: string | undefined;
   do {
@@ -53,6 +54,13 @@ export async function listInquiries(): Promise<{ inquiries: StoredInquiry[]; tot
     pathnames.push(...page.blobs.map((b) => b.pathname));
     cursor = page.hasMore ? page.cursor : undefined;
   } while (cursor);
+  return pathnames;
+}
+
+/** The newest inquiries first, and the total number stored. */
+export async function listInquiries(): Promise<{ inquiries: StoredInquiry[]; total: number }> {
+  if (!isInquiryStorageConfigured()) return { inquiries: [], total: 0 };
+  const pathnames = await listPathnames();
 
   // Ids start with a UTC timestamp, so sorting the paths sorts by time.
   pathnames.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
@@ -82,6 +90,41 @@ async function updateInquiry(
     contentType: "application/json",
   });
   return next;
+}
+
+/**
+ * The id of the newest inquiry whose reference (the last 8 characters of the
+ * id, e.g. "A1B2C3D4") matches, or null.
+ */
+export async function findInquiryIdByReference(reference: string): Promise<string | null> {
+  if (!/^[0-9A-F]{8}$/i.test(reference)) return null;
+  const suffix = `-${reference.toLowerCase()}.json`;
+  const match = (await listPathnames())
+    .filter((p) => p.endsWith(suffix))
+    .sort()
+    .pop();
+  const id = match?.slice(PREFIX.length, -".json".length);
+  return id && isInquiryId(id) ? id : null;
+}
+
+/** Updates the email summary on an inquiry after an email is sent or received. Retries on conflicts. */
+export async function noteInquiryEmail(id: string, direction: "in" | "out", at: string): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await updateInquiry(id, (inquiry) => ({
+        ...inquiry,
+        emails: {
+          count: (inquiry.emails?.count ?? 0) + 1,
+          lastAt: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastAt : at,
+          lastDirection: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastDirection : direction,
+        },
+      }));
+      return;
+    } catch (error) {
+      if (!(error instanceof BlobPreconditionFailedError) || attempt >= UPDATE_ATTEMPTS) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 50 + Math.random() * 150 * attempt));
+    }
+  }
 }
 
 /** One inquiry by id, or null. */
