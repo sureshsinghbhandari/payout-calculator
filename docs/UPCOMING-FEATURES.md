@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**12 done · 4 in progress · 33 pending**
+**12 done · 4 in progress · 33 pending** · 21 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -14,57 +14,88 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 
 ## Summary
 
-| # | Feature | Status | Priority | Area |
-| --- | --- | --- | --- | --- |
-| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | Now | Email and messaging |
-| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Now | Email and messaging |
-| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Now | Email and messaging |
-| 4 | [Search, filters and export](#search-export) | 🔄 In progress | Next | Sales and inquiries |
-| 5 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging |
-| 6 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance |
-| 7 | [Alerts for new inquiries](#new-inquiry-alerts) | ⏳ Pending | Next | Email and messaging |
-| 8 | [Email templates](#email-templates) | ⏳ Pending | Next | Email and messaging |
-| 9 | [Assign inquiries and follow-up dates](#assign-inquiries) | ⏳ Pending | Next | Sales and inquiries |
-| 10 | [Lead source and seminar tracking](#lead-source) | ⏳ Pending | Next | Sales and inquiries |
-| 11 | [Forgot password by email](#forgot-password) | ⏳ Pending | Next | Investor portal |
-| 12 | [Statements and downloads](#statements) | ⏳ Pending | Next | Investor portal |
-| 13 | [Record actual payouts](#record-payments) | ⏳ Pending | Next | Payouts and operations |
-| 14 | [Payout calendar](#payout-calendar) | ⏳ Pending | Next | Payouts and operations |
-| 15 | [Two-step sign-in](#two-factor) | ⏳ Pending | Next | Security and compliance |
-| 16 | [Privacy notice and data requests](#privacy) | ⏳ Pending | Next | Security and compliance |
-| 17 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance |
-| 18 | [Dashboard](#dashboard) | ⏳ Pending | Next | Reports and insights |
-| 19 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience |
-| 20 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience |
-| 21 | [Payout notices to investors](#payout-reminders) | ⏳ Pending | Later | Email and messaging |
-| 22 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging |
-| 23 | [Pipeline board](#pipeline-board) | ⏳ Pending | Later | Sales and inquiries |
-| 24 | [Document vault](#documents) | ⏳ Pending | Later | Investor portal |
-| 25 | [More investments and renewals](#multiple-investments) | ⏳ Pending | Later | Investor portal |
-| 26 | [Profile and bank detail updates](#profile-requests) | ⏳ Pending | Later | Investor portal |
-| 27 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations |
-| 28 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Later | Payouts and operations |
-| 29 | [Amounts and terms in settings](#configurable-products) | ⏳ Pending | Later | Payouts and operations |
-| 30 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance |
-| 31 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance |
-| 32 | [Sign-in alerts](#sign-in-alerts) | ⏳ Pending | Later | Security and compliance |
-| 33 | [Audit log export](#audit-export) | ⏳ Pending | Later | Reports and insights |
-| 34 | [Visitor analytics](#web-analytics) | ⏳ Pending | Later | Reports and insights |
-| 35 | [Install on phones](#installable-app) | ⏳ Pending | Later | Platform and experience |
-| 36 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience |
-| 37 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience |
-| 38 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries |
-| 39 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries |
-| 40 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries |
-| 41 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal |
-| 42 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal |
-| 43 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations |
-| 44 | [Interest rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations |
-| 45 | [Admin users and roles](#admin-roles) | ✅ Done | Now | Security and compliance |
-| 46 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance |
-| 47 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience |
-| 48 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience |
-| 49 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries |
+| # | Feature | Status | Priority | Area | Needs from you |
+| --- | --- | --- | --- | --- | --- |
+| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | Now | Email and messaging | A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD. |
+| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Now | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording. |
+| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Now | Email and messaging | Email set up (Gmail settings in Vercel). |
+| 4 | [Search, filters and export](#search-export) | 🔄 In progress | Next | Sales and inquiries | — |
+| 5 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 6 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
+| 7 | [Alerts for new inquiries](#new-inquiry-alerts) | ⏳ Pending | Next | Email and messaging | Email set up (Gmail settings in Vercel) before alerts can be sent. |
+| 8 | [Email templates](#email-templates) | ⏳ Pending | Next | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the wording. |
+| 9 | [Assign inquiries and follow-up dates](#assign-inquiries) | ⏳ Pending | Next | Sales and inquiries | — |
+| 10 | [Lead source and seminar tracking](#lead-source) | ⏳ Pending | Next | Sales and inquiries | — |
+| 11 | [Forgot password by email](#forgot-password) | ⏳ Pending | Next | Investor portal | Email set up (Gmail settings in Vercel) before reset links can be sent. |
+| 12 | [Statements and downloads](#statements) | ⏳ Pending | Next | Investor portal | — |
+| 13 | [Record actual payouts](#record-payments) | ⏳ Pending | Next | Payouts and operations | — |
+| 14 | [Payout calendar](#payout-calendar) | ⏳ Pending | Next | Payouts and operations | — |
+| 15 | [Two-step sign-in](#two-factor) | ⏳ Pending | Next | Security and compliance | — |
+| 16 | [Privacy notice and data requests](#privacy) | ⏳ Pending | Next | Security and compliance | The privacy notice wording, ideally checked by a lawyer. |
+| 17 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance | Your go-ahead to add and run tests. |
+| 18 | [Dashboard](#dashboard) | ⏳ Pending | Next | Reports and insights | — |
+| 19 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience | The domain (see Company domain) and access to its DNS settings. |
+| 20 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
+| 21 | [Payout notices to investors](#payout-reminders) | ⏳ Pending | Later | Email and messaging | Email set up (Gmail settings in Vercel). |
+| 22 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
+| 23 | [Pipeline board](#pipeline-board) | ⏳ Pending | Later | Sales and inquiries | — |
+| 24 | [Document vault](#documents) | ⏳ Pending | Later | Investor portal | — |
+| 25 | [More investments and renewals](#multiple-investments) | ⏳ Pending | Later | Investor portal | — |
+| 26 | [Profile and bank detail updates](#profile-requests) | ⏳ Pending | Later | Investor portal | — |
+| 27 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations | Confirm Monthly should be offered, and the monthly rate. |
+| 28 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Later | Payouts and operations | Which country's public holidays to skip (for example US federal holidays). |
+| 29 | [Amounts and terms in settings](#configurable-products) | ⏳ Pending | Later | Payouts and operations | — |
+| 30 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
+| 31 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 32 | [Sign-in alerts](#sign-in-alerts) | ⏳ Pending | Later | Security and compliance | — |
+| 33 | [Audit log export](#audit-export) | ⏳ Pending | Later | Reports and insights | — |
+| 34 | [Visitor analytics](#web-analytics) | ⏳ Pending | Later | Reports and insights | Turn on Web Analytics in the Vercel project. |
+| 35 | [Install on phones](#installable-app) | ⏳ Pending | Later | Platform and experience | — |
+| 36 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
+| 37 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
+| 38 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 39 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 40 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 41 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 42 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 43 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 44 | [Interest rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 45 | [Admin users and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 46 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 47 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 48 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 49 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+
+<a id="waiting-on-you"></a>
+
+## Waiting on you
+
+These cannot be finished without access, an account, a key, wording or a decision from you.
+Everything else in the list can be built without your help.
+
+| # | Feature | Status | What is needed from you |
+| --- | --- | --- | --- |
+| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD. |
+| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording. |
+| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Email set up (Gmail settings in Vercel). |
+| 4 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 5 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
+| 6 | [Alerts for new inquiries](#new-inquiry-alerts) | ⏳ Pending | Email set up (Gmail settings in Vercel) before alerts can be sent. |
+| 7 | [Email templates](#email-templates) | ⏳ Pending | Email set up (Gmail settings in Vercel), and approval of the wording. |
+| 8 | [Forgot password by email](#forgot-password) | ⏳ Pending | Email set up (Gmail settings in Vercel) before reset links can be sent. |
+| 9 | [Privacy notice and data requests](#privacy) | ⏳ Pending | The privacy notice wording, ideally checked by a lawyer. |
+| 10 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Your go-ahead to add and run tests. |
+| 11 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
+| 12 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
+| 13 | [Payout notices to investors](#payout-reminders) | ⏳ Pending | Email set up (Gmail settings in Vercel). |
+| 14 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
+| 15 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
+| 16 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Which country's public holidays to skip (for example US federal holidays). |
+| 17 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
+| 18 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 19 | [Visitor analytics](#web-analytics) | ⏳ Pending | Turn on Web Analytics in the Vercel project. |
+| 20 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
+| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
 
 ## In progress
 
@@ -75,6 +106,8 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 **Status:** 🔄 In progress · **Priority:** Now · **Area:** Email and messaging
 
 Email works with Gmail now (no domain needed; replies are picked up by checking the inbox) and can switch to Resend with the EMAIL_PROVIDER setting once there is a company domain (replies arrive instantly, with delivery and bounce tracking). Settings > Email shows the status and a test button.
+
+**Needs from you:** A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD.
 
 **Outcome:** Customers get emails from the business, and their replies come back into the app.
 
@@ -93,6 +126,8 @@ Email works with Gmail now (no domain needed; replies are picked up by checking 
 
 As soon as an inquiry arrives, email the customer a thank-you with their reference number and what happens next.
 
+**Needs from you:** Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording.
+
 **Outcome:** Every customer gets an immediate confirmation, recorded in the audit log.
 
 **Depends on:** [Send and receive email (Gmail now, Resend later)](#email-setup) (🔄 In progress), [Company domain](#company-domain) (⏳ Pending)
@@ -110,6 +145,8 @@ As soon as an inquiry arrives, email the customer a thank-you with their referen
 **Status:** 🔄 In progress · **Priority:** Now · **Area:** Email and messaging
 
 Customers' replies are picked up (from the Gmail inbox now, through the Resend webhook later) and attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.
+
+**Needs from you:** Email set up (Gmail settings in Vercel).
 
 **Outcome:** Admins see the conversation on the inquiry; each response is recorded in the audit log under Customer responses.
 
@@ -139,6 +176,8 @@ Search inquiries and investors by name, email or reference, filter by status and
 
 Buy a domain (about $11 a year) for the website and email, verify it in Resend, and point the site at it.
 
+**Needs from you:** Buy the domain (about $11 a year) and add the DNS records it needs.
+
 **Outcome:** Customers see a company web address and get emails from it, which reads as more trustworthy.
 
 **Needs:**
@@ -156,6 +195,8 @@ Buy a domain (about $11 a year) for the website and email, verify it in Resend, 
 
 The temporary Delete permanently button for inquiries is removed once the app is ready.
 
+**Needs from you:** Your go-ahead at go-live, after the test data is cleaned up.
+
 [Back to the table](#summary)
 
 <a id="new-inquiry-alerts"></a>
@@ -165,6 +206,8 @@ The temporary Delete permanently button for inquiries is removed once the app is
 **Status:** ⏳ Pending · **Priority:** Next · **Area:** Email and messaging
 
 Notify the sales team by email (and optionally Slack or Teams) the moment a new inquiry arrives.
+
+**Needs from you:** Email set up (Gmail settings in Vercel) before alerts can be sent.
 
 **Depends on:** [Send and receive email (Gmail now, Resend later)](#email-setup) (🔄 In progress)
 
@@ -177,6 +220,8 @@ Notify the sales team by email (and optionally Slack or Teams) the moment a new 
 **Status:** ⏳ Pending · **Priority:** Next · **Area:** Email and messaging
 
 Editable templates for follow-ups, welcome-to-the-portal emails, password setup links and payout notices, with the customer's name and plan filled in.
+
+**Needs from you:** Email set up (Gmail settings in Vercel), and approval of the wording.
 
 **Depends on:** [Send and receive email (Gmail now, Resend later)](#email-setup) (🔄 In progress)
 
@@ -211,6 +256,8 @@ Record where each inquiry came from (seminar, website, referral) using links or 
 **Status:** ⏳ Pending · **Priority:** Next · **Area:** Investor portal
 
 Investors and staff reset their own password with an emailed link instead of asking an admin.
+
+**Needs from you:** Email set up (Gmail settings in Vercel) before reset links can be sent.
 
 **Depends on:** [Send and receive email (Gmail now, Resend later)](#email-setup) (🔄 In progress)
 
@@ -264,6 +311,8 @@ Optional authenticator-app codes for staff and investors, required for Master Ad
 
 A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.
 
+**Needs from you:** The privacy notice wording, ideally checked by a lawyer.
+
 [Back to the table](#summary)
 
 <a id="automated-tests"></a>
@@ -273,6 +322,8 @@ A privacy notice on the inquiry form, consent checkbox, retention periods, and a
 **Status:** ⏳ Pending · **Priority:** Next · **Area:** Security and compliance
 
 Tests for sign-in, roles, conversion and the portal, run automatically before each deployment.
+
+**Needs from you:** Your go-ahead to add and run tests.
 
 [Back to the table](#summary)
 
@@ -294,6 +345,8 @@ Inquiries per week, conversion rate, total invested, and upcoming payouts owed, 
 
 Use your company domain (for example invest.yourcompany.com) instead of the vercel.app address.
 
+**Needs from you:** The domain (see Company domain) and access to its DNS settings.
+
 **Needs:**
 
 - A domain you own
@@ -309,6 +362,8 @@ Use your company domain (for example invest.yourcompany.com) instead of the verc
 
 Your logo, colours and contact details across the calculator, portal, emails and seminar materials.
 
+**Needs from you:** Your logo, colours and contact details.
+
 [Back to the table](#summary)
 
 <a id="payout-reminders"></a>
@@ -318,6 +373,8 @@ Your logo, colours and contact details across the calculator, portal, emails and
 **Status:** ⏳ Pending · **Priority:** Later · **Area:** Email and messaging
 
 Email investors a few days before each payout, and confirm when it has been paid.
+
+**Needs from you:** Email set up (Gmail settings in Vercel).
 
 **Depends on:** [Send and receive email (Gmail now, Resend later)](#email-setup) (🔄 In progress), [Record actual payouts](#record-payments) (⏳ Pending)
 
@@ -330,6 +387,8 @@ Email investors a few days before each payout, and confirm when it has been paid
 **Status:** ⏳ Pending · **Priority:** Later · **Area:** Email and messaging
 
 Optional text or WhatsApp messages for acknowledgements and payout notices.
+
+**Needs from you:** A messaging provider account (for example Twilio) and its keys, and customer consent.
 
 **Needs:**
 
@@ -386,6 +445,8 @@ Investors request changes to their contact or bank details; a Master Admin appro
 
 Add Monthly alongside Quarterly, Half-Yearly and Yearly, with its own rate.
 
+**Needs from you:** Confirm Monthly should be offered, and the monthly rate.
+
 [Back to the table](#summary)
 
 <a id="holiday-calendar"></a>
@@ -395,6 +456,8 @@ Add Monthly alongside Quarterly, Half-Yearly and Yearly, with its own rate.
 **Status:** ⏳ Pending · **Priority:** Later · **Area:** Payouts and operations
 
 Skip public holidays when counting business days, and optionally move payouts that land on weekends or holidays.
+
+**Needs from you:** Which country's public holidays to skip (for example US federal holidays).
 
 [Back to the table](#summary)
 
@@ -416,6 +479,8 @@ Let Master Admins change the investment amounts and terms on a settings page ins
 
 Collect and verify investor identity documents before an investment is confirmed.
 
+**Needs from you:** An identity verification provider account, and advice on the rules that apply.
+
 **Needs:**
 
 - Advice on the rules that apply to your business
@@ -430,6 +495,8 @@ Collect and verify investor identity documents before an investment is confirmed
 **Status:** ⏳ Pending · **Priority:** Later · **Area:** Security and compliance
 
 Send the investment agreement for electronic signature and store the signed copy in the document vault.
+
+**Needs from you:** An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys.
 
 **Depends on:** [Document vault](#documents) (⏳ Pending)
 
@@ -463,6 +530,8 @@ Download the audit log for a date range as Excel.
 
 Privacy-friendly visit counts for the calculator page (Vercel Web Analytics has a free tier).
 
+**Needs from you:** Turn on Web Analytics in the Vercel project.
+
 [Back to the table](#summary)
 
 <a id="installable-app"></a>
@@ -483,6 +552,8 @@ Let investors add the portal to their phone's home screen and open it like an ap
 
 Show the calculator and portal in other languages, with local number and date formats.
 
+**Needs from you:** Which languages, and someone to check the translations.
+
 [Back to the table](#summary)
 
 <a id="accessibility-review"></a>
@@ -492,6 +563,8 @@ Show the calculator and portal in other languages, with local number and date fo
 **Status:** ⏳ Pending · **Priority:** Later · **Area:** Platform and experience
 
 A full check against WCAG 2.2 AA with screen readers and keyboard-only use.
+
+**Needs from you:** Your go-ahead for browser checks.
 
 [Back to the table](#summary)
 

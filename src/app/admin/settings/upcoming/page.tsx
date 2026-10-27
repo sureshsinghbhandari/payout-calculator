@@ -55,6 +55,12 @@ function Item({ item }: { item: RoadmapItem }) {
           {item.outcome}
         </p>
       )}
+      {item.fromYou && item.status !== "done" && (
+        <p className="mt-1.5 rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900">
+          <span className="font-semibold">Needs from you: </span>
+          {item.fromYou}
+        </p>
+      )}
       {item.dependsOn && item.dependsOn.length > 0 && (
         <p className="mt-1.5 text-xs text-slate-600">
           <span className="font-semibold text-slate-800">Depends on: </span>

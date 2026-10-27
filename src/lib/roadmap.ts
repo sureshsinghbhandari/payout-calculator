@@ -27,6 +27,8 @@ export interface RoadmapItem {
   dependsOn?: string[];
   /** What is needed to build it. */
   needs?: string[];
+  /** Access, accounts, keys, wording or decisions only the owner can give. */
+  fromYou?: string;
 }
 
 export const ROADMAP_STATUS_LABELS: Record<RoadmapStatus, string> = {
@@ -69,6 +71,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "now",
     status: "in-progress",
+    fromYou: "A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD.",
     description:
       "Email works with Gmail now (no domain needed; replies are picked up by checking the inbox) and can switch to Resend with the EMAIL_PROVIDER setting once there is a company domain (replies arrive instantly, with delivery and bounce tracking). Settings > Email shows the status and a test button.",
     outcome: "Customers get emails from the business, and their replies come back into the app.",
@@ -83,6 +86,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "now",
     status: "planned",
+    fromYou: "Buy the domain (about $11 a year) and add the DNS records it needs.",
     description:
       "Buy a domain (about $11 a year) for the website and email, verify it in Resend, and point the site at it.",
     outcome: "Customers see a company web address and get emails from it, which reads as more trustworthy.",
@@ -94,6 +98,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "now",
     status: "in-progress",
+    fromYou: "Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording.",
     description:
       "As soon as an inquiry arrives, email the customer a thank-you with their reference number and what happens next.",
     outcome: "Every customer gets an immediate confirmation, recorded in the audit log.",
@@ -106,6 +111,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "now",
     status: "in-progress",
+    fromYou: "Email set up (Gmail settings in Vercel).",
     description:
       "Customers' replies are picked up (from the Gmail inbox now, through the Resend webhook later) and attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.",
     outcome: "Admins see the conversation on the inquiry; each response is recorded in the audit log under Customer responses.",
@@ -117,6 +123,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "next",
     status: "planned",
+    fromYou: "Email set up (Gmail settings in Vercel) before alerts can be sent.",
     description: "Notify the sales team by email (and optionally Slack or Teams) the moment a new inquiry arrives.",
     dependsOn: ["email-setup"],
   },
@@ -126,6 +133,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "next",
     status: "planned",
+    fromYou: "Email set up (Gmail settings in Vercel), and approval of the wording.",
     description:
       "Editable templates for follow-ups, welcome-to-the-portal emails, password setup links and payout notices, with the customer's name and plan filled in.",
     dependsOn: ["email-setup"],
@@ -136,6 +144,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "later",
     status: "planned",
+    fromYou: "Email set up (Gmail settings in Vercel).",
     description: "Email investors a few days before each payout, and confirm when it has been paid.",
     dependsOn: ["email-setup", "record-payments"],
   },
@@ -145,6 +154,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "communication",
     priority: "later",
     status: "planned",
+    fromYou: "A messaging provider account (for example Twilio) and its keys, and customer consent.",
     description: "Optional text or WhatsApp messages for acknowledgements and payout notices.",
     needs: ["A messaging provider account (for example Twilio or WhatsApp Business)", "Customer consent to receive messages"],
   },
@@ -249,6 +259,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "portal",
     priority: "next",
     status: "planned",
+    fromYou: "Email set up (Gmail settings in Vercel) before reset links can be sent.",
     description: "Investors and staff reset their own password with an emailed link instead of asking an admin.",
     dependsOn: ["email-setup"],
   },
@@ -328,6 +339,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "operations",
     priority: "later",
     status: "planned",
+    fromYou: "Confirm Monthly should be offered, and the monthly rate.",
     description: "Add Monthly alongside Quarterly, Half-Yearly and Yearly, with its own rate.",
   },
   {
@@ -336,6 +348,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "operations",
     priority: "later",
     status: "planned",
+    fromYou: "Which country's public holidays to skip (for example US federal holidays).",
     description:
       "Skip public holidays when counting business days, and optionally move payouts that land on weekends or holidays.",
   },
@@ -381,6 +394,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "later",
     status: "planned",
+    fromYou: "An identity verification provider account, and advice on the rules that apply.",
     description: "Collect and verify investor identity documents before an investment is confirmed.",
     needs: ["Advice on the rules that apply to your business", "An identity verification provider"],
   },
@@ -390,6 +404,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "later",
     status: "planned",
+    fromYou: "An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys.",
     description: "Send the investment agreement for electronic signature and store the signed copy in the document vault.",
     dependsOn: ["documents"],
   },
@@ -399,6 +414,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "next",
     status: "planned",
+    fromYou: "The privacy notice wording, ideally checked by a lawyer.",
     description:
       "A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.",
   },
@@ -408,6 +424,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "now",
     status: "planned",
+    fromYou: "Your go-ahead at go-live, after the test data is cleaned up.",
     description: "The temporary Delete permanently button for inquiries is removed once the app is ready.",
   },
   {
@@ -416,6 +433,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "next",
     status: "planned",
+    fromYou: "Your go-ahead to add and run tests.",
     description: "Tests for sign-in, roles, conversion and the portal, run automatically before each deployment.",
   },
   {
@@ -451,6 +469,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "reporting",
     priority: "later",
     status: "planned",
+    fromYou: "Turn on Web Analytics in the Vercel project.",
     description: "Privacy-friendly visit counts for the calculator page (Vercel Web Analytics has a free tier).",
   },
 
@@ -478,6 +497,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "platform",
     priority: "next",
     status: "planned",
+    fromYou: "The domain (see Company domain) and access to its DNS settings.",
     description: "Use your company domain (for example invest.yourcompany.com) instead of the vercel.app address.",
     needs: ["A domain you own", "Adding two DNS records"],
   },
@@ -487,6 +507,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "platform",
     priority: "next",
     status: "planned",
+    fromYou: "Your logo, colours and contact details.",
     description: "Your logo, colours and contact details across the calculator, portal, emails and seminar materials.",
   },
   {
@@ -503,6 +524,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "platform",
     priority: "later",
     status: "planned",
+    fromYou: "Which languages, and someone to check the translations.",
     description: "Show the calculator and portal in other languages, with local number and date formats.",
   },
   {
@@ -511,6 +533,7 @@ export const ROADMAP: RoadmapItem[] = [
     category: "platform",
     priority: "later",
     status: "planned",
+    fromYou: "Your go-ahead for browser checks.",
     description: "A full check against WCAG 2.2 AA with screen readers and keyboard-only use.",
   },
 ];

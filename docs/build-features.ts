@@ -52,6 +52,11 @@ function link(item: RoadmapItem): string {
   return `[${item.title}](#${item.id})`;
 }
 
+/** What the owner has to give, for the summary column. */
+function fromYouCell(item: RoadmapItem): string {
+  return item.fromYou && item.status !== "done" ? cell(item.fromYou) : "—";
+}
+
 function details(item: RoadmapItem): string[] {
   const lines = [
     `<a id="${item.id}"></a>`,
@@ -62,6 +67,7 @@ function details(item: RoadmapItem): string[] {
     "",
     item.description,
   ];
+  if (item.fromYou && item.status !== "done") lines.push("", `**Needs from you:** ${item.fromYou}`);
   if (item.outcome) lines.push("", `**Outcome:** ${item.outcome}`);
   if (item.dependsOn?.length) {
     const deps = item.dependsOn.map((id) => {
@@ -77,6 +83,7 @@ function details(item: RoadmapItem): string[] {
 
 const items = sorted(ROADMAP);
 const count = (status: RoadmapStatus) => ROADMAP.filter((i) => i.status === status).length;
+const waiting = items.filter((i) => i.fromYou && i.status !== "done");
 
 const md = [
   "# Upcoming features",
@@ -87,7 +94,7 @@ const md = [
   "This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run",
   "`npm run docs:features`.",
   "",
-  `**${count("done")} done · ${count("in-progress")} in progress · ${count("planned")} pending**`,
+  `**${count("done")} done · ${count("in-progress")} in progress · ${count("planned")} pending** · ${waiting.length} [waiting on you](#waiting-on-you)`,
   "",
   "Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.",
   "",
@@ -95,12 +102,23 @@ const md = [
   "",
   "## Summary",
   "",
-  "| # | Feature | Status | Priority | Area |",
-  "| --- | --- | --- | --- | --- |",
+  "| # | Feature | Status | Priority | Area | Needs from you |",
+  "| --- | --- | --- | --- | --- | --- |",
   ...items.map(
     (item, i) =>
-      `| ${i + 1} | ${cell(link(item))} | ${STATUS_TEXT[item.status]} | ${ROADMAP_PRIORITY_LABELS[item.priority]} | ${ROADMAP_CATEGORY_LABELS[item.category]} |`,
+      `| ${i + 1} | ${cell(link(item))} | ${STATUS_TEXT[item.status]} | ${ROADMAP_PRIORITY_LABELS[item.priority]} | ${ROADMAP_CATEGORY_LABELS[item.category]} | ${fromYouCell(item)} |`,
   ),
+  "",
+  '<a id="waiting-on-you"></a>',
+  "",
+  "## Waiting on you",
+  "",
+  "These cannot be finished without access, an account, a key, wording or a decision from you.",
+  "Everything else in the list can be built without your help.",
+  "",
+  "| # | Feature | Status | What is needed from you |",
+  "| --- | --- | --- | --- |",
+  ...waiting.map((item, i) => `| ${i + 1} | ${cell(link(item))} | ${STATUS_TEXT[item.status]} | ${cell(item.fromYou ?? "")} |`),
   "",
   ...STATUS_ORDER.flatMap((status) => {
     const group = items.filter((i) => i.status === status);
