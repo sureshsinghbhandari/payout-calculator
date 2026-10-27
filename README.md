@@ -177,6 +177,41 @@ Until the first save, the starting rates in `src/lib/config.ts`
     Inquiries list shows each inquiry's latest note.
   - The email conversation. See [Email](#email).
 
+### Assign, follow up, sources and export
+
+- **Assign and follow up:** on an inquiry's page, assign it to a team member and set a
+  follow-up date. The Inquiries list shows who has it and highlights follow-ups that are
+  overdue or due today; **Assigned to me** and **Follow-ups due** narrow the list.
+- **Lead sources:** add `?source=seminar-2026-11` (or `utm_source`) to the calculator link
+  and inquiries sent through it are tagged with that source. **Settings > Lead sources**
+  (Master Admin) shows inquiries and conversions per source and builds tracking links with
+  a QR code to copy or download.
+- **Filters and export:** filter inquiries by source and date received, then select
+  **Export to Excel** to download what is shown (rates only for Master Admins).
+- **Pipeline board:** Inquiries > **Pipeline board** shows New, Contacted and Converted
+  columns. Investors can be searched by name, email, phone or username.
+
+## Payouts and investments
+
+- **Record payouts:** on an investor's page, Master Admins mark each scheduled payout as
+  paid with the date, amount and a reference (such as a bank transfer id), and can change
+  or remove it. Investors see a payout as Paid once it is recorded, Due once its date
+  arrives, and Upcoming before that.
+- **Payout calendar:** `/admin/payouts` lists due payouts first, then the next 90 days
+  (or any range) by week or month with totals.
+- **More investments and renewals:** add another investment to an investor, or renew a
+  matured one from its maturity date. The current rate is fixed on the new investment.
+- **Statements:** investors (in the portal) and admins download an Excel statement per
+  investment with the schedule and payments. The investor's copy never shows the rate.
+- **Install on phones:** investors can add the Investor Portal to their home screen
+  ("Add to Home Screen" on iPhone, "Install app" on Android).
+
+## Dashboard
+
+`/admin/dashboard`: inquiries per week for the last 8 weeks, counts by status and the
+conversion rate. Master Admins also see total invested, the number of investors, payouts
+due in the next 30 and 90 days, and sign-in alerts. Sales Admins see inquiry figures only.
+
 ## Audit log
 
 Every action is recorded with who did it, what they did, the item it affected and the
@@ -189,6 +224,11 @@ stored as one private file per month in Vercel Blob. Events about an inquiry are
 copied to that inquiry's own log (`inquiry-log/<env>/`), which holds its notes too and
 is shown on the inquiry's page. Events from before inquiry logs existed are copied in
 the first time an inquiry's page is opened.
+
+- **Export:** on Settings > Audit log, choose a date range and select **Export to Excel**.
+- **Sign-in alerts:** the dashboard and audit log flag 5 or more failed sign-ins for one
+  username within 15 minutes, and admin sign-ins from a device or network not used in the
+  previous 30 days. Only a short coded fingerprint is kept, never the IP address.
 
 ## Upcoming features
 
@@ -231,6 +271,20 @@ they are.
   match no inquiry are listed under **Settings > Email**.
 - Emails are stored as one private file per inquiry in Vercel Blob (`emails/<env>/`), and
   bodies are always shown as plain text.
+
+### Alerts, password resets and templates
+
+These need email to be set up (Settings > Email); until then the pages say so.
+
+- **New inquiry alerts:** admins add an email address (Settings > Users, or My account for
+  yourself) and switch on "Email me when a new inquiry arrives". The interest rate is never
+  included.
+- **Forgot password:** "Forgot password?" on the admin and investor sign-in pages emails a
+  one-time link (valid 72 hours) to an active account with an email address. The page
+  never reveals whether an account exists.
+- **Email templates:** Master Admins change the wording of the inquiry acknowledgement,
+  the new inquiry alert and the password reset email on **Settings > Email templates**,
+  with placeholders, a preview and Reset to default.
 
 ### Setting up Gmail (now)
 
