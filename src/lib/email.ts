@@ -2,9 +2,8 @@
  * Inquiry emails: the stored thread format, the wording of outgoing emails and
  * helpers for reading incoming ones. Pure functions so they can be unit tested.
  */
-import { formatDollars, formatYears } from "./format";
+import { DEFAULT_TEMPLATES, inquiryTemplateValues, renderTemplate, type EmailTemplate } from "./email-templates";
 import { inquiryReference, type StoredInquiry } from "./inquiry";
-import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "./payout";
 
 export type EmailDirection = "out" | "in";
 /** acknowledgement: automatic thank-you; reply: written by staff; customer: received from the customer. */
@@ -80,8 +79,9 @@ export function displayNameOf(value: string): string {
 
 // ---------- subjects ----------
 
+/** The acknowledgement subject from the default template (the sent one may use a saved template). */
 export function acknowledgementSubject(inquiryId: string): string {
-  return `We received your inquiry (Ref ${inquiryReference(inquiryId)})`;
+  return renderTemplate(DEFAULT_TEMPLATES.acknowledgement, { reference: inquiryReference(inquiryId) }).subject;
 }
 
 export function replySubject(inquiryId: string): string {
@@ -96,29 +96,13 @@ export function referenceFromSubject(subject: string): string | null {
 
 // ---------- outgoing wording ----------
 
-export function acknowledgementText(inquiry: StoredInquiry, teamName: string): string {
-  const { plan } = inquiry;
-  const firstName = inquiry.name.split(" ")[0] || inquiry.name;
-  return [
-    `Hello ${firstName},`,
-    "",
-    "Thank you for your inquiry. We have received it and a member of our team will contact you soon.",
-    "",
-    `Your reference number is ${inquiryReference(inquiry.id)}. Please quote it if you contact us.`,
-    "",
-    "What you asked about:",
-    `- Investment amount: ${formatDollars(plan.principal)}`,
-    `- Term locked: ${formatYears(plan.lockInYears)}`,
-    `- Payout term: ${FREQUENCY_LABELS[plan.frequency]}`,
-    `- Payout type: ${PAYOUT_TYPE_LABELS[plan.payoutType]}`,
-    "",
-    "If you would like to add anything, just reply to this email.",
-    "",
-    "The figures shown in the calculator are estimates for illustration only. They are not an offer or a guarantee of returns.",
-    "",
-    "Kind regards,",
-    teamName,
-  ].join("\n");
+/** The acknowledgement body, from a saved template or the default one (Settings > Email templates). */
+export function acknowledgementText(
+  inquiry: StoredInquiry,
+  teamName: string,
+  template: EmailTemplate = DEFAULT_TEMPLATES.acknowledgement,
+): string {
+  return renderTemplate(template, inquiryTemplateValues(inquiry, teamName)).body;
 }
 
 // ---------- incoming text ----------

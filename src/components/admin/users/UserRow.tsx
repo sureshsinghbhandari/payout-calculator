@@ -12,6 +12,7 @@ import {
 import { ROLE_LABELS, type AdminRole, type PublicAdmin } from "@/lib/accounts";
 import { SetupLinkPanel } from "./SetupLinkPanel";
 import { TemporaryPasswordForm } from "./TemporaryPasswordForm";
+import { UserEmailForm } from "./UserEmailForm";
 import { dangerButton, formatTimestamp, secondaryButton } from "./ui";
 
 const ROLES: AdminRole[] = ["master", "sales"];
@@ -98,7 +99,7 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
         </div>
       </div>
 
-      <dl className="mt-3 text-sm">
+      <dl className="mt-3 space-y-1.5 text-sm">
         <dt className="sr-only">Sign-in</dt>
         <dd className="flex items-start gap-2 text-slate-800">
           <span aria-hidden="true" className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TONE_DOT[signIn.tone]}`} />
@@ -107,13 +108,27 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
             {signIn.detail && <span className="block text-xs text-slate-500">{signIn.detail}</span>}
           </span>
         </dd>
+        <dt className="sr-only">Email</dt>
+        <dd className="break-all text-slate-700">
+          {user.email ? (
+            <>
+              {user.email}
+              <span className="text-slate-500">
+                {" "}
+                · New inquiry alerts {user.inquiryAlerts ? "on" : "off"}
+              </span>
+            </>
+          ) : (
+            <span className="text-slate-500">No email address</span>
+          )}
+        </dd>
       </dl>
 
       <div className="mt-4 border-t border-slate-100 pt-4">
         {isSelf ? (
           <p className="text-sm text-slate-600">
             This is your account. You cannot change your own role or disable yourself; another Master Admin can. To
-            change your password, go to{" "}
+            change your password, email address or alerts, go to{" "}
             <Link href="/admin/account" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
               My account
             </Link>
@@ -218,6 +233,8 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
                 onClose={() => setPasswordFormKey(null)}
               />
             )}
+
+            <UserEmailForm userId={user.id} email={user.email} />
           </div>
         )}
       </div>

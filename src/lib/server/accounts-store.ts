@@ -3,8 +3,10 @@ import { randomBytes } from "node:crypto";
 import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
 import { writableEtag } from "./blob-etag";
 import {
+  normalizeEmail,
   SEED_ADMINS,
   SETUP_LINK_HOURS,
+  validateEmailAddress,
   type AdminRole,
   type AdminUser,
   type Credentials,
@@ -21,9 +23,9 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  * preview and local development use separate folders.
  *
  * Public API (all server-only):
- *   Admin users: listAdminUsers, getAdminUser, findAdminByUsername,
+ *   Admin users: listAdminUsers, getAdminUser, findAdminByUsername, findAdminByEmail,
  *     createAdminUser, updateAdminUser, setAdminPassword, issueAdminSetupToken
- *   Investors: listInvestors, getInvestor, findInvestorByUsername,
+ *   Investors: listInvestors, getInvestor, findInvestorByUsername, findInvestorsByEmail,
  *     createInvestor, updateInvestor, setInvestorPassword, issueInvestorSetupToken
  *   Setup links: findAccountBySetupToken
  */
@@ -96,6 +98,13 @@ function parseCredentials(d: Record<string, unknown>): Credentials {
   };
 }
 
+/** A stored admin email address, or null when it is missing or not a valid address. */
+function parseAdminEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = normalizeEmail(value);
+  return email !== "" && validateEmailAddress(email) === null ? email : null;
+}
+
 function parseAdmins(data: unknown): AdminUser[] {
   const list = (data as { users?: unknown })?.users;
   if (!Array.isArray(list)) throw new Error("Invalid admin users file.");
@@ -114,6 +123,8 @@ function parseAdmins(data: unknown): AdminUser[] {
         role,
         active: d.active !== false,
         createdAt: str(d.createdAt) ?? new Date(0).toISOString(),
+        email: parseAdminEmail(d.email),
+        inquiryAlerts: d.inquiryAlerts !== false,
         ...parseCredentials(d),
       },
     ];
@@ -187,7 +198,14 @@ function blankCredentials(): Credentials {
 
 function seededAdmins(): AdminUser[] {
   const now = new Date().toISOString();
-  return SEED_ADMINS.map((seed) => ({ ...seed, active: true, createdAt: now, ...blankCredentials() }));
+  return SEED_ADMINS.map((seed) => ({
+    ...seed,
+    active: true,
+    createdAt: now,
+    email: null,
+    inquiryAlerts: true,
+    ...blankCredentials(),
+  }));
 }
 
 /** New password state: the hash, a bumped version (signs out old sessions), no setup link. */
@@ -237,6 +255,12 @@ export async function findAdminByUsername(username: string): Promise<AdminUser |
   return (await listAdminUsers()).find((u) => u.username === username) ?? null;
 }
 
+/** The admin with this (normalized) email address. Admin email addresses are unique. */
+export async function findAdminByEmail(email: string): Promise<AdminUser | null> {
+  if (email === "") return null;
+  return (await listAdminUsers()).find((u) => u.email === email) ?? null;
+}
+
 function mutateAdmins<R>(change: (users: AdminUser[]) => { users: AdminUser[]; result: R }): Promise<R> {
   // A missing file starts from the seed users (fixed ids), the same as listAdminUsers.
   return mutateDoc(
@@ -265,6 +289,8 @@ export function createAdminUser(input: { name: string; username: string; role: A
       role: input.role,
       active: true,
       createdAt: new Date().toISOString(),
+      email: null,
+      inquiryAlerts: true,
       ...blankCredentials(),
     };
     return { users: [...users, user], result: user };
@@ -272,14 +298,18 @@ export function createAdminUser(input: { name: string; username: string; role: A
 }
 
 /**
- * Updates name, role or active state. Refuses to leave the system without an
- * active Master Admin.
+ * Updates name, role, active state, email address or inquiry alerts. Refuses
+ * to leave the system without an active Master Admin, or to give two users the
+ * same email address (it is used to reset passwords).
  */
 export function updateAdminUser(
   id: string,
-  patch: Partial<Pick<AdminUser, "name" | "role" | "active">>,
+  patch: Partial<Pick<AdminUser, "name" | "role" | "active" | "email" | "inquiryAlerts">>,
 ): Promise<AdminUser> {
   return mutateAdmins((users) => {
+    if (patch.email && users.some((u) => u.id !== id && u.email === patch.email)) {
+      throw new AccountError("Another user already has that email address.");
+    }
     const next = updateAdmin(users, id, (u) => ({ ...u, ...patch, name: (patch.name ?? u.name).trim() }));
     if (!next.some((u) => u.role === "master" && u.active)) {
       throw new AccountError("There must always be at least one active Master Admin.");
@@ -322,6 +352,12 @@ export async function getInvestor(id: string): Promise<Investor | null> {
 
 export async function findInvestorByUsername(username: string): Promise<Investor | null> {
   return (await listInvestors()).find((i) => i.username === username) ?? null;
+}
+
+/** Investors with this (normalized) email address. Several investors can share one. */
+export async function findInvestorsByEmail(email: string): Promise<Investor[]> {
+  if (email === "") return [];
+  return (await listInvestors()).filter((i) => normalizeEmail(i.email) === email);
 }
 
 function mutateInvestors<R>(change: (investors: Investor[]) => { investors: Investor[]; result: R }): Promise<R> {

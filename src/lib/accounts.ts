@@ -73,6 +73,10 @@ export interface AdminUser extends Credentials {
   role: AdminRole;
   active: boolean;
   createdAt: string;
+  /** Lower-case email address for alerts and password resets, or null when none is set. */
+  email: string | null;
+  /** Email this admin when a new inquiry arrives (needs an email address). On unless switched off. */
+  inquiryAlerts: boolean;
 }
 
 export interface Investment {
@@ -130,6 +134,22 @@ export function validateUsername(username: string): string | null {
   return null;
 }
 
+export const MAX_EMAIL_LENGTH = 254;
+const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/;
+
+export function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+/** Checks a normalized email address. Empty is allowed when `optional`. Returns an error message or null. */
+export function validateEmailAddress(email: string, optional = false): string | null {
+  if (email === "") return optional ? null : "Enter an email address.";
+  if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) {
+    return "Enter a valid email address, like name@example.com.";
+  }
+  return null;
+}
+
 export function validatePersonName(name: string): string | null {
   const clean = name.trim();
   if (clean === "") return "Enter a name.";
@@ -153,6 +173,8 @@ export interface PublicAdmin {
   role: AdminRole;
   active: boolean;
   createdAt: string;
+  email: string | null;
+  inquiryAlerts: boolean;
   hasPassword: boolean;
   mustChangePassword: boolean;
   setupExpiresAt: string | null;
@@ -166,6 +188,8 @@ export function toPublicAdmin(user: AdminUser): PublicAdmin {
     role: user.role,
     active: user.active,
     createdAt: user.createdAt,
+    email: user.email,
+    inquiryAlerts: user.inquiryAlerts,
     hasPassword: Boolean(user.passwordHash),
     mustChangePassword: user.mustChangePassword,
     setupExpiresAt: user.setupTokenHash ? user.setupExpiresAt : null,
