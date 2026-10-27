@@ -27,7 +27,7 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *   Admin users: listAdminUsers, getAdminUser, findAdminByUsername, findAdminByEmail,
  *     createAdminUser, updateAdminUser, setAdminPassword, issueAdminSetupToken
  *   Investors: listInvestors, getInvestor, findInvestorByUsername, findInvestorsByEmail,
- *     createInvestor, updateInvestor, setInvestorPassword, issueInvestorSetupToken
+ *     createInvestor, updateInvestor, setInvestorPayoutEmails, setInvestorPassword, issueInvestorSetupToken
  *   Investments: addInvestment, setPayoutPayment, removePayoutPayment
  *   Setup links: findAccountBySetupToken
  */
@@ -209,6 +209,7 @@ function parseInvestors(data: unknown): Investor[] {
         createdAt: str(d.createdAt) ?? new Date(0).toISOString(),
         sourceInquiryId: str(d.sourceInquiryId),
         investments,
+        payoutEmails: d.payoutEmails !== false,
         ...parseCredentials(d),
       },
     ];
@@ -446,6 +447,7 @@ export function createInvestor(input: {
       createdAt: now,
       sourceInquiryId: input.sourceInquiryId,
       investments: [{ id: newId("ivt"), createdAt: now, renewedFromId: null, payments: [], ...input.investment }],
+      payoutEmails: true,
       ...blankCredentials(),
     };
     return { investors: [...investors, investor], result: investor };
@@ -462,6 +464,14 @@ export function updateInvestor(
       throw new AccountError("That username is already taken.");
     }
     const next = updateInvestorIn(investors, id, (i) => ({ ...i, ...patch }));
+    return { investors: next, result: next.find((i) => i.id === id)! };
+  });
+}
+
+/** Switches payout reminders and payment confirmations by email on or off (the investor's own choice, in the portal). */
+export function setInvestorPayoutEmails(id: string, on: boolean): Promise<Investor> {
+  return mutateInvestors((investors) => {
+    const next = updateInvestorIn(investors, id, (i) => ({ ...i, payoutEmails: on }));
     return { investors: next, result: next.find((i) => i.id === id)! };
   });
 }

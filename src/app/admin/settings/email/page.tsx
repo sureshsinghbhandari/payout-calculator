@@ -5,12 +5,20 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { CheckRepliesButton } from "@/components/admin/email/CheckRepliesButton";
+import { ReminderDaysForm, RunRemindersButton } from "@/components/admin/email/PayoutNoticeControls";
 import { TestEmailForm } from "@/components/admin/email/TestEmailForm";
 import { toPublicAdmin } from "@/lib/accounts";
 import { newPartOfReply, type UnmatchedEmail } from "@/lib/email";
+import { describeNoticeRun, REMINDER_SCHEDULE_TEXT } from "@/lib/payout-notices";
 import { requireAdminPage } from "@/lib/server/auth";
 import { EMAIL_PROVIDER_LABELS, emailStatus, gmailCheckState } from "@/lib/server/email";
 import { listUnmatchedEmails, type GmailCheckState } from "@/lib/server/email-store";
+import { isCronSecretSet } from "@/lib/server/payout-notices";
+import {
+  isNoticeStorageConfigured,
+  readPayoutNoticeSettings,
+  type PayoutNoticeSettings,
+} from "@/lib/server/payout-notices-store";
 
 export const metadata: Metadata = {
   title: "Email | Admin | Investment Payout Calculator",
@@ -55,6 +63,13 @@ async function EmailSettingsContent() {
   } catch (error) {
     console.error("Loading email details failed", error);
   }
+  let notices: PayoutNoticeSettings | null = null;
+  try {
+    notices = await readPayoutNoticeSettings();
+  } catch (error) {
+    console.error("Loading payout email settings failed", error);
+  }
+  const cronSecretSet = isCronSecretSet();
 
   const row = "flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-2.5 last:border-0";
   return (
@@ -107,6 +122,77 @@ async function EmailSettingsContent() {
                 <li key={p}>{p}</li>
               ))}
             </ul>
+          )}
+        </AdminCard>
+
+        <AdminCard>
+          <h2 className="text-lg font-semibold text-slate-900">Payout emails to investors</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Investors with an email address get a reminder before each scheduled payout, and a confirmation when a
+            Master Admin marks a payout as paid (an option in the Mark as paid dialog). Investors can switch these emails
+            off in the portal. They never include the interest rate. The wording is on{" "}
+            <Link href="/admin/settings/email-templates" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+              Email templates
+            </Link>
+            .
+          </p>
+          {notices === null ? (
+            <p role="alert" className="mt-3 text-sm font-medium text-red-700">
+              These settings could not be loaded. Reload the page to try again.
+            </p>
+          ) : (
+            <>
+              <div className="mt-4">
+                <ReminderDaysForm days={notices.reminderDays} storageConfigured={isNoticeStorageConfigured()} />
+              </div>
+              <div className="mt-4 text-sm">
+                <div className={row}>
+                  <span className="text-slate-700">Reminders</span>
+                  <span className="text-right font-medium text-slate-900">
+                    {notices.reminderDays === 0
+                      ? "Off"
+                      : `${notices.reminderDays} ${notices.reminderDays === 1 ? "day" : "days"} before each payout`}
+                  </span>
+                </div>
+                <div className={row}>
+                  <span className="text-slate-700">Daily job</span>
+                  <span className="text-right font-medium text-slate-900">Runs {REMINDER_SCHEDULE_TEXT}</span>
+                </div>
+                <div className={row}>
+                  <span className="text-slate-700">CRON_SECRET</span>
+                  <StatusPill on={cronSecretSet} onText="Set" offText="Not set" />
+                </div>
+                <div className={row}>
+                  <span className="text-slate-700">Last run</span>
+                  <span className="text-right font-medium text-slate-900">
+                    {notices.lastRun
+                      ? `${timestampFormatter.format(new Date(notices.lastRun.at))} UTC (${
+                          notices.lastRun.trigger === "manual" ? `Run now by ${notices.lastRun.by ?? "an admin"}` : "daily job"
+                        })`
+                      : "Not yet"}
+                  </span>
+                </div>
+              </div>
+              {notices.lastRun && <p className="mt-2 text-sm text-slate-700">{describeNoticeRun(notices.lastRun)}.</p>}
+              {(!cronSecretSet || !status.sending) && (
+                <ul className="mt-4 list-disc space-y-1 rounded-lg bg-amber-50 p-3 pl-7 text-sm text-amber-900">
+                  {!status.sending && <li>Email is not set up yet, so no payout emails are sent. Runs are skipped.</li>}
+                  {!cronSecretSet && (
+                    <li>
+                      CRON_SECRET is not set, so the daily job is refused. Add a random value of at least 16 characters
+                      as CRON_SECRET in Vercel, then redeploy.
+                    </li>
+                  )}
+                </ul>
+              )}
+              <div className="mt-4">
+                <p className="mb-2 text-sm text-slate-600">
+                  Run now sends any reminders that are due and not sent yet, the same as the daily job. No reminder is
+                  ever sent twice.
+                </p>
+                <RunRemindersButton disabled={!isNoticeStorageConfigured()} />
+              </div>
+            </>
           )}
         </AdminCard>
 

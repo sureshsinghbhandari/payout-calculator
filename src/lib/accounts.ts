@@ -142,6 +142,8 @@ export interface Investor extends Credentials {
   /** Inquiry this investor was converted from, if any. */
   sourceInquiryId: string | null;
   investments: Investment[];
+  /** Payout reminders and payment confirmations by email. On unless the investor switched them off in the portal. */
+  payoutEmails: boolean;
 }
 
 /**

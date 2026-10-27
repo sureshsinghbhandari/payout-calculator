@@ -6,6 +6,7 @@ import { InvestmentOverview } from "@/components/investor/InvestmentOverview";
 import { InvestorCard, InvestorFrame, InvestorLoading } from "@/components/investor/InvestorFrame";
 import { InvestorLoginForm } from "@/components/investor/InvestorLoginForm";
 import { InvestorPasswordForm } from "@/components/investor/InvestorPasswordForm";
+import { PayoutEmailsForm } from "@/components/investor/PayoutEmailsForm";
 import type { Investor } from "@/lib/accounts";
 import { formatIsoDateLong } from "@/lib/format";
 import { todayUtc } from "@/lib/investments";
@@ -164,6 +165,12 @@ function Dashboard({ investor, today, passwordChanged }: { investor: Investor; t
           {investor.investments.map((investment) => (
             <InvestmentOverview key={investment.id} investment={investment} today={today} />
           ))}
+        </div>
+      )}
+
+      {count > 0 && investor.email.trim() !== "" && (
+        <div className="mt-12">
+          <PayoutEmailsForm on={investor.payoutEmails} email={investor.email.trim()} />
         </div>
       )}
     </InvestorFrame>

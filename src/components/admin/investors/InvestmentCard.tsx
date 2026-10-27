@@ -26,6 +26,8 @@ interface Props {
   today: string;
   /** Whether this admin may record payouts as paid. */
   canManagePayouts: boolean;
+  /** Why no payment confirmation can be emailed to the investor, or null when it can. */
+  confirmationBlocker: string | null;
   /** Numbers of the investment this one renews, and of the one that renewed it. */
   renewedFromNumber: number | null;
   renewedByNumber: number | null;
@@ -41,6 +43,7 @@ export function InvestmentCard({
   number,
   today,
   canManagePayouts,
+  confirmationBlocker,
   renewedFromNumber,
   renewedByNumber,
 }: Props) {
@@ -154,6 +157,7 @@ export function InvestmentCard({
             investment={investment}
             today={today}
             canManagePayouts={canManagePayouts}
+            confirmationBlocker={confirmationBlocker}
           />
         </details>
       )}
@@ -168,6 +172,7 @@ function ScheduleTable({
   investment,
   today,
   canManagePayouts,
+  confirmationBlocker,
 }: {
   schedule: PayoutSchedule;
   rows: PayoutWithStatus[];
@@ -175,6 +180,7 @@ function ScheduleTable({
   investment: Investment;
   today: string;
   canManagePayouts: boolean;
+  confirmationBlocker: string | null;
 }) {
   const { totals, inputs } = schedule;
   return (
@@ -261,6 +267,7 @@ function ScheduleTable({
                       earliest={investment.investmentDate}
                       latest={latestPaidOn(today)}
                       today={today}
+                      confirmationBlocker={confirmationBlocker}
                     />
                   </td>
                 )}

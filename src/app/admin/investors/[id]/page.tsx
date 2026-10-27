@@ -19,6 +19,7 @@ import { formatDollars } from "@/lib/format";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { todayUtc } from "@/lib/investments";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
+import { paymentConfirmationBlocker } from "@/lib/server/payout-notices";
 import { requireAdminPage } from "@/lib/server/auth";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 
@@ -211,6 +212,7 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
                 number={index + 1}
                 today={today}
                 canManagePayouts={can(admin.role, "payouts.manage")}
+                confirmationBlocker={paymentConfirmationBlocker(investor)}
                 renewedFromNumber={numberOf(investment.renewedFromId)}
                 renewedByNumber={numberOf(pub.investments.find((i) => i.renewedFromId === investment.id)?.id ?? null)}
               />

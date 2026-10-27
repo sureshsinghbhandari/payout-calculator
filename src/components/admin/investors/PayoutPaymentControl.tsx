@@ -21,6 +21,8 @@ interface Props {
   latest: string;
   /** Today's date in UTC: the default paid date for payouts already due. */
   today: string;
+  /** Why no payment confirmation can be emailed to the investor, or null when it can. */
+  confirmationBlocker: string | null;
 }
 
 const smallButton =
@@ -30,6 +32,8 @@ const smallButton =
  * "Mark as paid" (or "Edit payment") for one scheduled payout: a dialog with
  * the date paid, the amount (prefilled with the scheduled amount) and a
  * reference. A recorded payment can also be removed from the same dialog.
+ * When marking as paid, the investor can be emailed a payment confirmation
+ * (ticked by default; not ticked when changing a recorded payment).
  */
 export function PayoutPaymentControl(props: Props) {
   const { payment, payoutNumber, payoutDate, scheduledCents } = props;
@@ -38,6 +42,7 @@ export function PayoutPaymentControl(props: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const titleId = useId();
+  const notifyId = useId();
 
   // Close once saved or removed; the page refreshes with the new status.
   useEffect(() => {
@@ -77,6 +82,11 @@ export function PayoutPaymentControl(props: Props) {
       >
         {payment ? "Edit payment" : "Mark as paid"}
       </button>
+      {saveState.status === "saved" && saveState.email && (
+        <p role="status" className="mt-1 max-w-[14rem] whitespace-normal text-xs text-slate-600">
+          {saveState.email}
+        </p>
+      )}
       <dialog
         ref={dialog}
         aria-labelledby={titleId}
@@ -134,6 +144,23 @@ export function PayoutPaymentControl(props: Props) {
               maxLength={REFERENCE_MAX}
               hint="For example the bank transfer id. The investor sees it in their statement."
             />
+            {props.confirmationBlocker ? (
+              <p className="text-sm text-slate-600">{props.confirmationBlocker}</p>
+            ) : (
+              <div className="flex items-start gap-3">
+                <input
+                  id={notifyId}
+                  name="notify"
+                  type="checkbox"
+                  defaultChecked={!payment}
+                  className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-400 text-blue-900 focus:ring-2 focus:ring-blue-700"
+                />
+                <label htmlFor={notifyId} className="text-sm text-slate-800">
+                  <span className="font-semibold">Email the investor a payment confirmation</span>
+                  <span className="block text-slate-600">With the amount, date paid and reference. Never the interest rate.</span>
+                </label>
+              </div>
+            )}
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => dialog.current?.close()} className={secondaryButton}>
                 Cancel
