@@ -7,10 +7,14 @@ import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/componen
 import { CheckRepliesButton } from "@/components/admin/email/CheckRepliesButton";
 import { EmailThreadView } from "@/components/admin/email/EmailThreadView";
 import { ReplyForm } from "@/components/admin/email/ReplyForm";
+import { InquiryTimeline } from "@/components/admin/inquiry/InquiryTimeline";
+import { NoteForm } from "@/components/admin/inquiry/NoteForm";
 import { InquiryCard } from "@/components/admin/InquiryCard";
 import { can, toPublicAdmin } from "@/lib/accounts";
 import { displayNameOf, replySubject, type EmailMessage } from "@/lib/email";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
+import { inquiryTimeline, type TimelineEntry } from "@/lib/inquiry-log";
+import { getInquiryActivity } from "@/lib/server/audit-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
 import { getThread } from "@/lib/server/email-store";
@@ -31,7 +35,7 @@ export default function InquiryPage({ params }: { params: Params }) {
   );
 }
 
-/** One inquiry with its emails, and a form to email the customer. */
+/** One inquiry with its notes and activity, its emails, and a form to email the customer. */
 async function InquiryContent({ params }: { params: Params }) {
   await connection();
   const user = await requireAdminPage("inquiries.view");
@@ -51,12 +55,17 @@ async function InquiryContent({ params }: { params: Params }) {
   const status = emailStatus();
   // With Gmail, replies are picked up by checking the inbox; new ones show on the next load.
   if (status.provider === "gmail" && status.receiving) after(checkGmailRepliesQuietly);
-  let messages: EmailMessage[] | null = null;
-  try {
-    messages = (await getThread(inquiry.id)).messages;
-  } catch (error) {
-    console.error("Loading emails failed", error);
-  }
+  const [messages, timeline] = await Promise.all([
+    getThread(inquiry.id).then(
+      (thread): EmailMessage[] | null => thread.messages,
+      (error) => (console.error("Loading emails failed", error), null),
+    ),
+    getInquiryActivity(inquiry.id, inquiry.createdAt).then(
+      (log): TimelineEntry[] | null => inquiryTimeline(log),
+      (error) => (console.error("Loading inquiry activity failed", error), null),
+    ),
+  ]);
+  const canAddNotes = can(user.role, "inquiries.notes") && inquiry.status !== "deleted";
 
   const firstName = inquiry.name.split(" ")[0] || inquiry.name;
   const team = status.from ? displayNameOf(status.from) : "";
@@ -76,8 +85,30 @@ async function InquiryContent({ params }: { params: Params }) {
       <h1 className="mb-5 text-2xl font-semibold text-slate-900">Inquiry from {inquiry.name}</h1>
 
       <ul>
-        <InquiryCard inquiry={inquiry} permissions={permissions} showEmailLink={false} />
+        <InquiryCard inquiry={inquiry} permissions={permissions} showDetailsLink={false} />
       </ul>
+
+      <section aria-labelledby="activity-heading" className="mt-8">
+        <h2 id="activity-heading" className="mb-3 text-lg font-semibold text-slate-900">
+          Notes and activity
+        </h2>
+        {canAddNotes && (
+          <AdminCard>
+            <NoteForm inquiryId={inquiry.id} />
+          </AdminCard>
+        )}
+        <div className={canAddNotes ? "mt-4" : ""}>
+          {timeline === null ? (
+            <AdminCard>
+              <p role="alert" className="text-sm font-medium text-red-700">
+                Notes and activity could not be loaded. Reload the page to try again.
+              </p>
+            </AdminCard>
+          ) : (
+            <InquiryTimeline entries={timeline} />
+          )}
+        </div>
+      </section>
 
       <section aria-labelledby="emails-heading" className="mt-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

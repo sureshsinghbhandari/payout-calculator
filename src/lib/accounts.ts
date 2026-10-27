@@ -18,6 +18,7 @@ export type Permission =
   | "inquiries.delete"
   | "inquiries.convert"
   | "inquiries.email"
+  | "inquiries.notes"
   | "investors.manage"
   | "rates.manage"
   | "users.manage"
@@ -34,6 +35,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "inquiries.delete",
     "inquiries.convert",
     "inquiries.email",
+    "inquiries.notes",
     "investors.manage",
     "rates.manage",
     "users.manage",
@@ -42,8 +44,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "roadmap.view",
     "inquiries.purge",
   ],
-  // Sales admins only work with inquiries: view them, email the customer and mark them contacted.
-  sales: ["inquiries.view", "inquiries.status", "inquiries.email"],
+  // Sales admins only work with inquiries: view them, add notes, email the customer and mark them contacted.
+  sales: ["inquiries.view", "inquiries.status", "inquiries.email", "inquiries.notes"],
 };
 
 export function can(role: AdminRole, permission: Permission): boolean {

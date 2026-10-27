@@ -148,6 +148,16 @@ export async function convertInquiryAction(prev: ConvertState, formData: FormDat
   try {
     const marked = await markInquiryConverted(inquiry.id, investorId, new Date().toISOString());
     if (!marked) console.error("Inquiry was not marked as converted", inquiry.id, investorId);
+    else {
+      // Also on the inquiry's own activity (the event above is about the investor).
+      recordAudit({
+        actor: adminActor(admin),
+        category: "inquiry",
+        action: "inquiry.converted",
+        summary: `Marked inquiry ${inquiryReference(inquiry.id)} (${inquiry.name}) as converted to an investor`,
+        target: { type: "inquiry", id: inquiry.id, label: `${inquiryReference(inquiry.id)} (${inquiry.name})` },
+      });
+    }
   } catch (error) {
     // The investor exists; converting the same inquiry again is refused by the store.
     console.error("Marking inquiry as converted failed", inquiry.id, investorId, error);

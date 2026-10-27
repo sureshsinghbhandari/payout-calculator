@@ -47,6 +47,20 @@ export interface AuditEvent {
 
 export type NewAuditEvent = Omit<AuditEvent, "id" | "at">;
 
+/** Keeps the well-formed events of a stored list. */
+export function parseAuditEvents(list: unknown): AuditEvent[] {
+  if (!Array.isArray(list)) return [];
+  return list.filter(
+    (e): e is AuditEvent =>
+      typeof e === "object" &&
+      e !== null &&
+      typeof (e as AuditEvent).id === "string" &&
+      typeof (e as AuditEvent).at === "string" &&
+      typeof (e as AuditEvent).summary === "string" &&
+      typeof (e as AuditEvent).actor?.name === "string",
+  );
+}
+
 export function adminActor(user: Pick<AdminUser, "id" | "name" | "username" | "role">): AuditActor {
   return { kind: "admin", id: user.id, name: user.name, username: user.username, role: user.role };
 }

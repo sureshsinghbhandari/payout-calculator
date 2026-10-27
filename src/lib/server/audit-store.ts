@@ -1,14 +1,19 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { BlobError, BlobPreconditionFailedError, get, list, put } from "@vercel/blob";
+import { writableEtag } from "./blob-etag";
 import { after } from "next/server";
-import { auditMonth, isAuditMonth, type AuditEvent, type NewAuditEvent } from "../audit";
+import { auditMonth, isAuditMonth, parseAuditEvents, type AuditEvent, type NewAuditEvent } from "../audit";
+import { isInquiryId } from "../inquiry";
+import type { InquiryLog } from "../inquiry-log";
+import { addInquiryEvents, readInquiryLog } from "./inquiry-log-store";
 
 /**
  * Audit events are appended to one private JSON file per month in Vercel Blob
  * ("audit/<env>/<YYYY-MM>.json"). Writes check the file's ETag and retry on a
  * conflict, so simultaneous events are not lost. Production, preview and local
- * development use separate folders.
+ * development use separate folders. Events about an inquiry are also copied to
+ * that inquiry's log, so they show on the inquiry page.
  */
 const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
 const PREFIX = `audit/${ENV}/`;
@@ -24,24 +29,20 @@ function pathFor(month: string): string {
 }
 
 function parseEvents(data: unknown): AuditEvent[] {
-  const list = (data as { events?: unknown })?.events;
-  if (!Array.isArray(list)) return [];
-  return list.filter(
-    (e): e is AuditEvent =>
-      typeof e === "object" &&
-      e !== null &&
-      typeof (e as AuditEvent).id === "string" &&
-      typeof (e as AuditEvent).at === "string" &&
-      typeof (e as AuditEvent).summary === "string" &&
-      typeof (e as AuditEvent).actor?.name === "string",
-  );
+  return parseAuditEvents((data as { events?: unknown })?.events);
+}
+
+/** The inquiry an event belongs to, if its log should get a copy (not once it is permanently deleted). */
+function inquiryOf(event: AuditEvent): string | null {
+  const id = event.target?.type === "inquiry" ? event.target.id : undefined;
+  return id && isInquiryId(id) && event.action !== "inquiry.purged" ? id : null;
 }
 
 async function readMonth(month: string): Promise<{ events: AuditEvent[]; etag: string | null }> {
   const result = await get(pathFor(month), { access: "private", useCache: false });
   if (!result || result.statusCode !== 200) return { events: [], etag: null };
   const text = await new Response(result.stream).text();
-  return { events: parseEvents(JSON.parse(text)), etag: result.blob.etag };
+  return { events: parseEvents(JSON.parse(text)), etag: writableEtag(result.blob.etag) };
 }
 
 function isConflict(error: unknown): boolean {
@@ -83,11 +84,14 @@ export function recordAudit(event: NewAuditEvent): void {
     at: new Date().toISOString(),
   };
   const write = async () => {
-    try {
-      await append(full);
-    } catch (error) {
-      console.error("Recording audit event failed", full.action, error);
-    }
+    const inquiryId = inquiryOf(full);
+    await Promise.all([
+      append(full).catch((error) => console.error("Recording audit event failed", full.action, error)),
+      inquiryId &&
+        addInquiryEvents(inquiryId, [full]).catch((error) =>
+          console.error("Copying audit event to the inquiry failed", full.action, error),
+        ),
+    ]);
   };
   try {
     after(write);
@@ -113,4 +117,23 @@ export async function listAuditMonths(): Promise<string[]> {
     .filter(isAuditMonth)
     .sort()
     .reverse();
+}
+
+/**
+ * The activity and notes of one inquiry. The first time, events recorded
+ * before inquiry logs existed are copied in from the monthly files.
+ */
+export async function getInquiryActivity(inquiryId: string, createdAt: string): Promise<InquiryLog> {
+  const log = await readInquiryLog(inquiryId);
+  if (log.backfilled || !isConfigured()) return log;
+  const months = (await listAuditMonths()).filter((m) => m >= auditMonth(createdAt));
+  const found = (await Promise.all(months.map(async (m) => (await readMonth(m)).events)))
+    .flat()
+    .filter((e) => inquiryOf(e) === inquiryId);
+  try {
+    return await addInquiryEvents(inquiryId, found, true);
+  } catch (error) {
+    console.error("Copying earlier events to the inquiry failed", error);
+    return { ...log, events: [...log.events, ...found.filter((e) => !log.events.some((k) => k.id === e.id))] };
+  }
 }

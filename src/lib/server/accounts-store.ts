@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { writableEtag } from "./blob-etag";
 import {
   SEED_ADMINS,
   SETUP_LINK_HOURS,
@@ -44,7 +45,7 @@ async function readDoc<T>(path: string, parse: (data: unknown) => T): Promise<{ 
   const result = await get(path, { access: "private", useCache: false });
   if (!result || result.statusCode !== 200) return { value: null, etag: null };
   const text = await new Response(result.stream).text();
-  return { value: parse(JSON.parse(text)), etag: result.blob.etag };
+  return { value: parse(JSON.parse(text)), etag: writableEtag(result.blob.etag) };
 }
 
 function isConflict(error: unknown): boolean {

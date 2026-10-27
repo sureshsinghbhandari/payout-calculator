@@ -50,7 +50,18 @@ export interface StoredInquiry extends InquiryContact {
   plan: InquiryPlan;
   /** Summary of the email thread (the messages are stored separately). */
   emails?: InquiryEmailSummary;
+  /** Summary of the notes (stored in the inquiry's log). */
+  notes?: InquiryNotesSummary;
 }
+
+export interface InquiryNotesSummary {
+  count: number;
+  /** The latest note, call or meeting, shortened. */
+  last: { at: string; kind: "note" | "call" | "meeting"; by: string; text: string };
+}
+
+/** Length of the latest note kept on the inquiry for the list. */
+export const NOTE_PREVIEW_LENGTH = 200;
 
 export interface InquiryEmailSummary {
   /** Emails sent and received. */
@@ -183,6 +194,21 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     emailCount !== null && emailLastAt
       ? { count: emailCount, lastAt: emailLastAt, lastDirection: emailData?.lastDirection === "in" ? "in" : "out" }
       : undefined;
+  const noteData = (d.notes ?? null) as Record<string, unknown> | null;
+  const lastNote = (noteData?.last ?? null) as Record<string, unknown> | null;
+  const noteCount = num(noteData?.count);
+  const notes: InquiryNotesSummary | undefined =
+    noteCount !== null && str(lastNote?.at) && str(lastNote?.by) && str(lastNote?.text) !== null
+      ? {
+          count: noteCount,
+          last: {
+            at: str(lastNote?.at)!,
+            kind: lastNote?.kind === "call" || lastNote?.kind === "meeting" ? lastNote.kind : "note",
+            by: str(lastNote?.by)!,
+            text: str(lastNote?.text)!,
+          },
+        }
+      : undefined;
   const statusBeforeDelete = d.statusBeforeDelete === "contacted" ? "contacted" : "new";
   return {
     id,
@@ -206,5 +232,43 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
       totalPaidCents: values.totalPaidCents!,
     },
     ...(emails ? { emails } : {}),
+    ...(notes ? { notes } : {}),
   };
+}
+
+/** Filters on the Inquiries page. "open" (the default) is new and contacted, so converted ones are hidden. */
+export type InquiryFilter = "open" | "new" | "contacted" | "converted" | "all";
+
+export const INQUIRY_FILTERS: ReadonlyArray<{ value: InquiryFilter; label: string }> = [
+  { value: "open", label: "Open" },
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "converted", label: "Converted" },
+  { value: "all", label: "All" },
+];
+
+export function parseInquiryFilter(value: unknown): InquiryFilter {
+  return INQUIRY_FILTERS.some((f) => f.value === value) ? (value as InquiryFilter) : "open";
+}
+
+export function matchesInquiryFilter(inquiry: StoredInquiry, filter: InquiryFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "open") return inquiry.status === "new" || inquiry.status === "contacted";
+  return inquiry.status === filter;
+}
+
+export const INQUIRY_SEARCH_MAX = 100;
+
+/**
+ * Search by name, email or phone (case-insensitive, part of the text is
+ * enough), or by reference. Phone numbers match on their digits, so
+ * "555 0101" finds "+1 (555) 010-1234".
+ */
+export function matchesInquirySearch(inquiry: StoredInquiry, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  if (inquiry.name.toLowerCase().includes(q) || inquiry.email.includes(q)) return true;
+  if (inquiryReference(inquiry.id).toLowerCase() === q.replace(/^ref\s*/, "")) return true;
+  const digits = q.replace(/\D/g, "");
+  return digits.length >= 3 && /^[+()\-.\s\d]+$/.test(q) && inquiry.phone.replace(/\D/g, "").includes(digits);
 }

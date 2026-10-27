@@ -1,5 +1,6 @@
 import "server-only";
 import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { writableEtag } from "./blob-etag";
 import { cacheLife, cacheTag } from "next/cache";
 import {
   defaultStoredRates,
@@ -47,10 +48,10 @@ async function readRaw(): Promise<RawRead> {
   if (!result || result.statusCode !== 200) return { stored: null, etag: null, invalid: false };
   const text = await new Response(result.stream).text();
   try {
-    return { stored: parseStoredRates(text), etag: result.blob.etag, invalid: false };
+    return { stored: parseStoredRates(text), etag: writableEtag(result.blob.etag), invalid: false };
   } catch (error) {
     console.error("Stored interest rates could not be parsed", error);
-    return { stored: null, etag: result.blob.etag, invalid: true };
+    return { stored: null, etag: writableEtag(result.blob.etag), invalid: true };
   }
 }
 

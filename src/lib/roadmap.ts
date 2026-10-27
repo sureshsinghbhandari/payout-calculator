@@ -163,7 +163,7 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Notes and call log on inquiries",
     category: "sales",
     priority: "next",
-    status: "planned",
+    status: "done",
     description: "Add notes, calls and meetings to an inquiry, shown as a timeline with who added each entry.",
   },
   {
@@ -189,8 +189,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Search, filters and export",
     category: "sales",
     priority: "next",
-    status: "planned",
+    status: "in-progress",
     description: "Search inquiries and investors by name, email or reference, filter by status and date, and export to Excel.",
+    outcome: "Inquiries can already be searched by name, email, phone or reference and filtered by status; investors, dates and export are next.",
   },
 
   // ---------- Investor portal ----------

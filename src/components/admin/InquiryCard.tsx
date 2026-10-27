@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { inquiryReference, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
+import { NOTE_KIND_LABELS } from "@/lib/inquiry-log";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import { InquiryActions } from "./InquiryActions";
 
@@ -33,12 +34,12 @@ export interface InquiryPermissions {
 export function InquiryCard({
   inquiry,
   permissions,
-  showEmailLink = true,
+  showDetailsLink = true,
 }: {
   inquiry: StoredInquiry;
   permissions: InquiryPermissions;
-  /** Link to the inquiry page with its emails (off on that page itself). */
-  showEmailLink?: boolean;
+  /** Link to the inquiry page with its notes, activity and emails, and the latest note (off on that page itself). */
+  showDetailsLink?: boolean;
 }) {
   const { plan } = inquiry;
   const style = STATUS_STYLES[inquiry.status];
@@ -76,12 +77,13 @@ export function InquiryCard({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {showEmailLink && (
+          {showDetailsLink && (
             <Link
               href={`/admin/inquiries/${inquiry.id}`}
               className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
             >
-              {inquiry.emails ? `Emails (${inquiry.emails.count})` : "Emails"}
+              Notes and activity{inquiry.notes ? ` (${inquiry.notes.count})` : ""}
+              {inquiry.emails ? ` · Emails (${inquiry.emails.count})` : ""}
             </Link>
           )}
           {inquiry.status === "contacted" && permissions.convert && (
@@ -127,6 +129,19 @@ export function InquiryCard({
 
       {inquiry.message && (
         <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-800">{inquiry.message}</p>
+      )}
+
+      {showDetailsLink && inquiry.notes && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+            Latest {NOTE_KIND_LABELS[inquiry.notes.last.kind].toLowerCase()}
+            <span className="font-normal normal-case tracking-normal text-slate-600">
+              {" "}
+              · {inquiry.notes.last.by} · {formatTimestamp(inquiry.notes.last.at)}
+            </span>
+          </p>
+          <p className="mt-1 whitespace-pre-wrap break-words text-slate-900">{inquiry.notes.last.text}</p>
+        </div>
       )}
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4">

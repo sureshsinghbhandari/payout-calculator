@@ -65,7 +65,7 @@ function targetHref(event: AuditEvent): string | null {
   const t = event.target;
   if (!t) return null;
   if (t.type === "investor" && t.id) return `/admin/investors/${t.id}`;
-  if (t.type === "inquiry") return "/admin/inquiries";
+  if (t.type === "inquiry") return t.id && event.action !== "inquiry.purged" ? `/admin/inquiries/${t.id}` : "/admin/inquiries";
   if (t.type === "user") return "/admin/settings/users";
   if (t.type === "rates") return "/admin/settings/rates";
   return null;

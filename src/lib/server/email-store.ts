@@ -1,5 +1,6 @@
 import "server-only";
 import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { writableEtag } from "./blob-etag";
 import {
   EMAIL_LIMITS,
   parseThread,
@@ -30,7 +31,7 @@ async function readJson(path: string): Promise<{ data: unknown; etag: string | n
   const result = await get(path, { access: "private", useCache: false });
   if (!result || result.statusCode !== 200) return { data: null, etag: null };
   const text = await new Response(result.stream).text();
-  return { data: JSON.parse(text), etag: result.blob.etag };
+  return { data: JSON.parse(text), etag: writableEtag(result.blob.etag) };
 }
 
 function isConflict(error: unknown): boolean {

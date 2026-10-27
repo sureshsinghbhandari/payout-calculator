@@ -88,8 +88,8 @@ Admins sign in at `/admin` with a **username and password**.
 
 | Role | Can do |
 | --- | --- |
-| **Master Admin** | Everything: inquiries (view, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users, Email settings. |
-| **Sales Admin** | Inquiries only: view them, email the customer, and mark them contacted or new. They do not see interest rates. |
+| **Master Admin** | Everything: inquiries (view, add notes, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users, Email settings. |
+| **Sales Admin** | Inquiries only: view them, add notes, email the customer, and mark them contacted or new. They do not see interest rates. |
 
 Starting users (created automatically the first time the admin area is used):
 
@@ -158,12 +158,20 @@ Until the first save, the starting rates in `src/lib/config.ts`
   asks for name, email, an optional phone number and an optional message.
 - Admins see them at `/admin/inquiries` (the admin home page), newest first. Statuses:
   New, Contacted, Converted, Deleted.
+- **Search** by name, email, phone number (any part of the digits) or reference, and
+  **filter** by status: Open (new and contacted, the default, so converted ones are
+  hidden), New, Contacted, Converted or All.
 - Delete (Master Admin) is a soft delete: the inquiry keeps its data, gets the status
   "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
   can be restored.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
-- Each inquiry has its own page (**Emails** button) with the email conversation. See
-  [Email](#email).
+- Each inquiry has its own page (**Notes and activity** button) with:
+  - **Notes and activity:** Master and Sales Admins add notes, calls and meetings, each
+    with who added it and when. Every audit event about the inquiry (received, status
+    changes, delete and restore, conversion, emails) appears there too, one row each,
+    newest first. Notes stay on their inquiry only; they are not in the audit log. The
+    Inquiries list shows each inquiry's latest note.
+  - The email conversation. See [Email](#email).
 
 ## Audit log
 
@@ -173,7 +181,10 @@ inquiries received, status changes, deletes and restores, conversions, investor 
 changes, and interest rate unlocks and changes (with the old and new rates). Master
 Admins see it under **Settings > Audit log** (`/admin/settings/audit`), by month and by
 category. Emails sent and customer replies are recorded too. Events are
-stored as one private file per month in Vercel Blob.
+stored as one private file per month in Vercel Blob. Events about an inquiry are also
+copied to that inquiry's own log (`inquiry-log/<env>/`), which holds its notes too and
+is shown on the inquiry's page. Events from before inquiry logs existed are copied in
+the first time an inquiry's page is opened.
 
 ## Upcoming features
 
@@ -263,8 +274,23 @@ PowerPoint: `powershell -File docs/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -Image
 
 Everything is stored as private JSON files in the Vercel Blob store
 `payout-calculator-rates`: interest rates, inquiries (one file each), admin users,
-investors, emails and the audit log. Production, preview deployments and local
+investors, emails, inquiry notes and activity, and the audit log. Production, preview deployments and local
 development use separate folders, so testing never touches live data.
+
+## Demo data
+
+`scripts/seed-demo.ts` adds demo data: 7 inquiries (3 new, 2 contacted, 2 converted), 2
+deleted inquiries and 3 investors, with notes, calls, meetings and their activity. It needs
+`BLOB_READ_WRITE_TOKEN` in `.env.local` (`npx vercel env pull .env.local`).
+
+```bash
+npm run seed:demo -- production
+```
+
+Use `local` or `preview` instead of `production` for those folders. Running it again
+replaces the demo data; add `--remove` to remove it. It only touches its own records
+(references `DE30000x`, investor ids `inv_demo…`, audit ids `demo-…`). Demo investors
+have no password, so they cannot sign in to the portal.
 
 ## Environment variables
 

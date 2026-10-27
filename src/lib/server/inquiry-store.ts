@@ -1,6 +1,15 @@
 import "server-only";
 import { BlobPreconditionFailedError, del, get, list, put } from "@vercel/blob";
-import { isInquiryId, parseStoredInquiry, type ActiveInquiryStatus, type StoredInquiry } from "../inquiry";
+import { writableEtag } from "./blob-etag";
+import {
+  isInquiryId,
+  NOTE_PREVIEW_LENGTH,
+  parseStoredInquiry,
+  type ActiveInquiryStatus,
+  type InquiryNotesSummary,
+  type StoredInquiry,
+} from "../inquiry";
+import { deleteInquiryLog } from "./inquiry-log-store";
 
 /** Rewrite attempts when two changes to the same inquiry overlap. */
 const UPDATE_ATTEMPTS = 4;
@@ -39,7 +48,7 @@ async function readInquiry(pathname: string): Promise<{ inquiry: StoredInquiry; 
   if (!result || result.statusCode !== 200) return null;
   const text = await new Response(result.stream).text();
   try {
-    return { inquiry: parseStoredInquiry(text), etag: result.blob.etag };
+    return { inquiry: parseStoredInquiry(text), etag: writableEtag(result.blob.etag) };
   } catch (error) {
     console.error("Skipping unreadable inquiry", pathname, error);
     return null;
@@ -107,24 +116,41 @@ export async function findInquiryIdByReference(reference: string): Promise<strin
   return id && isInquiryId(id) ? id : null;
 }
 
-/** Updates the email summary on an inquiry after an email is sent or received. Retries on conflicts. */
-export async function noteInquiryEmail(id: string, direction: "in" | "out", at: string): Promise<void> {
+/** updateInquiry, retried when another change got there first. */
+async function updateInquiryWithRetry(id: string, change: (inquiry: StoredInquiry) => StoredInquiry | null): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
-      await updateInquiry(id, (inquiry) => ({
-        ...inquiry,
-        emails: {
-          count: (inquiry.emails?.count ?? 0) + 1,
-          lastAt: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastAt : at,
-          lastDirection: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastDirection : direction,
-        },
-      }));
+      await updateInquiry(id, change);
       return;
     } catch (error) {
       if (!(error instanceof BlobPreconditionFailedError) || attempt >= UPDATE_ATTEMPTS) throw error;
       await new Promise((resolve) => setTimeout(resolve, 50 + Math.random() * 150 * attempt));
     }
   }
+}
+
+/** Updates the email summary on an inquiry after an email is sent or received. Retries on conflicts. */
+export function noteInquiryEmail(id: string, direction: "in" | "out", at: string): Promise<void> {
+  return updateInquiryWithRetry(id, (inquiry) => ({
+    ...inquiry,
+    emails: {
+      count: (inquiry.emails?.count ?? 0) + 1,
+      lastAt: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastAt : at,
+      lastDirection: inquiry.emails && inquiry.emails.lastAt > at ? inquiry.emails.lastDirection : direction,
+    },
+  }));
+}
+
+/** Updates the notes summary on an inquiry after a note is added. Retries on conflicts. */
+export function noteInquiryNote(id: string, last: InquiryNotesSummary["last"]): Promise<void> {
+  const preview = last.text.length > NOTE_PREVIEW_LENGTH ? `${last.text.slice(0, NOTE_PREVIEW_LENGTH - 1)}…` : last.text;
+  return updateInquiryWithRetry(id, (inquiry) => ({
+    ...inquiry,
+    notes: {
+      count: (inquiry.notes?.count ?? 0) + 1,
+      last: inquiry.notes && inquiry.notes.last.at > last.at ? inquiry.notes.last : { ...last, text: preview },
+    },
+  }));
 }
 
 /** One inquiry by id, or null. */
@@ -174,5 +200,6 @@ export async function purgeInquiry(id: string): Promise<StoredInquiry | null> {
   const current = await readInquiry(pathname);
   if (!current || current.inquiry.status !== "deleted") return null;
   await del(pathname);
+  await deleteInquiryLog(id).catch((error) => console.error("Removing the inquiry log failed", error));
   return current.inquiry;
 }
