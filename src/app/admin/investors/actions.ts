@@ -1,7 +1,9 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import {
   CONTACT_FIELDS,
   CONVERT_FIELDS,
@@ -42,6 +44,8 @@ import { buildStatementData, type StatementResult } from "@/lib/statement";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
 import { getCurrentRates } from "@/lib/server/rates-store";
+import { paymentConfirmationBlocker, sendPaymentConfirmation } from "@/lib/server/payout-notices";
+import { siteOrigin } from "@/lib/server/site-url";
 
 /*
  * Investors administration (Master Admin only). Server actions are public
@@ -468,6 +472,8 @@ export interface PaymentState {
   message?: string;
   fieldErrors?: FieldErrors<PaymentField>;
   values?: Partial<Record<PaymentField, string>>;
+  /** What happened to the payment confirmation email, when one was asked for. */
+  email?: string;
 }
 
 /** The investor, investment and scheduled payout named by a payment form, or an error message. */
@@ -526,6 +532,10 @@ export async function recordPaymentAction(prev: PaymentState, formData: FormData
     recordedById: admin.id,
     recordedAt: new Date().toISOString(),
   };
+  // "Email the investor a payment confirmation" (sent after the response, when possible).
+  const notify = formData.get("notify") === "on";
+  const origin = notify ? siteOrigin(await headers()) : "";
+  let emailNote = "";
 
   try {
     const { investor: updated, previous } = await setPayoutPayment(investor.id, investment.id, payment);
@@ -541,6 +551,16 @@ export async function recordPaymentAction(prev: PaymentState, formData: FormData
         : `Marked ${payoutLabel(investment, row)} of investor ${updated.name} (${updated.username}) as paid: ${paid}`,
       target: investorTarget(updated),
     });
+    if (notify) {
+      const blocker = paymentConfirmationBlocker(updated);
+      if (blocker) emailNote = blocker;
+      else {
+        after(() =>
+          sendPaymentConfirmation({ investorId: updated.id, investmentId: investment.id, payoutNumber: row.payoutNumber, by: admin, origin }),
+        );
+        emailNote = `Payment confirmation on its way to ${updated.email.trim()}.`;
+      }
+    }
   } catch (error) {
     return {
       attempt,
@@ -551,7 +571,12 @@ export async function recordPaymentAction(prev: PaymentState, formData: FormData
   }
 
   refresh();
-  return { attempt, status: "saved", message: `Payout ${row.payoutNumber} marked as paid.` };
+  return {
+    attempt,
+    status: "saved",
+    message: `Payout ${row.payoutNumber} marked as paid.`,
+    ...(emailNote ? { email: emailNote } : {}),
+  };
 }
 
 /** Removes the recorded payment of a payout, so it shows as Due or Upcoming again. */

@@ -455,6 +455,41 @@ export async function sendPasswordResetEmail(input: {
   return result.ok ? { ok: true } : result;
 }
 
+export type PayoutEmailSend = (
+  to: string,
+  values: Record<string, string>,
+  idempotencyKey: string,
+) => Promise<{ ok: true } | { ok: false; error: string }>;
+
+/**
+ * A sender for one payout email template (payout reminder or payment
+ * confirmation), with the template read once; null when email is not set up.
+ * `values` are the placeholder values without {team}. The caller records the
+ * audit event. Sending never throws.
+ */
+export async function payoutEmailSender(key: "payoutReminder" | "paymentConfirmation"): Promise<PayoutEmailSend | null> {
+  const env = readEnv();
+  const from = senderOf(env);
+  if (!from) return null;
+  const template = await getEmailTemplate(key);
+  const team = teamName(env, from);
+  return async (to, values, idempotencyKey) => {
+    try {
+      const email = renderTemplate(template, { ...values, team });
+      const result = await deliver(env, from, {
+        to,
+        subject: email.subject,
+        text: email.body,
+        tags: { kind: key === "payoutReminder" ? "payout-reminder" : "payment-confirmation" },
+        idempotencyKey,
+      });
+      return result.ok ? { ok: true } : result;
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : "Sending failed." };
+    }
+  };
+}
+
 /** Message-ID of the latest customer email in a thread, to thread a staff reply. */
 export async function latestCustomerMessageId(inquiryId: string): Promise<string | undefined> {
   const thread = await getThread(inquiryId);

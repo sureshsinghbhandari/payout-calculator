@@ -34,7 +34,7 @@ async function EmailTemplatesContent() {
   } catch (error) {
     console.error("Loading email templates failed", error);
   }
-  const sample = sampleTemplateValues(emailTeamName(), SETUP_LINK_HOURS);
+  const team = emailTeamName();
 
   return (
     <AdminFrame user={toPublicAdmin(user)}>
@@ -74,7 +74,7 @@ async function EmailTemplatesContent() {
                 templateKey={key}
                 current={templateFor(stored, key)}
                 saved={saved ? { updatedAt: saved.updatedAt, updatedBy: saved.updatedBy } : null}
-                sample={sample}
+                sample={sampleTemplateValues(team, SETUP_LINK_HOURS, key)}
                 storageConfigured={isTemplateStorageConfigured()}
               />
             );

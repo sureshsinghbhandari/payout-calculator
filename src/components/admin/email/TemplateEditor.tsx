@@ -67,7 +67,7 @@ export function TemplateEditor({ templateKey, current, saved, sample, storageCon
         <ul className="mt-2 grid gap-1 sm:grid-cols-2">
           {info.placeholders.map((name) => (
             <li key={name} className="text-slate-700">
-              <code className="rounded bg-white px-1 text-slate-900">{`{${name}}`}</code> {placeholderHelp(name)}
+              <code className="rounded bg-white px-1 text-slate-900">{`{${name}}`}</code> {placeholderHelp(name, templateKey)}
             </li>
           ))}
         </ul>

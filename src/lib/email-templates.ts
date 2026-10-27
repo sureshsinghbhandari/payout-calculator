@@ -1,20 +1,27 @@
 /**
  * Editable email templates (Settings > Email templates): the inquiry
- * acknowledgement, the new-inquiry alert for admins and the password reset
- * email. Placeholders such as {name} are filled in when an email is sent.
+ * acknowledgement, the new-inquiry alert for admins, the password reset email
+ * and the payout emails to investors (reminder and payment confirmation).
+ * Placeholders such as {name} are filled in when an email is sent.
  * Pure functions so they can be unit tested.
  *
  * There is deliberately no placeholder for the interest rate, and percentages
- * are refused in the acknowledgement and the alert: visitors and Sales Admins
- * never see rates.
+ * are refused in every template except the password reset: visitors, investors
+ * and Sales Admins never see rates.
  */
-import { formatDollars, formatYears } from "./format";
+import { formatCents, formatDollars, formatIsoDateLong, formatYears } from "./format";
 import { inquiryReference, type StoredInquiry } from "./inquiry";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "./payout";
 
-export type TemplateKey = "acknowledgement" | "alert" | "reset";
+export type TemplateKey = "acknowledgement" | "alert" | "reset" | "payoutReminder" | "paymentConfirmation";
 
-export const TEMPLATE_KEYS: readonly TemplateKey[] = ["acknowledgement", "alert", "reset"];
+export const TEMPLATE_KEYS: readonly TemplateKey[] = [
+  "acknowledgement",
+  "alert",
+  "reset",
+  "payoutReminder",
+  "paymentConfirmation",
+];
 
 export interface EmailTemplate {
   subject: string;
@@ -48,6 +55,10 @@ const PLACEHOLDER_HELP: Record<string, string> = {
   username: "Username of the account",
   hours: "Hours the link stays valid",
   team: "Your team's name (the email sender name)",
+  date: "Date",
+  payoutNumber: "Number of the payout, e.g. 3",
+  payoutCount: "Number of payouts in the term, e.g. 12",
+  investment: "The investment, e.g. $50,000 investment of Jan 5, 2026",
 };
 
 export interface TemplateInfo {
@@ -55,6 +66,8 @@ export interface TemplateInfo {
   description: string;
   /** Placeholders this template can use. */
   placeholders: readonly string[];
+  /** Help for placeholders that mean something different in this template. */
+  help?: Partial<Record<string, string>>;
 }
 
 export const TEMPLATE_INFO: Record<TemplateKey, TemplateInfo> = {
@@ -87,10 +100,44 @@ export const TEMPLATE_INFO: Record<TemplateKey, TemplateInfo> = {
     description: "Sent to an admin or investor who selects Forgot password. {link} opens the page to choose a new password.",
     placeholders: ["name", "firstName", "username", "link", "hours", "team"],
   },
+  payoutReminder: {
+    label: "Payout reminder",
+    description:
+      "Sent to investors a few days before each scheduled payout (the number of days is set on Settings > Email). Not sent to investors who switched payout emails off in the portal.",
+    placeholders: ["name", "firstName", "amount", "date", "payoutNumber", "payoutCount", "investment", "link", "team"],
+    help: {
+      amount: "Scheduled payout amount",
+      date: "Scheduled payout date, e.g. Tue, Jan 5, 2027",
+      link: "Link to the investor portal",
+    },
+  },
+  paymentConfirmation: {
+    label: "Payment confirmation",
+    description:
+      "Sent to an investor when a Master Admin marks a payout as paid with “Email the investor a payment confirmation” ticked. Not sent to investors who switched payout emails off in the portal.",
+    placeholders: [
+      "name",
+      "firstName",
+      "amount",
+      "date",
+      "payoutNumber",
+      "payoutCount",
+      "reference",
+      "investment",
+      "link",
+      "team",
+    ],
+    help: {
+      amount: "Amount paid",
+      date: "Date paid, e.g. Tue, Jan 5, 2027",
+      reference: "Payment reference, e.g. the bank transfer id",
+      link: "Link to the investor portal",
+    },
+  },
 };
 
-export function placeholderHelp(name: string): string {
-  return PLACEHOLDER_HELP[name] ?? "";
+export function placeholderHelp(name: string, key?: TemplateKey): string {
+  return (key ? TEMPLATE_INFO[key].help?.[name] : undefined) ?? PLACEHOLDER_HELP[name] ?? "";
 }
 
 export const DEFAULT_TEMPLATES: Record<TemplateKey, EmailTemplate> = {
@@ -157,6 +204,48 @@ export const DEFAULT_TEMPLATES: Record<TemplateKey, EmailTemplate> = {
       "",
       "Kind regards,",
       "{team}",
+    ].join("\n"),
+  },
+  payoutReminder: {
+    subject: "Your payout of {amount} is scheduled for {date}",
+    body: [
+      "Hello {firstName},",
+      "",
+      "This is a reminder that payout {payoutNumber} of {payoutCount} on your {investment} is scheduled for {date}.",
+      "",
+      "Scheduled amount: {amount}",
+      "",
+      "You can see your payout schedule in your investor portal:",
+      "{link}",
+      "",
+      "If you have any questions, just reply to this email.",
+      "",
+      "Kind regards,",
+      "{team}",
+      "",
+      "You get this email because payout emails are on for you. You can switch them off in your investor portal.",
+    ].join("\n"),
+  },
+  paymentConfirmation: {
+    subject: "We have paid your payout of {amount}",
+    body: [
+      "Hello {firstName},",
+      "",
+      "We have paid payout {payoutNumber} of {payoutCount} on your {investment}.",
+      "",
+      "Amount paid: {amount}",
+      "Date paid: {date}",
+      "Reference: {reference}",
+      "",
+      "Depending on your bank, it can take a few days to reach your account. The payment also shows as Paid in your investor portal:",
+      "{link}",
+      "",
+      "If you have any questions, just reply to this email.",
+      "",
+      "Kind regards,",
+      "{team}",
+      "",
+      "You get this email because payout emails are on for you. You can switch them off in your investor portal.",
     ].join("\n"),
   },
 };
@@ -268,8 +357,22 @@ export function inquiryTemplateValues(inquiry: StoredInquiry, team: string, link
   };
 }
 
-/** Example values for the preview on Settings > Email templates. */
-export function sampleTemplateValues(team: string, hours: number): Record<string, string> {
+/** Example values for the preview on Settings > Email templates (payout emails have their own). */
+export function sampleTemplateValues(team: string, hours: number, key?: TemplateKey): Record<string, string> {
+  if (key === "payoutReminder" || key === "paymentConfirmation") {
+    return {
+      name: "Jane Doe",
+      firstName: "Jane",
+      amount: formatCents(125_000),
+      date: formatIsoDateLong("2027-01-05"),
+      payoutNumber: "3",
+      payoutCount: "12",
+      reference: "TRX-20270105-001",
+      investment: `${formatDollars(50_000)} investment of Jan 5, 2026`,
+      link: "https://example.com/portal",
+      team,
+    };
+  }
   return {
     name: "Jane Doe",
     firstName: "Jane",
