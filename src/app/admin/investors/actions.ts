@@ -38,13 +38,15 @@ import { recordAudit } from "@/lib/server/audit-store";
 import { adminActor } from "@/lib/audit";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate } from "@/lib/format";
-import type { Investment, Investor, PayoutPayment } from "@/lib/accounts";
+import { hasTwoStep, type Investment, type Investor, type PayoutPayment } from "@/lib/accounts";
 import type { ProductSettings } from "@/lib/products";
 import { isMatured, latestPaidOn, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
 import { buildStatementData, type StatementResult } from "@/lib/statement";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
 import { getCurrentProducts } from "@/lib/server/products-store";
+import { turnOffTwoStep } from "@/lib/server/two-step";
+import type { TwoStepResetState } from "@/lib/two-step";
 import { getCurrentRates } from "@/lib/server/rates-store";
 import { paymentConfirmationBlocker, sendPaymentConfirmation } from "@/lib/server/payout-notices";
 import { siteOrigin } from "@/lib/server/site-url";
@@ -372,6 +374,43 @@ export async function createInvestorSetupLinkAction(_prev: SetupLinkState, formD
 
   refresh();
   return { status: "created", token };
+}
+
+// ---------- two-step sign-in ----------
+
+/** Resets an investor's two-step sign-in, e.g. when they lost their phone. They then sign in with their password only. */
+export async function resetInvestorTwoStepAction(_prev: TwoStepResetState, formData: FormData): Promise<TwoStepResetState> {
+  const admin = await requireAdminPermission("investors.manage");
+  if (!admin) return { status: "error", message: NO_ACCESS };
+
+  const id = formData.get("id");
+  if (!isInvestorIdLike(id)) return { status: "error", message: NOT_FOUND };
+  if (!isAccountStorageConfigured()) return { status: "error", message: NO_STORAGE };
+
+  try {
+    const investor = await getInvestor(id);
+    if (!investor) return { status: "error", message: NOT_FOUND };
+    if (!hasTwoStep(investor)) return { status: "ok", message: "Two-step sign-in is already off." };
+    await turnOffTwoStep("investor", id);
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: "investor.two_step_reset",
+      summary: `Reset two-step sign-in for investor ${investor.name} (${investor.username})`,
+      target: investorTarget(investor),
+    });
+  } catch (error) {
+    return {
+      status: "error",
+      message: errorMessage(error, "Two-step sign-in could not be reset. Please try again.", "Resetting investor two-step sign-in failed"),
+    };
+  }
+
+  refresh();
+  return {
+    status: "ok",
+    message: "Two-step sign-in reset. The investor can sign in with their password only, and set it up again under Sign-in security.",
+  };
 }
 
 // ---------- more investments and renewals ----------

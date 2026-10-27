@@ -3,12 +3,14 @@
 import { useActionState, useId, useRef, useState } from "react";
 import {
   createInvestorSetupLinkAction,
+  resetInvestorTwoStepAction,
   setInvestorAccessAction,
   setInvestorTemporaryPasswordAction,
   type InvestorActionState,
   type SetupLinkState,
   type TemporaryPasswordState,
 } from "@/app/admin/investors/actions";
+import { TwoStepResetForm } from "@/components/two-step/TwoStepResetForm";
 import { SETUP_LINK_HOURS } from "@/lib/accounts";
 import { dangerButton, errorNotice, inputClass, primaryButton, secondaryButton, successNotice } from "./ui";
 
@@ -17,17 +19,20 @@ interface Props {
   investorName: string;
   active: boolean;
   hasPassword: boolean;
+  /** Two-step sign-in (authenticator app) is on. */
+  twoStepEnabled: boolean;
   /** Minimum password length (from the server's password rules). */
   minPasswordLength: number;
 }
 
-/** Sign-in management: login access, temporary password and setup link. */
+/** Sign-in management: login access, temporary password, setup link and two-step sign-in. */
 export function InvestorAccess(props: Props) {
   return (
     <div className="divide-y divide-slate-200">
       <LoginAccess {...props} />
       <TemporaryPassword {...props} />
       <SetupLink {...props} />
+      <TwoStep {...props} />
     </div>
   );
 }
@@ -210,7 +215,7 @@ function SetupLink({ investorId, investorName, active, hasPassword }: Props) {
   }
 
   return (
-    <div className="pt-6">
+    <div className="py-6">
       <h3 className="text-sm font-semibold text-slate-900">Setup link</h3>
       <p className="mt-1 text-sm text-slate-600">
         A one-time link {investorName} opens to choose {hasPassword ? "a new" : "their own"} password. It expires after{" "}
@@ -257,6 +262,28 @@ function SetupLink({ investorId, investorName, active, hasPassword }: Props) {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+function TwoStep({ investorId, investorName, twoStepEnabled }: Props) {
+  return (
+    <div className="pt-6">
+      <h3 className="text-sm font-semibold text-slate-900">Two-step sign-in</h3>
+      <p className="mt-1 text-sm text-slate-600">
+        {twoStepEnabled
+          ? `On. ${investorName} enters a code from an authenticator app after their password. If they lost their phone and their recovery codes, reset it so they can sign in with their password only. A new password or setup link does not turn it off.`
+          : `Off. ${investorName} can turn it on under Sign-in security in the investor portal.`}
+      </p>
+      <div className="mt-3">
+        <TwoStepResetForm
+          action={resetInvestorTwoStepAction}
+          id={investorId}
+          name={investorName}
+          enabled={twoStepEnabled}
+          buttonClass={secondaryButton}
+        />
+      </div>
     </div>
   );
 }

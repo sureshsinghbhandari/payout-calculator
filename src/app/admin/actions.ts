@@ -3,7 +3,7 @@
 import { refresh, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { normalizeEmail, validateEmailAddress } from "@/lib/accounts";
+import { hasTwoStep, normalizeEmail, validateEmailAddress } from "@/lib/accounts";
 import { adminActor, visitorActor } from "@/lib/audit";
 import { formatPercent } from "@/lib/format";
 import { inquiryReference, isInquiryId, type StoredInquiry } from "@/lib/inquiry";
@@ -13,14 +13,17 @@ import { RATE_FREQUENCIES, validateRateTable, type RateTable } from "@/lib/rates
 import { AccountError, setAdminPassword, updateAdminUser } from "@/lib/server/accounts-store";
 import { recordAudit } from "@/lib/server/audit-store";
 import {
+  adminAccountReady,
   authConfig,
   endAdminSession,
+  endTwoStepSignIn,
   getCurrentAdmin,
   isRatesUnlocked,
   lockRates,
-  needsNewPassword,
+  needsTwoStepSetup,
   requireAdminPermission,
   startAdminSession,
+  startTwoStepSignIn,
   unlockRates,
   verifyAdminCredentials,
 } from "@/lib/server/auth";
@@ -78,6 +81,11 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     return { error: "Incorrect username or password.", username };
   }
   loginThrottle.reset(client);
+  if (hasTwoStep(result.user)) {
+    // The session starts only after the code from the authenticator app (see two-step-actions.ts).
+    await startTwoStepSignIn("admin", result.user);
+    redirect("/admin");
+  }
   await startAdminSession(result.user);
   recordAudit({
     actor: adminActor(result.user),
@@ -87,7 +95,8 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     // A hash of the network and browser, for the new-device sign-in alert.
     client: signInClientHash(await headers(), config.secret),
   });
-  redirect(result.mustChangePassword ? "/admin/account" : "/admin/inquiries");
+  // Master Admins without two-step sign-in are sent to set it up (My account).
+  redirect(result.mustChangePassword || needsTwoStepSetup(result.user) ? "/admin/account" : "/admin/inquiries");
 }
 
 export async function logoutAction(): Promise<void> {
@@ -96,6 +105,7 @@ export async function logoutAction(): Promise<void> {
     recordAudit({ actor: adminActor(user), category: "sign-in", action: "admin.sign_out", summary: "Signed out of admin" });
   }
   await endAdminSession();
+  await endTwoStepSignIn("admin");
   redirect("/admin");
 }
 
@@ -139,7 +149,7 @@ export async function changeOwnPasswordAction(_prev: ChangePasswordState, formDa
   loginThrottle.reset(client);
   // The password version changed, so issue a new session for this admin.
   await startAdminSession(updated);
-  redirect("/admin/inquiries?password=changed");
+  redirect(needsTwoStepSetup(updated) ? "/admin/account" : "/admin/inquiries?password=changed");
 }
 
 // ---------- own email address and alerts ----------
@@ -158,7 +168,7 @@ export interface MyEmailState {
  */
 export async function saveMyEmailAction(_prev: MyEmailState, formData: FormData): Promise<MyEmailState> {
   const user = await getCurrentAdmin();
-  if (!user || needsNewPassword(user)) return { status: "error", message: "Your session has ended. Sign in again." };
+  if (!user || !adminAccountReady(user)) return { status: "error", message: "Your session has ended. Sign in again." };
 
   const typed = String(formData.get("email") ?? "").slice(0, 300);
   const email = normalizeEmail(typed);
@@ -201,7 +211,7 @@ export interface AlertsState {
 /** Switches the signed-in admin's new inquiry alerts on or off. */
 export async function saveMyAlertsAction(_prev: AlertsState, formData: FormData): Promise<AlertsState> {
   const user = await getCurrentAdmin();
-  if (!user || needsNewPassword(user)) return { status: "error", message: "Your session has ended. Sign in again." };
+  if (!user || !adminAccountReady(user)) return { status: "error", message: "Your session has ended. Sign in again." };
   const on = formData.get("inquiryAlerts") === "on";
   if (on === user.inquiryAlerts) return { status: "saved", message: "No changes to save." };
   try {

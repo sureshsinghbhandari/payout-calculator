@@ -219,6 +219,7 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
               investorName={pub.name}
               active={pub.active}
               hasPassword={pub.hasPassword}
+              twoStepEnabled={pub.twoStepEnabled}
               minPasswordLength={MIN_USER_PASSWORD_LENGTH}
             />
           </AdminCard>

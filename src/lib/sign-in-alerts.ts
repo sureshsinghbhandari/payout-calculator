@@ -3,7 +3,8 @@
  * unit tested.
  *
  * - Repeated failures: 5 or more failed sign-ins for the same username (admin
- *   or investor) within 15 minutes. One alert covers the whole burst.
+ *   or investor) within 15 minutes. One alert covers the whole burst. Wrong
+ *   two-step sign-in codes count too (the password was right, so they matter).
  * - New device or network: a successful admin sign-in from a client (see
  *   `AuditEvent.client`) the person did not use in the previous 30 days. Only
  *   raised when the person has earlier sign-ins with a known client in that
@@ -49,6 +50,8 @@ export function alertTime(alert: SignInAlert): string {
 const FAILED_ACTIONS: Record<string, SignInPortal> = {
   "admin.sign_in_failed": "admin",
   "investor.sign_in_failed": "investor",
+  "admin.two_step_failed": "admin",
+  "investor.two_step_failed": "investor",
 };
 
 function failedSignInAlerts(events: AuditEvent[]): SignInAlert[] {
