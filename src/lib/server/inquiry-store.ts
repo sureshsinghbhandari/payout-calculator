@@ -1,5 +1,5 @@
 import "server-only";
-import { get, list, put } from "@vercel/blob";
+import { del, get, list, put } from "@vercel/blob";
 import { isInquiryId, parseStoredInquiry, type ActiveInquiryStatus, type StoredInquiry } from "../inquiry";
 
 /**
@@ -65,12 +65,15 @@ export async function listInquiries(): Promise<{ inquiries: StoredInquiry[]; tot
 }
 
 /** Rewrites one inquiry, only if it has not changed since it was read. */
-async function updateInquiry(id: string, change: (inquiry: StoredInquiry) => StoredInquiry | null): Promise<boolean> {
+async function updateInquiry(
+  id: string,
+  change: (inquiry: StoredInquiry) => StoredInquiry | null,
+): Promise<StoredInquiry | null> {
   const pathname = pathnameFor(id);
   const current = await readInquiry(pathname);
-  if (!current) return false;
+  if (!current) return null;
   const next = change(current.inquiry);
-  if (!next) return false;
+  if (!next) return null;
   await put(pathname, JSON.stringify(next, null, 2), {
     access: "private",
     addRandomSuffix: false,
@@ -78,7 +81,7 @@ async function updateInquiry(id: string, change: (inquiry: StoredInquiry) => Sto
     ifMatch: current.etag,
     contentType: "application/json",
   });
-  return true;
+  return next;
 }
 
 /** One inquiry by id, or null. */
@@ -87,14 +90,14 @@ export async function getInquiry(id: string): Promise<StoredInquiry | null> {
 }
 
 /** Marks an inquiry as new or contacted (not when deleted or converted). */
-export function setInquiryStatus(id: string, status: ActiveInquiryStatus): Promise<boolean> {
+export function setInquiryStatus(id: string, status: ActiveInquiryStatus): Promise<StoredInquiry | null> {
   return updateInquiry(id, (inquiry) =>
     inquiry.status === "new" || inquiry.status === "contacted" ? { ...inquiry, status } : null,
   );
 }
 
 /** Soft delete: the inquiry stays stored with status "deleted" and can be restored. Converted inquiries cannot be deleted. */
-export function softDeleteInquiry(id: string, deletedAt: string): Promise<boolean> {
+export function softDeleteInquiry(id: string, deletedAt: string): Promise<StoredInquiry | null> {
   return updateInquiry(id, (inquiry) =>
     inquiry.status === "new" || inquiry.status === "contacted"
       ? { ...inquiry, status: "deleted", deletedAt, statusBeforeDelete: inquiry.status }
@@ -103,18 +106,30 @@ export function softDeleteInquiry(id: string, deletedAt: string): Promise<boolea
 }
 
 /** Marks a contacted inquiry as converted to the given investor. */
-export function markInquiryConverted(id: string, investorId: string, convertedAt: string): Promise<boolean> {
+export function markInquiryConverted(id: string, investorId: string, convertedAt: string): Promise<StoredInquiry | null> {
   return updateInquiry(id, (inquiry) =>
     inquiry.status === "contacted" ? { ...inquiry, status: "converted", investorId, convertedAt } : null,
   );
 }
 
 /** Restores a deleted inquiry to the status it had before it was deleted. */
-export function restoreInquiry(id: string): Promise<boolean> {
+export function restoreInquiry(id: string): Promise<StoredInquiry | null> {
   return updateInquiry(id, (inquiry) => {
     if (inquiry.status !== "deleted") return null;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { deletedAt, statusBeforeDelete, ...rest } = inquiry;
     return { ...rest, status: statusBeforeDelete ?? "new" };
   });
+}
+
+/**
+ * TEMPORARY: permanently removes an inquiry that is already soft-deleted.
+ * Returns the removed inquiry, or null if it was not found or not deleted.
+ */
+export async function purgeInquiry(id: string): Promise<StoredInquiry | null> {
+  const pathname = pathnameFor(id);
+  const current = await readInquiry(pathname);
+  if (!current || current.inquiry.status !== "deleted") return null;
+  await del(pathname);
+  return current.inquiry;
 }

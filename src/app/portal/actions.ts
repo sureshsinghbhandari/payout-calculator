@@ -12,13 +12,15 @@ import {
 } from "@/lib/server/auth";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
+import { recordAudit } from "@/lib/server/audit-store";
+import { investorActor, visitorActor } from "@/lib/audit";
 
 /**
  * Investor portal actions. Server actions are public endpoints: every action
  * that touches an account checks the investor's session itself.
  */
 
-const PORTAL = "/investor";
+const PORTAL = "/portal";
 const FAILED_ATTEMPT_DELAY_MS = 1000;
 /** Longer inputs are rejected before any hashing work is done. */
 const MAX_INPUT_LENGTH = 200;
@@ -75,6 +77,13 @@ export async function investorLoginAction(_prev: InvestorLoginState, formData: F
   }
 
   if (!result) {
+    const tried = username.trim().toLowerCase().slice(0, 64);
+    recordAudit({
+      actor: visitorActor("Unknown visitor", tried || undefined),
+      category: "sign-in",
+      action: "investor.sign_in_failed",
+      summary: tried ? `Failed investor sign-in for username "${tried}"` : "Failed investor sign-in",
+    });
     loginThrottle.recordFailure(client, Date.now());
     // Slow down repeated guessing.
     await wait(FAILED_ATTEMPT_DELAY_MS);
@@ -83,12 +92,27 @@ export async function investorLoginAction(_prev: InvestorLoginState, formData: F
 
   loginThrottle.reset(client);
   await startInvestorSession(result.investor);
+  recordAudit({
+    actor: investorActor(result.investor),
+    category: "sign-in",
+    action: "investor.sign_in",
+    summary: "Signed in to the investor portal",
+  });
   redirect(PORTAL);
 }
 
 // ---------- sign out ----------
 
 export async function investorLogoutAction(): Promise<void> {
+  const investor = await getCurrentInvestor();
+  if (investor) {
+    recordAudit({
+      actor: investorActor(investor),
+      category: "sign-in",
+      action: "investor.sign_out",
+      summary: "Signed out of the investor portal",
+    });
+  }
   await endInvestorSession();
   redirect(PORTAL);
 }
@@ -144,6 +168,12 @@ export async function investorChangePasswordAction(
     return { error: "Your password could not be changed. Please try again." };
   }
 
+  recordAudit({
+    actor: investorActor(updated),
+    category: "sign-in",
+    action: "investor.password_changed",
+    summary: "Changed their own password",
+  });
   // The new password version signs out older sessions, including this one: start a fresh one.
   await startInvestorSession(updated);
   redirect(`${PORTAL}?changed=1`);

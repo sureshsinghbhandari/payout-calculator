@@ -10,6 +10,9 @@ import {
   type StoredInquiry,
 } from "@/lib/inquiry";
 import { buildScenarios } from "@/lib/scenarios";
+import { visitorActor } from "@/lib/audit";
+import { formatDollars } from "@/lib/format";
+import { recordAudit } from "@/lib/server/audit-store";
 import { isInquiryStorageConfigured, saveInquiry } from "@/lib/server/inquiry-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { getCurrentRates } from "@/lib/server/rates-store";
@@ -93,6 +96,13 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
       },
     };
     await saveInquiry(inquiry);
+    recordAudit({
+      actor: visitorActor(inquiry.name),
+      category: "inquiry",
+      action: "inquiry.received",
+      summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}`,
+      target: { type: "inquiry", id: inquiry.id, label: `${reference} (${inquiry.name})` },
+    });
   } catch (error) {
     console.error("Saving inquiry failed", error);
     return { status: "error", message: "Your inquiry could not be sent. Please try again.", values };

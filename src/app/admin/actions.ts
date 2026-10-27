@@ -3,10 +3,14 @@
 import { refresh, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { isInquiryId } from "@/lib/inquiry";
+import { adminActor, visitorActor } from "@/lib/audit";
+import { formatPercent } from "@/lib/format";
+import { inquiryReference, isInquiryId, type StoredInquiry } from "@/lib/inquiry";
+import { FREQUENCY_LABELS } from "@/lib/payout";
 import type { PayoutFrequency } from "@/lib/payout";
-import { RATE_FREQUENCIES, validateRateTable } from "@/lib/rates";
+import { RATE_FREQUENCIES, validateRateTable, type RateTable } from "@/lib/rates";
 import { setAdminPassword } from "@/lib/server/accounts-store";
+import { recordAudit } from "@/lib/server/audit-store";
 import {
   authConfig,
   endAdminSession,
@@ -18,10 +22,10 @@ import {
   unlockRates,
   verifyAdminCredentials,
 } from "@/lib/server/auth";
-import { restoreInquiry, setInquiryStatus, softDeleteInquiry } from "@/lib/server/inquiry-store";
+import { purgeInquiry, restoreInquiry, setInquiryStatus, softDeleteInquiry } from "@/lib/server/inquiry-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
-import { isRateStorageConfigured, RATES_TAG, saveRates } from "@/lib/server/rates-store";
+import { isRateStorageConfigured, RATES_TAG, readStoredRates, saveRates } from "@/lib/server/rates-store";
 
 const FAILED_LOGIN_DELAY_MS = 1000;
 const loginThrottle = new LoginThrottle();
@@ -59,15 +63,27 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
   const result = await verifyAdminCredentials(username, password);
   if (!result) {
+    const tried = username.trim().toLowerCase().slice(0, 64);
+    recordAudit({
+      actor: visitorActor("Unknown visitor", tried || undefined),
+      category: "sign-in",
+      action: "admin.sign_in_failed",
+      summary: tried ? `Failed admin sign-in for username "${tried}"` : "Failed admin sign-in",
+    });
     await failedAttempt(client);
     return { error: "Incorrect username or password.", username };
   }
   loginThrottle.reset(client);
   await startAdminSession(result.user);
+  recordAudit({ actor: adminActor(result.user), category: "sign-in", action: "admin.sign_in", summary: "Signed in to admin" });
   redirect(result.mustChangePassword ? "/admin/account" : "/admin/inquiries");
 }
 
 export async function logoutAction(): Promise<void> {
+  const user = await getCurrentAdmin();
+  if (user) {
+    recordAudit({ actor: adminActor(user), category: "sign-in", action: "admin.sign_out", summary: "Signed out of admin" });
+  }
   await endAdminSession();
   redirect("/admin");
 }
@@ -103,6 +119,12 @@ export async function changeOwnPasswordAction(_prev: ChangePasswordState, formDa
   if (password === current) return { fieldErrors: { password: "Choose a password different from the current one." } };
 
   const updated = await setAdminPassword(user.id, await hashPassword(password), false);
+  recordAudit({
+    actor: adminActor(user),
+    category: "sign-in",
+    action: "admin.password_changed",
+    summary: "Changed their own password",
+  });
   loginThrottle.reset(client);
   // The password version changed, so issue a new session for this admin.
   await startAdminSession(updated);
@@ -127,11 +149,25 @@ export async function unlockRatesAction(_prev: UnlockState, formData: FormData):
 
   const password = String(formData.get("password") ?? "");
   if (!(await verifyPassword(password, user.passwordHash))) {
+    recordAudit({
+      actor: adminActor(user),
+      category: "rates",
+      action: "rates.unlock_failed",
+      summary: "Failed to unlock interest rates (wrong password)",
+      target: { type: "rates", label: "Interest rates" },
+    });
     await failedAttempt(client);
     return { error: "Incorrect password." };
   }
   loginThrottle.reset(client);
   await unlockRates(user);
+  recordAudit({
+    actor: adminActor(user),
+    category: "rates",
+    action: "rates.unlocked",
+    summary: "Unlocked interest rates for editing",
+    target: { type: "rates", label: "Interest rates" },
+  });
   redirect(RATES_PAGE);
 }
 
@@ -168,12 +204,25 @@ export async function saveRatesAction(_prev: SaveRatesState, formData: FormData)
     return { status: "error", message: "Rate storage is not configured, so rates cannot be saved.", values };
   }
 
+  let before: RateTable | null = null;
+  try {
+    before = (await readStoredRates()).rates;
+  } catch {
+    // The audit entry then lists the new rates only.
+  }
   try {
     await saveRates(result.value, new Date().toISOString());
   } catch (error) {
     console.error("Saving rates failed", error);
     return { status: "error", message: "The rates could not be saved. Please try again.", values };
   }
+  recordAudit({
+    actor: adminActor(user),
+    category: "rates",
+    action: "rates.saved",
+    summary: describeRateChange(before, result.value),
+    target: { type: "rates", label: "Interest rates" },
+  });
 
   // New quotes use the new rates immediately. Editing locks again after a save.
   updateTag(RATES_TAG);
@@ -181,7 +230,21 @@ export async function saveRatesAction(_prev: SaveRatesState, formData: FormData)
   redirect(`${RATES_PAGE}?saved=1`);
 }
 
+function describeRateChange(before: RateTable | null, after: RateTable): string {
+  const parts = RATE_FREQUENCIES.flatMap((f) => {
+    if (!before) return [`${FREQUENCY_LABELS[f]} ${formatPercent(after[f])}`];
+    if (before[f] === after[f]) return [];
+    return [`${FREQUENCY_LABELS[f]} ${formatPercent(before[f])} to ${formatPercent(after[f])}`];
+  });
+  if (parts.length === 0) return "Saved interest rates (no changes)";
+  return `Changed interest rates: ${parts.join(", ")}`;
+}
+
 // ---------- inquiries ----------
+
+function inquiryTarget(inquiry: StoredInquiry) {
+  return { type: "inquiry" as const, id: inquiry.id, label: `${inquiryReference(inquiry.id)} (${inquiry.name})` };
+}
 
 function inquiryId(formData: FormData): string | null {
   const id = formData.get("id");
@@ -190,12 +253,22 @@ function inquiryId(formData: FormData): string | null {
 
 /** Marks an inquiry as new or contacted (Master and Sales Admins). */
 export async function setInquiryStatusAction(formData: FormData): Promise<void> {
-  if (!(await requireAdminPermission("inquiries.status"))) return;
+  const user = await requireAdminPermission("inquiries.status");
+  if (!user) return;
   const id = inquiryId(formData);
   const status = formData.get("status");
   if (!id || (status !== "new" && status !== "contacted")) return;
   try {
-    await setInquiryStatus(id, status);
+    const updated = await setInquiryStatus(id, status);
+    if (updated) {
+      recordAudit({
+        actor: adminActor(user),
+        category: "inquiry",
+        action: "inquiry.status",
+        summary: `Marked inquiry ${inquiryReference(updated.id)} (${updated.name}) as ${status}`,
+        target: inquiryTarget(updated),
+      });
+    }
   } catch (error) {
     console.error("Updating inquiry failed", error);
   }
@@ -204,11 +277,21 @@ export async function setInquiryStatusAction(formData: FormData): Promise<void> 
 
 /** Soft-deletes an inquiry: it moves to Deleted inquiries with status "deleted" (Master Admin). */
 export async function deleteInquiryAction(formData: FormData): Promise<void> {
-  if (!(await requireAdminPermission("inquiries.delete"))) return;
+  const user = await requireAdminPermission("inquiries.delete");
+  if (!user) return;
   const id = inquiryId(formData);
   if (!id) return;
   try {
-    await softDeleteInquiry(id, new Date().toISOString());
+    const updated = await softDeleteInquiry(id, new Date().toISOString());
+    if (updated) {
+      recordAudit({
+        actor: adminActor(user),
+        category: "inquiry",
+        action: "inquiry.deleted",
+        summary: `Deleted inquiry ${inquiryReference(updated.id)} (${updated.name})`,
+        target: inquiryTarget(updated),
+      });
+    }
   } catch (error) {
     console.error("Deleting inquiry failed", error);
   }
@@ -217,13 +300,49 @@ export async function deleteInquiryAction(formData: FormData): Promise<void> {
 
 /** Restores a deleted inquiry to its previous status (Master Admin). */
 export async function restoreInquiryAction(formData: FormData): Promise<void> {
-  if (!(await requireAdminPermission("inquiries.delete"))) return;
+  const user = await requireAdminPermission("inquiries.delete");
+  if (!user) return;
   const id = inquiryId(formData);
   if (!id) return;
   try {
-    await restoreInquiry(id);
+    const updated = await restoreInquiry(id);
+    if (updated) {
+      recordAudit({
+        actor: adminActor(user),
+        category: "inquiry",
+        action: "inquiry.restored",
+        summary: `Restored inquiry ${inquiryReference(updated.id)} (${updated.name}) as ${updated.status}`,
+        target: inquiryTarget(updated),
+      });
+    }
   } catch (error) {
     console.error("Restoring inquiry failed", error);
+  }
+  refresh();
+}
+
+/**
+ * TEMPORARY (to be removed before go-live): permanently deletes an inquiry that
+ * is already in Deleted inquiries. Master Admin only. Cannot be undone.
+ */
+export async function purgeInquiryAction(formData: FormData): Promise<void> {
+  const user = await requireAdminPermission("inquiries.purge");
+  if (!user) return;
+  const id = inquiryId(formData);
+  if (!id) return;
+  try {
+    const removed = await purgeInquiry(id);
+    if (removed) {
+      recordAudit({
+        actor: adminActor(user),
+        category: "inquiry",
+        action: "inquiry.purged",
+        summary: `Permanently deleted inquiry ${inquiryReference(removed.id)} (${removed.name})`,
+        target: inquiryTarget(removed),
+      });
+    }
+  } catch (error) {
+    console.error("Permanently deleting inquiry failed", error);
   }
   refresh();
 }

@@ -26,6 +26,8 @@ export interface InquiryPermissions {
   remove: boolean;
   convert: boolean;
   investors: boolean;
+  /** TEMPORARY: permanent deletion. */
+  purge: boolean;
 }
 
 export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; permissions: InquiryPermissions }) {
@@ -82,6 +84,7 @@ export function InquiryCard({ inquiry, permissions }: { inquiry: StoredInquiry; 
             name={inquiry.name}
             canChangeStatus={permissions.status}
             canDelete={permissions.remove}
+            canPurge={permissions.purge}
           />
         </div>
       </div>

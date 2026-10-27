@@ -26,7 +26,7 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
               </span>
             )}
             {user && <SettingsMenu user={user} />}
-            <Link href="/" className="text-sm font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+            <Link href="/inquiries" className="text-sm font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
               View calculator
             </Link>
           </div>

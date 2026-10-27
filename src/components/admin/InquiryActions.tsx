@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { deleteInquiryAction, restoreInquiryAction, setInquiryStatusAction } from "@/app/admin/actions";
+import { deleteInquiryAction, purgeInquiryAction, restoreInquiryAction, setInquiryStatusAction } from "@/app/admin/actions";
 import type { InquiryStatus } from "@/lib/inquiry";
 
 function SubmitButton({ children, tone }: { children: React.ReactNode; tone: "primary" | "danger" }) {
@@ -27,17 +27,32 @@ interface Props {
   name: string;
   canChangeStatus: boolean;
   canDelete: boolean;
+  /** TEMPORARY: Master Admins can permanently delete deleted inquiries. */
+  canPurge: boolean;
 }
 
-export function InquiryActions({ id, status, name, canChangeStatus, canDelete }: Props) {
+export function InquiryActions({ id, status, name, canChangeStatus, canDelete, canPurge }: Props) {
   if (status === "converted") return null;
   if (status === "deleted") {
     if (!canDelete) return null;
     return (
-      <form action={restoreInquiryAction}>
-        <input type="hidden" name="id" value={id} />
-        <SubmitButton tone="primary">Restore</SubmitButton>
-      </form>
+      <div className="flex flex-wrap gap-2">
+        <form action={restoreInquiryAction}>
+          <input type="hidden" name="id" value={id} />
+          <SubmitButton tone="primary">Restore</SubmitButton>
+        </form>
+        {canPurge && (
+          <form
+            action={purgeInquiryAction}
+            onSubmit={(e) => {
+              if (!window.confirm(`Permanently delete the inquiry from ${name}? This cannot be undone.`)) e.preventDefault();
+            }}
+          >
+            <input type="hidden" name="id" value={id} />
+            <SubmitButton tone="danger">Delete permanently</SubmitButton>
+          </form>
+        )}
+      </div>
     );
   }
 

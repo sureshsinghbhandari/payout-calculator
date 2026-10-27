@@ -22,7 +22,7 @@ export default function SetupPage({ searchParams }: { searchParams: SearchParams
     <main className="flex min-h-full flex-col items-center justify-center px-4 py-10 sm:py-16">
       <div className="w-full max-w-md">
         <Link
-          href="/"
+          href="/inquiries"
           className="mb-5 block text-center text-base font-semibold text-slate-900 hover:text-blue-900"
         >
           Investment Payout Calculator

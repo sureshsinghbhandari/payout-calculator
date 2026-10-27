@@ -78,7 +78,7 @@ function SignInView() {
           </p>
         </InvestorCard>
         <p className="mt-6 text-center text-sm">
-          <Link href="/" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+          <Link href="/inquiries" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
             Back to the calculator
           </Link>
         </p>
@@ -93,7 +93,7 @@ function PasswordView({ username, required }: { username: string; required: bool
       <div className="mx-auto max-w-xl">
         {!required && (
           <p className="mb-3 text-sm">
-            <Link href="/investor" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+            <Link href="/portal" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
               <span aria-hidden="true">← </span>Back to your investments
             </Link>
           </p>
@@ -146,7 +146,7 @@ function Dashboard({ investor, today, passwordChanged }: { investor: Investor; t
           </p>
         </div>
         <Link
-          href="/investor?view=password"
+          href="/portal?view=password"
           className="inline-flex shrink-0 items-center justify-center self-start rounded-lg border border-blue-900 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 shadow-sm hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:self-auto"
         >
           Change password

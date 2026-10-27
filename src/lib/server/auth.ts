@@ -30,7 +30,7 @@ import { readAuthConfig, readToken, safeEqual, SESSION_SECONDS, signToken } from
 const ADMIN_COOKIE = "payout_admin_session";
 const ADMIN_COOKIE_PATH = "/admin";
 const INVESTOR_COOKIE = "payout_investor_session";
-const INVESTOR_COOKIE_PATH = "/investor";
+const INVESTOR_COOKIE_PATH = "/portal";
 const RATES_UNLOCK_COOKIE = "payout_rates_unlock";
 const RATES_UNLOCK_PATH = "/admin/settings/rates";
 export const RATES_UNLOCK_SECONDS = 10 * 60;

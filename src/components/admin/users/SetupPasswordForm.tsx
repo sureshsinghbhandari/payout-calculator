@@ -38,7 +38,7 @@ export function SetupPasswordForm({ token, name, username, minPasswordLength }: 
           You can now sign in with your username <span className="font-mono font-semibold text-slate-900">{state.username}</span>{" "}
           and your new password.
         </p>
-        <Link href={isAdmin ? "/admin" : "/investor"} className={`${primaryButton} mt-6 w-full sm:w-auto`}>
+        <Link href={isAdmin ? "/admin" : "/portal"} className={`${primaryButton} mt-6 w-full sm:w-auto`}>
           {isAdmin ? "Go to admin sign-in" : "Go to investor sign-in"}
         </Link>
       </div>

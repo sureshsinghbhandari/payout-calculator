@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId } from "react";
-import { investorChangePasswordAction, type InvestorPasswordState } from "@/app/investor/actions";
+import { investorChangePasswordAction, type InvestorPasswordState } from "@/app/portal/actions";
 
 const inputClass =
   "mt-2 block w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2";

@@ -13,17 +13,22 @@ import {
   type ConvertField,
   type FieldErrors,
 } from "@/components/admin/investors/fields";
-import { isInquiryId } from "@/lib/inquiry";
 import { FREQUENCY_LABELS, validateRate } from "@/lib/payout";
 import {
   AccountError,
   createInvestor,
+  getInvestor,
   isAccountStorageConfigured,
   issueInvestorSetupToken,
   setInvestorPassword,
   updateInvestor,
 } from "@/lib/server/accounts-store";
 import { requireAdminPermission } from "@/lib/server/auth";
+import { recordAudit } from "@/lib/server/audit-store";
+import { adminActor } from "@/lib/audit";
+import { inquiryReference, isInquiryId } from "@/lib/inquiry";
+import { formatDollars } from "@/lib/format";
+import type { Investor } from "@/lib/accounts";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
 import { getCurrentRates } from "@/lib/server/rates-store";
@@ -45,6 +50,11 @@ function errorMessage(error: unknown, fallback: string, context: string): string
 }
 
 // ---------- convert an inquiry into an investor ----------
+
+
+function investorTarget(investor: Pick<Investor, "id" | "name" | "username">) {
+  return { type: "investor" as const, id: investor.id, label: `${investor.name} (${investor.username})` };
+}
 
 export interface ConvertState {
   /** Increases with every submission, so the form shows the returned values. */
@@ -122,6 +132,13 @@ export async function convertInquiryAction(prev: ConvertState, formData: FormDat
       investment: { ...plan.value, annualRatePercent },
     });
     investorId = investor.id;
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: "investor.created",
+      summary: `Converted inquiry ${inquiryReference(inquiry.id)} into investor ${investor.name} (${investor.username}), ${formatDollars(plan.value.principal)}`,
+      target: investorTarget(investor),
+    });
   } catch (error) {
     const message = errorMessage(error, "The investor could not be created. Please try again.", "Creating investor failed");
     const usernameTaken = error instanceof AccountError && /username/i.test(error.message);
@@ -168,7 +185,14 @@ export async function updateInvestorDetailsAction(
   }
 
   try {
-    await updateInvestor(id, contact.value);
+    const updated = await updateInvestor(id, contact.value);
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: "investor.details_updated",
+      summary: `Updated contact details of investor ${updated.name} (${updated.username})`,
+      target: investorTarget(updated),
+    });
   } catch (error) {
     const message = errorMessage(error, "The details could not be saved. Please try again.", "Updating investor failed");
     const usernameTaken = error instanceof AccountError && /username/i.test(error.message);
@@ -201,7 +225,14 @@ export async function setInvestorAccessAction(
   if (!isAccountStorageConfigured()) return { status: "error", message: NO_STORAGE };
 
   try {
-    await updateInvestor(id, { active: active === "true" });
+    const updated = await updateInvestor(id, { active: active === "true" });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: updated.active ? "investor.login_enabled" : "investor.login_disabled",
+      summary: `${updated.active ? "Enabled" : "Disabled"} login for investor ${updated.name} (${updated.username})`,
+      target: investorTarget(updated),
+    });
   } catch (error) {
     return {
       status: "error",
@@ -244,7 +275,14 @@ export async function setInvestorTemporaryPasswordAction(
   if (!isAccountStorageConfigured()) return { status: "error", message: NO_STORAGE };
 
   try {
-    await setInvestorPassword(id, await hashPassword(password), true);
+    const updated = await setInvestorPassword(id, await hashPassword(password), true);
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: "investor.temporary_password",
+      summary: `Set a temporary password for investor ${updated.name} (${updated.username})`,
+      target: investorTarget(updated),
+    });
   } catch (error) {
     return {
       status: "error",
@@ -280,6 +318,16 @@ export async function createInvestorSetupLinkAction(_prev: SetupLinkState, formD
   let token: string;
   try {
     token = await issueInvestorSetupToken(id);
+    const investor = await getInvestor(id);
+    if (investor) {
+      recordAudit({
+        actor: adminActor(admin),
+        category: "investor",
+        action: "investor.setup_link",
+        summary: `Created a setup link for investor ${investor.name} (${investor.username})`,
+        target: investorTarget(investor),
+      });
+    }
   } catch (error) {
     return {
       status: "error",

@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/accounts-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
+import { recordAudit } from "@/lib/server/audit-store";
 
 /** Public action behind /setup?token=…: sets the password for the account a setup link belongs to. */
 
@@ -68,6 +69,12 @@ export async function setPasswordFromLinkAction(
     const hash = await hashPassword(password);
     if (account.kind === "admin") await setAdminPassword(account.id, hash, false);
     else await setInvestorPassword(account.id, hash, false);
+    recordAudit({
+      actor: { kind: account.kind, id: account.id, name: account.name, username: account.username },
+      category: "sign-in",
+      action: account.kind === "admin" ? "admin.setup_link_used" : "investor.setup_link_used",
+      summary: "Set their password with a setup link",
+    });
     return { status: "done", kind: account.kind, username: account.username };
   } catch (error) {
     console.error("Setting a password from a setup link failed", error);

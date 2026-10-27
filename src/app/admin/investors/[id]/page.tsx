@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { InvestmentCard } from "@/components/admin/investors/InvestmentCard";
 import { InvestorAccess } from "@/components/admin/investors/InvestorAccess";
+import { InvestorSignInInfo } from "@/components/admin/investors/InvestorSignInInfo";
 import { InvestorDetailsForm } from "@/components/admin/investors/InvestorDetailsForm";
 import {
   formatTimestamp,
@@ -154,6 +155,7 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
               Status: <span className="font-semibold text-slate-900">{login.label}</span>
               {login.detail && <> · {login.detail}</>}
             </p>
+            <InvestorSignInInfo username={pub.username} hasPassword={pub.hasPassword} active={pub.active} />
             <InvestorAccess
               investorId={pub.id}
               investorName={pub.name}

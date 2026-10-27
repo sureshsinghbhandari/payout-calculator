@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { investorLogoutAction } from "@/app/investor/actions";
+import { investorLogoutAction } from "@/app/portal/actions";
 
 /**
  * Page chrome for the investor portal, in the same style as the public
@@ -11,7 +11,7 @@ export function InvestorFrame({ signedIn, children }: { signedIn: boolean; child
     <div className="flex min-h-full flex-col">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-          <Link href="/investor" className="flex min-w-0 items-center gap-3 text-slate-900 hover:text-blue-900">
+          <Link href="/portal" className="flex min-w-0 items-center gap-3 text-slate-900 hover:text-blue-900">
             <span
               aria-hidden="true"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-900 text-white"

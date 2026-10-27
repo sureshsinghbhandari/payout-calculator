@@ -16,6 +16,7 @@ export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
     remove: can(user.role, "inquiries.delete"),
     convert: can(user.role, "inquiries.convert"),
     investors: can(user.role, "investors.manage"),
+    purge: can(user.role, "inquiries.purge"),
   };
 
   let data: Awaited<ReturnType<typeof listInquiries>> | null = null;

@@ -19,7 +19,11 @@ export type Permission =
   | "inquiries.convert"
   | "investors.manage"
   | "rates.manage"
-  | "users.manage";
+  | "users.manage"
+  | "audit.view"
+  | "roadmap.view"
+  // TEMPORARY: permanent deletion of inquiries, to be removed before go-live.
+  | "inquiries.purge";
 
 const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
   master: [
@@ -30,6 +34,9 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "investors.manage",
     "rates.manage",
     "users.manage",
+    "audit.view",
+    "roadmap.view",
+    "inquiries.purge",
   ],
   // Sales admins only work with inquiries: view them and mark them contacted.
   sales: ["inquiries.view", "inquiries.status"],

@@ -17,6 +17,8 @@ import {
   updateAdminUser,
 } from "@/lib/server/accounts-store";
 import { requireAdminPermission } from "@/lib/server/auth";
+import { recordAudit } from "@/lib/server/audit-store";
+import { adminActor } from "@/lib/audit";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
 
 /**
@@ -60,7 +62,8 @@ export interface AddUserState extends ActionMessage {
 }
 
 export async function addUserAction(_prev: AddUserState, formData: FormData): Promise<AddUserState> {
-  if (!(await requireAdminPermission("users.manage"))) return { status: "error", message: NO_PERMISSION };
+  const admin = await requireAdminPermission("users.manage");
+  if (!admin) return { status: "error", message: NO_PERMISSION };
 
   const values = { name: text(formData, "name"), username: text(formData, "username"), role: text(formData, "role") };
   const name = values.name.trim();
@@ -77,6 +80,13 @@ export async function addUserAction(_prev: AddUserState, formData: FormData): Pr
 
   try {
     const user = await createAdminUser({ name, username, role: values.role });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: "user.created",
+      summary: `Added user ${user.name} (${user.username}) as ${ROLE_LABELS[user.role]}`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
     refresh();
     return {
       status: "ok",
@@ -108,6 +118,13 @@ export async function changeRoleAction(_prev: ActionMessage, formData: FormData)
     if (!current) return { status: "error", message: "User not found." };
     if (current.role === role) return { status: "ok", message: `Already a ${ROLE_LABELS[role]}.` };
     const user = await updateAdminUser(id, { role });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: "user.role_changed",
+      summary: `Changed ${user.name} (${user.username}) from ${ROLE_LABELS[current.role]} to ${ROLE_LABELS[user.role]}`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
     refresh();
     return { status: "ok", message: `${user.name} is now a ${ROLE_LABELS[user.role]}.` };
   } catch (error) {
@@ -130,6 +147,13 @@ export async function setActiveAction(_prev: ActionMessage, formData: FormData):
 
   try {
     const user = await updateAdminUser(id, { active: active === "true" });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: user.active ? "user.enabled" : "user.disabled",
+      summary: `${user.active ? "Enabled" : "Disabled"} user ${user.name} (${user.username})`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
     refresh();
     return {
       status: "ok",
@@ -170,6 +194,13 @@ export async function setTemporaryPasswordAction(
 
   try {
     const user = await setAdminPassword(id, await hashPassword(password), true);
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: "user.temporary_password",
+      summary: `Set a temporary password for ${user.name} (${user.username})`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
     refresh();
     return {
       status: "ok",
@@ -200,6 +231,15 @@ export async function createSetupLinkAction(_prev: SetupLinkState, formData: For
   try {
     const token = await issueAdminSetupToken(id);
     const user = await getAdminUser(id);
+    if (user) {
+      recordAudit({
+        actor: adminActor(admin),
+        category: "user",
+        action: "user.setup_link",
+        summary: `Created a setup link for ${user.name} (${user.username})`,
+        target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+      });
+    }
     refresh();
     return {
       status: "ok",
