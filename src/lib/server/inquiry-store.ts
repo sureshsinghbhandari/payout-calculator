@@ -6,6 +6,7 @@ import {
   NOTE_PREVIEW_LENGTH,
   parseStoredInquiry,
   type ActiveInquiryStatus,
+  type InquiryAssignee,
   type InquiryNotesSummary,
   type StoredInquiry,
 } from "../inquiry";
@@ -117,11 +118,13 @@ export async function findInquiryIdByReference(reference: string): Promise<strin
 }
 
 /** updateInquiry, retried when another change got there first. */
-async function updateInquiryWithRetry(id: string, change: (inquiry: StoredInquiry) => StoredInquiry | null): Promise<void> {
+async function updateInquiryWithRetry(
+  id: string,
+  change: (inquiry: StoredInquiry) => StoredInquiry | null,
+): Promise<StoredInquiry | null> {
   for (let attempt = 1; ; attempt++) {
     try {
-      await updateInquiry(id, change);
-      return;
+      return await updateInquiry(id, change);
     } catch (error) {
       if (!(error instanceof BlobPreconditionFailedError) || attempt >= UPDATE_ATTEMPTS) throw error;
       await new Promise((resolve) => setTimeout(resolve, 50 + Math.random() * 150 * attempt));
@@ -130,8 +133,8 @@ async function updateInquiryWithRetry(id: string, change: (inquiry: StoredInquir
 }
 
 /** Updates the email summary on an inquiry after an email is sent or received. Retries on conflicts. */
-export function noteInquiryEmail(id: string, direction: "in" | "out", at: string): Promise<void> {
-  return updateInquiryWithRetry(id, (inquiry) => ({
+export async function noteInquiryEmail(id: string, direction: "in" | "out", at: string): Promise<void> {
+  await updateInquiryWithRetry(id, (inquiry) => ({
     ...inquiry,
     emails: {
       count: (inquiry.emails?.count ?? 0) + 1,
@@ -142,15 +145,39 @@ export function noteInquiryEmail(id: string, direction: "in" | "out", at: string
 }
 
 /** Updates the notes summary on an inquiry after a note is added. Retries on conflicts. */
-export function noteInquiryNote(id: string, last: InquiryNotesSummary["last"]): Promise<void> {
+export async function noteInquiryNote(id: string, last: InquiryNotesSummary["last"]): Promise<void> {
   const preview = last.text.length > NOTE_PREVIEW_LENGTH ? `${last.text.slice(0, NOTE_PREVIEW_LENGTH - 1)}…` : last.text;
-  return updateInquiryWithRetry(id, (inquiry) => ({
+  await updateInquiryWithRetry(id, (inquiry) => ({
     ...inquiry,
     notes: {
       count: (inquiry.notes?.count ?? 0) + 1,
       last: inquiry.notes && inquiry.notes.last.at > last.at ? inquiry.notes.last : { ...last, text: preview },
     },
   }));
+}
+
+/**
+ * Sets who follows an inquiry up and when (null clears either). Not for
+ * deleted inquiries. Returns the inquiry before and after the change, or null
+ * when it was not found or is deleted. Retries on conflicts.
+ */
+export async function setInquiryFollowUp(
+  id: string,
+  followUp: { assignedTo: InquiryAssignee | null; followUpDate: string | null },
+): Promise<{ before: StoredInquiry; after: StoredInquiry } | null> {
+  const seen: { before?: StoredInquiry } = {};
+  const after = await updateInquiryWithRetry(id, (inquiry) => {
+    if (inquiry.status === "deleted") return null;
+    seen.before = inquiry;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { assignedTo, followUpDate, ...rest } = inquiry;
+    return {
+      ...rest,
+      ...(followUp.assignedTo ? { assignedTo: followUp.assignedTo } : {}),
+      ...(followUp.followUpDate ? { followUpDate: followUp.followUpDate } : {}),
+    };
+  });
+  return after && seen.before ? { before: seen.before, after } : null;
 }
 
 /** One inquiry by id, or null. */

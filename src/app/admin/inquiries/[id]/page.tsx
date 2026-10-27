@@ -7,13 +7,15 @@ import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/componen
 import { CheckRepliesButton } from "@/components/admin/email/CheckRepliesButton";
 import { EmailThreadView } from "@/components/admin/email/EmailThreadView";
 import { ReplyForm } from "@/components/admin/email/ReplyForm";
+import { FollowUpForm } from "@/components/admin/inquiry/FollowUpForm";
 import { InquiryTimeline } from "@/components/admin/inquiry/InquiryTimeline";
 import { NoteForm } from "@/components/admin/inquiry/NoteForm";
 import { InquiryCard } from "@/components/admin/InquiryCard";
 import { can, toPublicAdmin } from "@/lib/accounts";
 import { displayNameOf, replySubject, type EmailMessage } from "@/lib/email";
-import { inquiryReference, isInquiryId } from "@/lib/inquiry";
+import { inquiryReference, isInquiryId, todayUtc, type InquiryAssignee } from "@/lib/inquiry";
 import { inquiryTimeline, type TimelineEntry } from "@/lib/inquiry-log";
+import { listAdminUsers } from "@/lib/server/accounts-store";
 import { getInquiryActivity } from "@/lib/server/audit-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
@@ -55,7 +57,8 @@ async function InquiryContent({ params }: { params: Params }) {
   const status = emailStatus();
   // With Gmail, replies are picked up by checking the inbox; new ones show on the next load.
   if (status.provider === "gmail" && status.receiving) after(checkGmailRepliesQuietly);
-  const [messages, timeline] = await Promise.all([
+  const canAssign = can(user.role, "inquiries.assign") && inquiry.status !== "deleted";
+  const [messages, timeline, assignees] = await Promise.all([
     getThread(inquiry.id).then(
       (thread): EmailMessage[] | null => thread.messages,
       (error) => (console.error("Loading emails failed", error), null),
@@ -64,6 +67,12 @@ async function InquiryContent({ params }: { params: Params }) {
       (log): TimelineEntry[] | null => inquiryTimeline(log),
       (error) => (console.error("Loading inquiry activity failed", error), null),
     ),
+    canAssign
+      ? listAdminUsers().then(
+          (users): InquiryAssignee[] | null => users.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name })),
+          (error) => (console.error("Loading admin users failed", error), null),
+        )
+      : null,
   ]);
   const canAddNotes = can(user.role, "inquiries.notes") && inquiry.status !== "deleted";
 
@@ -85,8 +94,31 @@ async function InquiryContent({ params }: { params: Params }) {
       <h1 className="mb-5 text-2xl font-semibold text-slate-900">Inquiry from {inquiry.name}</h1>
 
       <ul>
-        <InquiryCard inquiry={inquiry} permissions={permissions} showDetailsLink={false} />
+        <InquiryCard inquiry={inquiry} permissions={permissions} today={todayUtc()} showDetailsLink={false} />
       </ul>
+
+      {canAssign && (
+        <section aria-labelledby="follow-up-heading" className="mt-8">
+          <h2 id="follow-up-heading" className="mb-3 text-lg font-semibold text-slate-900">
+            Assignment and follow-up
+          </h2>
+          <AdminCard>
+            {assignees === null ? (
+              <p role="alert" className="text-sm font-medium text-red-700">
+                The list of users could not be loaded. Reload the page to try again.
+              </p>
+            ) : (
+              <FollowUpForm
+                inquiryId={inquiry.id}
+                users={assignees}
+                currentUserId={user.id}
+                assignedTo={inquiry.assignedTo}
+                followUpDate={inquiry.followUpDate}
+              />
+            )}
+          </AdminCard>
+        </section>
+      )}
 
       <section aria-labelledby="activity-heading" className="mt-8">
         <h2 id="activity-heading" className="mb-3 text-lg font-semibold text-slate-900">

@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import {
+  DEFAULT_LEAD_SOURCE,
   inquiryReference,
   makeInquiryId,
   parseInquiryForm,
@@ -46,6 +47,7 @@ function formValues(formData: FormData): Record<string, string> {
     "frequency",
     "payoutType",
     "investmentDate",
+    "source",
   ]) {
     const value = formData.get(key);
     out[key] = typeof value === "string" ? value : "";
@@ -98,13 +100,15 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
         totalInterestCents: selected.totals.interestCents,
         totalPaidCents: selected.totals.payoutCents,
       },
+      source: parsed.source,
     };
     await saveInquiry(inquiry);
+    const via = inquiry.source === DEFAULT_LEAD_SOURCE ? "" : ` (source: ${inquiry.source})`;
     recordAudit({
       actor: visitorActor(inquiry.name),
       category: "inquiry",
       action: "inquiry.received",
-      summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}`,
+      summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}${via}`,
       target: { type: "inquiry", id: inquiry.id, label: `${reference} (${inquiry.name})` },
     });
     // The thank-you email goes out after the response, so the visitor never waits for it.
