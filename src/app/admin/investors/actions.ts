@@ -7,28 +7,38 @@ import {
   CONVERT_FIELDS,
   isInvestorIdLike,
   parseContactFields,
+  parsePaymentFields,
   parsePlanFields,
+  PAYMENT_FIELDS,
+  PLAN_FIELDS,
   readFields,
   type ContactField,
   type ConvertField,
   type FieldErrors,
+  type PaymentField,
+  type PlanField,
 } from "@/components/admin/investors/fields";
-import { FREQUENCY_LABELS, validateRate } from "@/lib/payout";
+import { FREQUENCY_LABELS, PERIODS_PER_YEAR, validateRate, type PayoutRow } from "@/lib/payout";
 import {
   AccountError,
+  addInvestment,
   createInvestor,
   getInvestor,
   isAccountStorageConfigured,
   issueInvestorSetupToken,
+  removePayoutPayment,
   setInvestorPassword,
+  setPayoutPayment,
   updateInvestor,
 } from "@/lib/server/accounts-store";
 import { requireAdminPermission } from "@/lib/server/auth";
 import { recordAudit } from "@/lib/server/audit-store";
 import { adminActor } from "@/lib/audit";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
-import { formatDollars } from "@/lib/format";
-import type { Investor } from "@/lib/accounts";
+import { formatCents, formatDollars, formatIsoDate } from "@/lib/format";
+import type { Investment, Investor, PayoutPayment } from "@/lib/accounts";
+import { isMatured, latestPaidOn, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
+import { buildStatementData, type StatementResult } from "@/lib/statement";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
 import { getCurrentRates } from "@/lib/server/rates-store";
@@ -347,4 +357,256 @@ export async function createInvestorSetupLinkAction(_prev: SetupLinkState, formD
 
   refresh();
   return { status: "created", token };
+}
+
+// ---------- more investments and renewals ----------
+
+/** "the $100,000 investment of Jan 5, 2026" */
+function investmentLabel(investment: Pick<Investment, "principal" | "investmentDate">): string {
+  return `the ${formatDollars(investment.principal)} investment of ${formatIsoDate(investment.investmentDate)}`;
+}
+
+export interface AddInvestmentState {
+  attempt?: number;
+  error?: string;
+  fieldErrors?: FieldErrors<PlanField>;
+  values?: Partial<Record<PlanField, string>>;
+}
+
+/**
+ * Adds an investment to an existing investor, or renews a matured one
+ * (`renewedFromId`). Like a conversion, the current rate for the chosen payout
+ * term is fixed on the new investment.
+ */
+export async function addInvestmentAction(prev: AddInvestmentState, formData: FormData): Promise<AddInvestmentState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const admin = await requireAdminPermission("investors.manage");
+  if (!admin) return { attempt, error: NO_ACCESS };
+
+  const values = readFields(formData, PLAN_FIELDS);
+  const id = formData.get("id");
+  const renewedRaw = formData.get("renewedFromId");
+  const renewedFromId = typeof renewedRaw === "string" && renewedRaw !== "" ? renewedRaw : null;
+  if (!isInvestorIdLike(id) || (renewedFromId !== null && !isInvestorIdLike(renewedFromId))) {
+    return { attempt, values, error: NOT_FOUND };
+  }
+  if (!isAccountStorageConfigured()) return { attempt, values, error: NO_STORAGE };
+
+  const plan = parsePlanFields(values);
+  if (!plan.ok) return { attempt, values, error: "Fix the highlighted fields.", fieldErrors: plan.errors };
+
+  let investor: Investor | null;
+  try {
+    investor = await getInvestor(id);
+  } catch (error) {
+    console.error("Reading investor for a new investment failed", error);
+    return { attempt, values, error: "The investor could not be loaded. Please try again." };
+  }
+  if (!investor) return { attempt, values, error: NOT_FOUND };
+
+  // A renewal needs a matured investment of this investor that has not been renewed yet.
+  const source = renewedFromId ? investor.investments.find((i) => i.id === renewedFromId) : undefined;
+  if (renewedFromId) {
+    if (!source) return { attempt, values, error: "The investment to renew could not be found. Reload the page." };
+    const sourceSchedule = scheduleOrNull(source);
+    if (!sourceSchedule || !isMatured(sourceSchedule, todayUtc())) {
+      return { attempt, values, error: "Only an investment whose term has ended can be renewed." };
+    }
+    if (renewalOf(source, investor.investments)) {
+      return { attempt, values, error: "This investment has already been renewed." };
+    }
+  }
+
+  // The rate in effect now for the chosen payout term is fixed on the investment.
+  let annualRatePercent: number;
+  try {
+    const rate = validateRate((await getCurrentRates())[plan.value.frequency]);
+    if (!rate.ok) {
+      return {
+        attempt,
+        values,
+        error: `The current ${FREQUENCY_LABELS[plan.value.frequency]} rate is not valid. Check Interest rates in Settings.`,
+      };
+    }
+    annualRatePercent = rate.value;
+  } catch (error) {
+    console.error("Reading rates for a new investment failed", error);
+    return { attempt, values, error: "The current interest rates could not be loaded. Please try again." };
+  }
+
+  try {
+    const { investor: updated, investment } = await addInvestment(id, {
+      ...plan.value,
+      annualRatePercent,
+      renewedFromId,
+    });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: source ? "investor.investment_renewed" : "investor.investment_added",
+      summary: source
+        ? `Renewed ${investmentLabel(source)} of investor ${updated.name} (${updated.username}) as ${investmentLabel(investment)}`
+        : `Added ${investmentLabel(investment)} for investor ${updated.name} (${updated.username})`,
+      target: investorTarget(updated),
+    });
+  } catch (error) {
+    return {
+      attempt,
+      values,
+      error: errorMessage(error, "The investment could not be saved. Please try again.", "Adding investment failed"),
+    };
+  }
+
+  redirect(`/admin/investors/${encodeURIComponent(id)}?${source ? "renewed" : "added"}=1`);
+}
+
+// ---------- recorded payouts ----------
+
+export interface PaymentState {
+  attempt?: number;
+  status?: "saved" | "error";
+  message?: string;
+  fieldErrors?: FieldErrors<PaymentField>;
+  values?: Partial<Record<PaymentField, string>>;
+}
+
+/** The investor, investment and scheduled payout named by a payment form, or an error message. */
+async function findPayout(
+  formData: FormData,
+): Promise<{ investor: Investor; investment: Investment; row: PayoutRow } | { error: string }> {
+  const investorId = formData.get("investorId");
+  const investmentId = formData.get("investmentId");
+  const payoutText = formData.get("payoutNumber");
+  if (!isInvestorIdLike(investorId) || !isInvestorIdLike(investmentId)) return { error: NOT_FOUND };
+  if (typeof payoutText !== "string" || !/^\d{1,4}$/.test(payoutText)) return { error: NOT_FOUND };
+  if (!isAccountStorageConfigured()) return { error: NO_STORAGE };
+
+  let investor: Investor | null;
+  try {
+    investor = await getInvestor(investorId);
+  } catch (error) {
+    console.error("Reading investor for a payment failed", error);
+    return { error: "The investor could not be loaded. Please try again." };
+  }
+  const investment = investor?.investments.find((i) => i.id === investmentId);
+  const schedule = investment ? scheduleOrNull(investment) : null;
+  const row = schedule?.rows.find((r) => r.payoutNumber === Number(payoutText));
+  if (!investor || !investment || !row) return { error: "This payout could not be found. Reload the page." };
+  return { investor, investment, row };
+}
+
+/** "payout 3 of 8 (scheduled Jan 5, 2027) of the $100,000 investment of Jan 5, 2026" */
+function payoutLabel(investment: Investment, row: PayoutRow): string {
+  const total = investment.lockInYears * PERIODS_PER_YEAR[investment.frequency];
+  return `payout ${row.payoutNumber} of ${total} (scheduled ${formatIsoDate(row.payoutDate)}) of ${investmentLabel(investment)}`;
+}
+
+/** Marks a scheduled payout as paid, or changes the recorded payment. */
+export async function recordPaymentAction(prev: PaymentState, formData: FormData): Promise<PaymentState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const admin = await requireAdminPermission("payouts.manage");
+  if (!admin) return { attempt, status: "error", message: NO_ACCESS };
+
+  const values = readFields(formData, PAYMENT_FIELDS);
+  const found = await findPayout(formData);
+  if ("error" in found) return { attempt, status: "error", message: found.error, values };
+  const { investor, investment, row } = found;
+
+  const parsed = parsePaymentFields(values, {
+    earliest: investment.investmentDate,
+    latest: latestPaidOn(todayUtc()),
+  });
+  if (!parsed.ok) {
+    return { attempt, status: "error", message: "Fix the highlighted fields.", fieldErrors: parsed.errors, values };
+  }
+  const payment: PayoutPayment = {
+    payoutNumber: row.payoutNumber,
+    ...parsed.value,
+    recordedBy: admin.name,
+    recordedById: admin.id,
+    recordedAt: new Date().toISOString(),
+  };
+
+  try {
+    const { investor: updated, previous } = await setPayoutPayment(investor.id, investment.id, payment);
+    const paid = `${formatCents(payment.amountCents)} on ${formatIsoDate(payment.paidOn)}${
+      payment.reference ? `, reference ${payment.reference}` : ""
+    }`;
+    recordAudit({
+      actor: adminActor(admin),
+      category: "investor",
+      action: previous ? "investor.payout_updated" : "investor.payout_recorded",
+      summary: previous
+        ? `Changed the recorded payment of ${payoutLabel(investment, row)} of investor ${updated.name} (${updated.username}) to ${paid} (was ${formatCents(previous.amountCents)} on ${formatIsoDate(previous.paidOn)})`
+        : `Marked ${payoutLabel(investment, row)} of investor ${updated.name} (${updated.username}) as paid: ${paid}`,
+      target: investorTarget(updated),
+    });
+  } catch (error) {
+    return {
+      attempt,
+      status: "error",
+      message: errorMessage(error, "The payment could not be saved. Please try again.", "Recording payment failed"),
+      values,
+    };
+  }
+
+  refresh();
+  return { attempt, status: "saved", message: `Payout ${row.payoutNumber} marked as paid.` };
+}
+
+/** Removes the recorded payment of a payout, so it shows as Due or Upcoming again. */
+export async function removePaymentAction(prev: PaymentState, formData: FormData): Promise<PaymentState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const admin = await requireAdminPermission("payouts.manage");
+  if (!admin) return { attempt, status: "error", message: NO_ACCESS };
+
+  const found = await findPayout(formData);
+  if ("error" in found) return { attempt, status: "error", message: found.error };
+  const { investor, investment, row } = found;
+
+  try {
+    const { investor: updated, removed } = await removePayoutPayment(investor.id, investment.id, row.payoutNumber);
+    if (removed) {
+      recordAudit({
+        actor: adminActor(admin),
+        category: "investor",
+        action: "investor.payout_unmarked",
+        summary: `Removed the recorded payment of ${payoutLabel(investment, row)} of investor ${updated.name} (${updated.username}) (was ${formatCents(removed.amountCents)} on ${formatIsoDate(removed.paidOn)})`,
+        target: investorTarget(updated),
+      });
+    }
+  } catch (error) {
+    return {
+      attempt,
+      status: "error",
+      message: errorMessage(error, "The payment could not be removed. Please try again.", "Removing payment failed"),
+    };
+  }
+
+  refresh();
+  return { attempt, status: "saved", message: `Payout ${row.payoutNumber} is no longer marked as paid.` };
+}
+
+// ---------- statement download ----------
+
+/** Statement data for one investment (bound to the ids on the investor page). Includes the rate: admins only. */
+export async function adminStatementAction(investorId: string, investmentId: string): Promise<StatementResult> {
+  const admin = await requireAdminPermission("investors.manage");
+  if (!admin) return { ok: false, error: NO_ACCESS };
+  if (!isInvestorIdLike(investorId) || !isInvestorIdLike(investmentId)) return { ok: false, error: NOT_FOUND };
+  if (!isAccountStorageConfigured()) return { ok: false, error: NO_STORAGE };
+
+  let investor: Investor | null;
+  try {
+    investor = await getInvestor(investorId);
+  } catch (error) {
+    console.error("Reading investor for a statement failed", error);
+    return { ok: false, error: "The investor could not be loaded. Please try again." };
+  }
+  const investment = investor?.investments.find((i) => i.id === investmentId);
+  if (!investor || !investment) return { ok: false, error: "This investment could not be found. Reload the page." };
+
+  const data = buildStatementData(investor, investment, todayUtc(), { forAdmin: true });
+  if (!data) return { ok: false, error: "The payout schedule of this investment could not be calculated." };
+  return { ok: true, data };
 }

@@ -10,6 +10,7 @@ import {
   type Credentials,
   type Investment,
   type Investor,
+  type PayoutPayment,
 } from "../accounts";
 import type { PayoutFrequency, PayoutType } from "../payout";
 import { hashSetupToken, newSetupToken } from "./passwords";
@@ -25,6 +26,7 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *     createAdminUser, updateAdminUser, setAdminPassword, issueAdminSetupToken
  *   Investors: listInvestors, getInvestor, findInvestorByUsername,
  *     createInvestor, updateInvestor, setInvestorPassword, issueInvestorSetupToken
+ *   Investments: addInvestment, setPayoutPayment, removePayoutPayment
  *   Setup links: findAccountBySetupToken
  */
 const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
@@ -123,6 +125,33 @@ function parseAdmins(data: unknown): AdminUser[] {
 const FREQUENCIES: PayoutFrequency[] = ["quarterly", "half-yearly", "yearly"];
 const TYPES: PayoutType[] = ["interest-only", "interest-and-principal"];
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Keeps the well-formed payments, at most one per payout number. */
+function parsePayments(list: unknown): PayoutPayment[] {
+  if (!Array.isArray(list)) return [];
+  const payments: PayoutPayment[] = [];
+  for (const raw of list) {
+    const d = (raw ?? {}) as Record<string, unknown>;
+    const payoutNumber = num(d.payoutNumber);
+    const paidOn = str(d.paidOn);
+    const amountCents = num(d.amountCents);
+    if (payoutNumber === null || !Number.isInteger(payoutNumber) || payoutNumber < 1) continue;
+    if (!paidOn || !ISO_DATE.test(paidOn) || amountCents === null || !Number.isInteger(amountCents)) continue;
+    if (payments.some((p) => p.payoutNumber === payoutNumber)) continue;
+    payments.push({
+      payoutNumber,
+      paidOn,
+      amountCents,
+      reference: str(d.reference) ?? "",
+      recordedBy: str(d.recordedBy) ?? "",
+      recordedById: str(d.recordedById) ?? "",
+      recordedAt: str(d.recordedAt) ?? new Date(0).toISOString(),
+    });
+  }
+  return payments.sort((a, b) => a.payoutNumber - b.payoutNumber);
+}
+
 function parseInvestment(raw: unknown): Investment | null {
   const d = (raw ?? {}) as Record<string, unknown>;
   const frequency = str(d.frequency) as PayoutFrequency | null;
@@ -137,7 +166,13 @@ function parseInvestment(raw: unknown): Investment | null {
   };
   if (!frequency || !FREQUENCIES.includes(frequency) || !payoutType || !TYPES.includes(payoutType)) return null;
   if (Object.values(investment).some((v) => v === null)) return null;
-  return { ...(investment as Omit<Investment, "frequency" | "payoutType">), frequency, payoutType };
+  return {
+    ...(investment as Omit<Investment, "frequency" | "payoutType" | "renewedFromId" | "payments">),
+    frequency,
+    payoutType,
+    renewedFromId: str(d.renewedFromId),
+    payments: parsePayments(d.payments),
+  };
 }
 
 function parseInvestors(data: unknown): Investor[] {
@@ -374,7 +409,7 @@ export function createInvestor(input: {
       active: true,
       createdAt: now,
       sourceInquiryId: input.sourceInquiryId,
-      investments: [{ id: newId("ivt"), createdAt: now, ...input.investment }],
+      investments: [{ id: newId("ivt"), createdAt: now, renewedFromId: null, payments: [], ...input.investment }],
       ...blankCredentials(),
     };
     return { investors: [...investors, investor], result: investor };
@@ -411,6 +446,74 @@ export function issueInvestorSetupToken(id: string): Promise<string> {
       return issued.account;
     });
     return { investors: next, result: token };
+  });
+}
+
+// ---------- investments and payments ----------
+
+function updateInvestmentIn(investor: Investor, investmentId: string, update: (i: Investment) => Investment): Investor {
+  if (!investor.investments.some((i) => i.id === investmentId)) throw new AccountError("Investment not found.");
+  return { ...investor, investments: investor.investments.map((i) => (i.id === investmentId ? update(i) : i)) };
+}
+
+/**
+ * Adds an investment to an existing investor. For a renewal, `renewedFromId`
+ * names the investment it renews; each investment can be renewed only once.
+ */
+export function addInvestment(
+  investorId: string,
+  input: NewInvestmentInput & { renewedFromId: string | null },
+): Promise<{ investor: Investor; investment: Investment }> {
+  return mutateInvestors((investors) => {
+    let investment: Investment | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      if (input.renewedFromId) {
+        if (!i.investments.some((x) => x.id === input.renewedFromId)) throw new AccountError("Investment not found.");
+        if (i.investments.some((x) => x.renewedFromId === input.renewedFromId)) {
+          throw new AccountError("This investment has already been renewed.");
+        }
+      }
+      investment = { id: newId("ivt"), createdAt: new Date().toISOString(), payments: [], ...input };
+      return { ...i, investments: [...i.investments, investment] };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, investment: investment! } };
+  });
+}
+
+/** Records (or replaces) the payment of one scheduled payout. Returns the payment it replaced, if any. */
+export function setPayoutPayment(
+  investorId: string,
+  investmentId: string,
+  payment: PayoutPayment,
+): Promise<{ investor: Investor; previous: PayoutPayment | null }> {
+  return mutateInvestors((investors) => {
+    let previous: PayoutPayment | null = null;
+    const next = updateInvestorIn(investors, investorId, (investor) =>
+      updateInvestmentIn(investor, investmentId, (i) => {
+        previous = i.payments.find((p) => p.payoutNumber === payment.payoutNumber) ?? null;
+        const others = i.payments.filter((p) => p.payoutNumber !== payment.payoutNumber);
+        return { ...i, payments: [...others, payment].sort((a, b) => a.payoutNumber - b.payoutNumber) };
+      }),
+    );
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, previous } };
+  });
+}
+
+/** Removes the recorded payment of one payout (marks it unpaid). Returns the removed payment, or null if there was none. */
+export function removePayoutPayment(
+  investorId: string,
+  investmentId: string,
+  payoutNumber: number,
+): Promise<{ investor: Investor; removed: PayoutPayment | null }> {
+  return mutateInvestors((investors) => {
+    let removed: PayoutPayment | null = null;
+    const next = updateInvestorIn(investors, investorId, (investor) =>
+      updateInvestmentIn(investor, investmentId, (i) => {
+        removed = i.payments.find((p) => p.payoutNumber === payoutNumber) ?? null;
+        return { ...i, payments: i.payments.filter((p) => p.payoutNumber !== payoutNumber) };
+      }),
+    );
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, removed } };
   });
 }
 

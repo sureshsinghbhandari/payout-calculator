@@ -8,6 +8,7 @@ import { InvestorLoginForm } from "@/components/investor/InvestorLoginForm";
 import { InvestorPasswordForm } from "@/components/investor/InvestorPasswordForm";
 import type { Investor } from "@/lib/accounts";
 import { formatIsoDateLong } from "@/lib/format";
+import { todayUtc } from "@/lib/investments";
 import { getCurrentInvestor } from "@/lib/server/auth";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 
@@ -28,11 +29,6 @@ export default function InvestorPage({ searchParams }: { searchParams: SearchPar
       <InvestorContent searchParams={searchParams} />
     </Suspense>
   );
-}
-
-/** Today's date in UTC, YYYY-MM-DD. */
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 async function InvestorContent({ searchParams }: { searchParams: SearchParams }) {

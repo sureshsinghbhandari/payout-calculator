@@ -5,8 +5,10 @@
  */
 import { normalizeUsername, setupState, validatePersonName, validateUsername, type Investor } from "@/lib/accounts";
 import { INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
+import { parseDollarsToCents } from "@/lib/investments";
 import {
   FREQUENCY_LABELS,
+  isValidIsoDate,
   PAYOUT_TYPE_LABELS,
   validateInvestmentDate,
   type PayoutFrequency,
@@ -135,6 +137,45 @@ export function parsePlanFields(
       payoutType: payoutType as PayoutType,
     },
   };
+}
+
+export const PAYMENT_FIELDS = ["paidOn", "amount", "reference"] as const;
+export type PaymentField = (typeof PAYMENT_FIELDS)[number];
+
+export const REFERENCE_MAX = 100;
+
+export interface PaymentValues {
+  paidOn: string;
+  amountCents: number;
+  reference: string;
+}
+
+/**
+ * Validates a recorded payment: the date it was paid (not before the
+ * investment date, not in the future), a positive amount and an optional
+ * reference such as a bank transfer id.
+ */
+export function parsePaymentFields(
+  raw: Partial<Record<PaymentField, unknown>>,
+  limits: { earliest: string; latest: string },
+): { ok: true; value: PaymentValues } | { ok: false; errors: FieldErrors<PaymentField> } {
+  const errors: FieldErrors<PaymentField> = {};
+
+  const paidOn = text(raw.paidOn);
+  if (paidOn === "") errors.paidOn = "Enter the date it was paid.";
+  else if (!isValidIsoDate(paidOn)) errors.paidOn = "Enter a valid date.";
+  else if (paidOn < limits.earliest) errors.paidOn = "The date cannot be before the investment date.";
+  else if (paidOn > limits.latest) errors.paidOn = "The date cannot be in the future.";
+
+  const amountCents = parseDollarsToCents(text(raw.amount));
+  if (amountCents === null) errors.amount = "Enter the amount paid in dollars, for example 2500.00.";
+
+  const reference = text(raw.reference).replace(/\s+/g, " ");
+  if (reference.length > REFERENCE_MAX) errors.reference = `Use at most ${REFERENCE_MAX} characters.`;
+  else if (CONTROL_CHARS.test(reference)) errors.reference = "Enter a valid reference.";
+
+  if (Object.keys(errors).length > 0 || amountCents === null) return { ok: false, errors };
+  return { ok: true, value: { paidOn, amountCents, reference } };
 }
 
 function usernameSlug(raw: string): string {

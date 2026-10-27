@@ -20,6 +20,7 @@ export type Permission =
   | "inquiries.email"
   | "inquiries.notes"
   | "investors.manage"
+  | "payouts.manage"
   | "rates.manage"
   | "users.manage"
   | "email.manage"
@@ -37,6 +38,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "inquiries.email",
     "inquiries.notes",
     "investors.manage",
+    "payouts.manage",
     "rates.manage",
     "users.manage",
     "email.manage",
@@ -75,6 +77,22 @@ export interface AdminUser extends Credentials {
   createdAt: string;
 }
 
+/** A payout actually paid to the investor, recorded by a Master Admin. */
+export interface PayoutPayment {
+  /** The scheduled payout this payment settles (1-based, as in the payout schedule). */
+  payoutNumber: number;
+  /** Date the money was paid, YYYY-MM-DD. */
+  paidOn: string;
+  amountCents: number;
+  /** E.g. a bank transfer id. May be empty. */
+  reference: string;
+  /** Name and id of the admin who recorded it. */
+  recordedBy: string;
+  recordedById: string;
+  /** ISO timestamp of the last change. */
+  recordedAt: string;
+}
+
 export interface Investment {
   id: string;
   principal: number;
@@ -85,6 +103,10 @@ export interface Investment {
   /** Rate fixed when the investment was recorded. Never shown to the investor. */
   annualRatePercent: number;
   createdAt: string;
+  /** The matured investment this one renews, if it is a renewal. */
+  renewedFromId: string | null;
+  /** Recorded payments, at most one per scheduled payout. */
+  payments: PayoutPayment[];
 }
 
 export interface Investor extends Credentials {
@@ -201,6 +223,6 @@ export function toPublicInvestor(investor: Investor): PublicInvestor {
     hasPassword: Boolean(investor.passwordHash),
     mustChangePassword: investor.mustChangePassword,
     setupExpiresAt: investor.setupTokenHash ? investor.setupExpiresAt : null,
-    investments: investor.investments.map((i) => ({ ...i })),
+    investments: investor.investments.map((i) => ({ ...i, payments: i.payments.map((p) => ({ ...p })) })),
   };
 }
