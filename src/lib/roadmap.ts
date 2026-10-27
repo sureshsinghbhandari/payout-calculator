@@ -64,17 +64,16 @@ export const ROADMAP: RoadmapItem[] = [
   // ---------- Email and messaging ----------
   {
     id: "email-setup",
-    title: "Send and receive email (Resend)",
+    title: "Send and receive email (Gmail now, Resend later)",
     category: "communication",
     priority: "now",
     status: "in-progress",
     description:
-      "Email through Resend (chosen over Gmail, Outlook and Yahoo: no access to a personal inbox, no sign-in that expires, and replies arrive instantly). Settings > Email shows the status, the webhook details and a test button.",
-    outcome: "Emails to customers come from a company address, and replies come back into the app.",
+      "Email works with Gmail now (no domain needed; replies are picked up by checking the inbox) and can switch to Resend with the EMAIL_PROVIDER setting once there is a company domain (replies arrive instantly, with delivery and bounce tracking). Settings > Email shows the status and a test button.",
+    outcome: "Customers get emails from the business, and their replies come back into the app.",
     needs: [
-      "A Resend account with a Full access API key, added to Vercel by the owner",
-      "The Resend webhook and its signing secret",
-      "Our own domain, so emails can go to any customer (until then Resend only sends to the account owner)",
+      "Now: a Gmail account for the business with 2-Step Verification and an app password, added to Vercel by the owner",
+      "Later: a company domain, a Resend Full access API key and the Resend webhook",
     ],
   },
   {

@@ -109,6 +109,37 @@ export async function setMessageDelivery(
   return updated;
 }
 
+/** Where the last Gmail inbox check stopped (Gmail provider only). */
+export interface GmailCheckState {
+  uidValidity: string | null;
+  lastUid: number;
+  /** ISO timestamp (UTC) of the last check, successful or not. */
+  checkedAt: string | null;
+  /** Error of the last check, if it failed. */
+  error: string | null;
+}
+
+const GMAIL_STATE_PATH = `${PREFIX}gmail-state.json`;
+
+export async function readGmailState(): Promise<GmailCheckState> {
+  const { data } = await readJson(GMAIL_STATE_PATH);
+  const d = (data ?? {}) as Partial<GmailCheckState>;
+  return {
+    uidValidity: typeof d.uidValidity === "string" ? d.uidValidity : null,
+    lastUid: typeof d.lastUid === "number" && Number.isFinite(d.lastUid) ? d.lastUid : 0,
+    checkedAt: typeof d.checkedAt === "string" ? d.checkedAt : null,
+    error: typeof d.error === "string" ? d.error : null,
+  };
+}
+
+/** Saves the check state. Never moves lastUid backwards when two checks overlap. */
+export async function saveGmailState(next: GmailCheckState): Promise<void> {
+  await mutate(GMAIL_STATE_PATH, (data) => data as Partial<GmailCheckState> | null, (current) => {
+    const keepUid = current?.uidValidity === next.uidValidity && (current?.lastUid ?? 0) > next.lastUid;
+    return { ...next, lastUid: keepUid ? (current?.lastUid ?? next.lastUid) : next.lastUid };
+  });
+}
+
 /** Incoming emails that matched no inquiry, newest first. */
 export async function listUnmatchedEmails(): Promise<UnmatchedEmail[]> {
   const { data } = await readJson(UNMATCHED_PATH);

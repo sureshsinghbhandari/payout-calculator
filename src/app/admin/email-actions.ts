@@ -7,7 +7,13 @@ import { EMAIL_LIMITS } from "@/lib/email";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { recordAudit } from "@/lib/server/audit-store";
 import { requireAdminPermission } from "@/lib/server/auth";
-import { isEmailEnabled, latestCustomerMessageId, sendInquiryEmail, sendTestEmail } from "@/lib/server/email";
+import {
+  checkGmailReplies,
+  isEmailEnabled,
+  latestCustomerMessageId,
+  sendInquiryEmail,
+  sendTestEmail,
+} from "@/lib/server/email";
 import { getInquiry, setInquiryStatus } from "@/lib/server/inquiry-store";
 
 export interface ReplyState {
@@ -110,5 +116,29 @@ export async function sendTestEmailAction(_prev: TestEmailState, formData: FormD
   } catch (error) {
     console.error("Sending test email failed", error);
     return { status: "error", message: "The test email could not be sent.", to };
+  }
+}
+
+export interface CheckRepliesState {
+  status: "idle" | "done" | "error";
+  message?: string;
+}
+
+/** Checks the Gmail inbox for customer replies now (any admin who can see inquiries). */
+export async function checkRepliesAction(): Promise<CheckRepliesState> {
+  const user = await requireAdminPermission("inquiries.view");
+  if (!user) return { status: "error", message: "You do not have permission to do this." };
+  try {
+    const result = await checkGmailReplies(true);
+    if (!result.checked) return { status: "done", message: "Replies are not checked this way with the current email provider." };
+    if (!result.ok) return { status: "error", message: `Could not check Gmail: ${result.error}` };
+    refresh();
+    return {
+      status: "done",
+      message: result.added === 0 ? "No new replies." : `${result.added} new ${result.added === 1 ? "reply" : "replies"} added.`,
+    };
+  } catch (error) {
+    console.error("Checking replies failed", error);
+    return { status: "error", message: "Could not check for replies. Try again." };
   }
 }

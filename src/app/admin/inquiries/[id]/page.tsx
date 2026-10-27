@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { CheckRepliesButton } from "@/components/admin/email/CheckRepliesButton";
 import { EmailThreadView } from "@/components/admin/email/EmailThreadView";
 import { ReplyForm } from "@/components/admin/email/ReplyForm";
 import { InquiryCard } from "@/components/admin/InquiryCard";
@@ -11,7 +12,7 @@ import { can, toPublicAdmin } from "@/lib/accounts";
 import { displayNameOf, replySubject, type EmailMessage } from "@/lib/email";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { requireAdminPage } from "@/lib/server/auth";
-import { emailStatus } from "@/lib/server/email";
+import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
 import { getThread } from "@/lib/server/email-store";
 import { getInquiry } from "@/lib/server/inquiry-store";
 
@@ -48,6 +49,8 @@ async function InquiryContent({ params }: { params: Params }) {
     purge: can(user.role, "inquiries.purge"),
   };
   const status = emailStatus();
+  // With Gmail, replies are picked up by checking the inbox; new ones show on the next load.
+  if (status.provider === "gmail" && status.receiving) after(checkGmailRepliesQuietly);
   let messages: EmailMessage[] | null = null;
   try {
     messages = (await getThread(inquiry.id)).messages;
@@ -77,9 +80,12 @@ async function InquiryContent({ params }: { params: Params }) {
       </ul>
 
       <section aria-labelledby="emails-heading" className="mt-8">
-        <h2 id="emails-heading" className="mb-3 text-lg font-semibold text-slate-900">
-          Emails
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="emails-heading" className="text-lg font-semibold text-slate-900">
+            Emails
+          </h2>
+          {status.provider === "gmail" && status.receiving && <CheckRepliesButton />}
+        </div>
         {messages === null ? (
           <AdminCard>
             <p role="alert" className="text-sm font-medium text-red-700">

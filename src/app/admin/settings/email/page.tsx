@@ -3,12 +3,13 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { CheckRepliesButton } from "@/components/admin/email/CheckRepliesButton";
 import { TestEmailForm } from "@/components/admin/email/TestEmailForm";
 import { toPublicAdmin } from "@/lib/accounts";
 import { newPartOfReply, type UnmatchedEmail } from "@/lib/email";
 import { requireAdminPage } from "@/lib/server/auth";
-import { emailStatus } from "@/lib/server/email";
-import { listUnmatchedEmails } from "@/lib/server/email-store";
+import { EMAIL_PROVIDER_LABELS, emailStatus, gmailCheckState } from "@/lib/server/email";
+import { listUnmatchedEmails, type GmailCheckState } from "@/lib/server/email-store";
 
 export const metadata: Metadata = {
   title: "Email | Admin | Investment Payout Calculator",
@@ -37,18 +38,21 @@ function StatusPill({ on, onText, offText }: { on: boolean; onText: string; offT
   );
 }
 
-/** Email setup status, the Resend webhook details, a test email and emails that matched no inquiry (Master Admin). */
+/** Email provider status, a test email and provider-specific details (Master Admin). */
 async function EmailSettingsContent() {
   await connection();
   const user = await requireAdminPage("email.manage");
   const status = emailStatus();
   const host = (await headers()).get("host") ?? "payout-calculator-steel.vercel.app";
   const webhookUrl = `${host.startsWith("localhost") ? "http" : "https"}://${host}/api/email/inbound`;
+
+  let gmail: GmailCheckState | null = null;
   let unmatched: UnmatchedEmail[] | null = null;
   try {
-    unmatched = await listUnmatchedEmails();
+    if (status.provider === "gmail") gmail = await gmailCheckState();
+    if (status.provider === "resend") unmatched = await listUnmatchedEmails();
   } catch (error) {
-    console.error("Loading unmatched emails failed", error);
+    console.error("Loading email details failed", error);
   }
 
   const row = "flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 py-2.5 last:border-0";
@@ -57,14 +61,20 @@ async function EmailSettingsContent() {
       <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Settings" }, { label: "Email" }]} />
       <h1 className="text-2xl font-semibold text-slate-900">Email</h1>
       <p className="mt-1 max-w-2xl text-sm text-slate-600">
-        Emails are sent and received through Resend. New inquiries get an automatic acknowledgement with their reference
-        number, staff can email customers from each inquiry, and customer replies appear on the inquiry.
+        New inquiries get an automatic acknowledgement with their reference number, staff can email customers from each
+        inquiry, and customer replies appear on the inquiry. The provider is chosen with the{" "}
+        <code className="rounded bg-slate-100 px-1">EMAIL_PROVIDER</code> setting in Vercel: <strong>gmail</strong> now,{" "}
+        <strong>resend</strong> once there is a company domain.
       </p>
 
       <div className="mt-6 space-y-6">
         <AdminCard>
           <h2 className="text-lg font-semibold text-slate-900">Status</h2>
           <div className="mt-3 text-sm">
+            <div className={row}>
+              <span className="text-slate-700">Provider</span>
+              <span className="font-medium text-slate-900">{status.provider ? EMAIL_PROVIDER_LABELS[status.provider] : "None"}</span>
+            </div>
             <div className={row}>
               <span className="text-slate-700">Sending emails</span>
               <StatusPill on={status.sending} onText="On" offText="Off" />
@@ -79,9 +89,7 @@ async function EmailSettingsContent() {
             </div>
             <div className={row}>
               <span className="text-slate-700">Replies go to</span>
-              <span className="break-all font-medium text-slate-900">
-                {status.replyDomain ? `reply+…@${status.replyDomain}` : "The sender address"}
-              </span>
+              <span className="break-all font-medium text-slate-900">{status.replyAddress ?? "The sender address"}</span>
             </div>
           </div>
           {status.problems.length > 0 && (
@@ -93,66 +101,97 @@ async function EmailSettingsContent() {
           )}
         </AdminCard>
 
-        <AdminCard>
-          <h2 className="text-lg font-semibold text-slate-900">Resend webhook</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            In Resend, open Webhooks, add an endpoint with these details, then copy its signing secret into the{" "}
-            <code className="rounded bg-slate-100 px-1">RESEND_WEBHOOK_SECRET</code> environment variable in Vercel.
-          </p>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div>
-              <dt className="font-semibold text-slate-900">Endpoint URL</dt>
-              <dd className="mt-1 break-all rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-800">{webhookUrl}</dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-slate-900">Events</dt>
-              <dd className="mt-1 flex flex-wrap gap-1.5">
-                {WEBHOOK_EVENTS.map((e) => (
-                  <code key={e} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
-                    {e}
-                  </code>
-                ))}
-              </dd>
-            </div>
-          </dl>
-        </AdminCard>
+        {status.provider === "gmail" && (
+          <AdminCard>
+            <h2 className="text-lg font-semibold text-slate-900">Gmail replies</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Emails ask customers to reply to a special address of this Gmail account, which Gmail delivers to the same
+              inbox. The inbox is checked whenever an admin opens the inquiries (at most once a minute) or selects Check for
+              replies. Only replies to inquiries are read and saved; other emails in the inbox are left alone.
+            </p>
+            <p className="mt-3 text-sm text-slate-700">
+              Last checked:{" "}
+              <span className="font-medium text-slate-900">
+                {gmail?.checkedAt ? `${timestampFormatter.format(new Date(gmail.checkedAt))} UTC` : "Not yet"}
+              </span>
+            </p>
+            {gmail?.error && (
+              <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+                Last check failed: {gmail.error}
+              </p>
+            )}
+            {status.receiving && (
+              <div className="mt-4">
+                <CheckRepliesButton />
+              </div>
+            )}
+          </AdminCard>
+        )}
+
+        {status.provider === "resend" && (
+          <AdminCard>
+            <h2 className="text-lg font-semibold text-slate-900">Resend webhook</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              In Resend, open Webhooks, add an endpoint with these details, then put its signing secret in the{" "}
+              <code className="rounded bg-slate-100 px-1">RESEND_WEBHOOK_SECRET</code> setting in Vercel.
+            </p>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="font-semibold text-slate-900">Endpoint URL</dt>
+                <dd className="mt-1 break-all rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-800">{webhookUrl}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-slate-900">Events</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {WEBHOOK_EVENTS.map((e) => (
+                    <code key={e} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
+                      {e}
+                    </code>
+                  ))}
+                </dd>
+              </div>
+            </dl>
+          </AdminCard>
+        )}
 
         <AdminCard>
           <h2 className="mb-3 text-lg font-semibold text-slate-900">Test</h2>
           {status.sending ? (
             <TestEmailForm />
           ) : (
-            <p className="text-sm text-slate-700">Set RESEND_API_KEY and EMAIL_FROM in Vercel first.</p>
+            <p className="text-sm text-slate-700">Finish the setup above first.</p>
           )}
         </AdminCard>
 
-        <AdminCard>
-          <h2 className="text-lg font-semibold text-slate-900">Emails that matched no inquiry</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Received emails without a reply address or reference number we recognise. The newest 100 are kept.
-          </p>
-          {unmatched === null ? (
-            <p role="alert" className="mt-3 text-sm font-medium text-red-700">
-              These could not be loaded. Reload the page to try again.
+        {status.provider === "resend" && (
+          <AdminCard>
+            <h2 className="text-lg font-semibold text-slate-900">Emails that matched no inquiry</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Received emails without a reply address or reference number we recognise. The newest 100 are kept.
             </p>
-          ) : unmatched.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-700">None.</p>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {unmatched.map((e) => (
-                <li key={e.id} className="rounded-xl border border-slate-200 p-4">
-                  <p className="break-words text-sm font-semibold text-slate-900">{e.subject}</p>
-                  <p className="mt-0.5 break-all text-xs text-slate-500">
-                    From {e.from} · To {e.to} · {timestampFormatter.format(new Date(e.at))} UTC
-                  </p>
-                  <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-sm text-slate-800">
-                    {newPartOfReply(e.text)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </AdminCard>
+            {unmatched === null ? (
+              <p role="alert" className="mt-3 text-sm font-medium text-red-700">
+                These could not be loaded. Reload the page to try again.
+              </p>
+            ) : unmatched.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-700">None.</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {unmatched.map((e) => (
+                  <li key={e.id} className="rounded-xl border border-slate-200 p-4">
+                    <p className="break-words text-sm font-semibold text-slate-900">{e.subject}</p>
+                    <p className="mt-0.5 break-all text-xs text-slate-500">
+                      From {e.from} · To {e.to} · {timestampFormatter.format(new Date(e.at))} UTC
+                    </p>
+                    <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-sm text-slate-800">
+                      {newPartOfReply(e.text)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminCard>
+        )}
       </div>
     </AdminFrame>
   );

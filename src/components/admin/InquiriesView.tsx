@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { can, toPublicAdmin } from "@/lib/accounts";
 import { requireAdminPage } from "@/lib/server/auth";
+import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
 import { INQUIRY_LIST_LIMIT, isInquiryStorageConfigured, listInquiries } from "@/lib/server/inquiry-store";
 import { AdminCard, AdminFrame } from "./AdminFrame";
 import { InquiryCard } from "./InquiryCard";
@@ -18,6 +19,10 @@ export async function InquiriesView({ view }: { view: "active" | "deleted" }) {
     investors: can(user.role, "investors.manage"),
     purge: can(user.role, "inquiries.purge"),
   };
+
+  // With Gmail, customer replies are picked up by checking the inbox in the background.
+  const email = emailStatus();
+  if (email.provider === "gmail" && email.receiving) after(checkGmailRepliesQuietly);
 
   let data: Awaited<ReturnType<typeof listInquiries>> | null = null;
   try {
