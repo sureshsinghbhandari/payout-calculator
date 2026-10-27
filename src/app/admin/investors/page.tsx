@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { investorLoginState, isoDay, LOGIN_STATE_BADGES } from "@/components/admin/investors/fields";
 import { textLink } from "@/components/admin/investors/ui";
-import { toPublicAdmin, type Investor } from "@/lib/accounts";
+import { can, toPublicAdmin, type Investor } from "@/lib/accounts";
 import { formatDollars, formatIsoDate } from "@/lib/format";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
@@ -53,12 +53,20 @@ async function InvestorsContent() {
             {investors
               ? `${investors.length} ${investors.length === 1 ? "investor" : "investors"}, newest first. `
               : ""}
-            Investors are added by converting a contacted inquiry.
+            Investors are added by converting a contacted inquiry. Further investments are added on the investor&apos;s
+            page.
           </p>
         </div>
-        <Link href="/admin/inquiries" className={`text-sm ${textLink}`}>
-          Go to inquiries
-        </Link>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {can(admin.role, "payouts.manage") && (
+            <Link href="/admin/payouts" className={textLink}>
+              Payout calendar
+            </Link>
+          )}
+          <Link href="/admin/inquiries" className={textLink}>
+            Go to inquiries
+          </Link>
+        </div>
       </div>
 
       {!configured ? (
