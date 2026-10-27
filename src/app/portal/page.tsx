@@ -14,6 +14,8 @@ import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 export const metadata: Metadata = {
   title: "Investor portal | Investment Payout Calculator",
   robots: { index: false, follow: false },
+  // Name and status bar when the portal is added to an iPhone's home screen.
+  appleWebApp: { capable: true, title: "Investor Portal", statusBarStyle: "default" },
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
