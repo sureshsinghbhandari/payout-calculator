@@ -194,8 +194,11 @@ the first time an inquiry's page is opened.
 
 **Settings > Upcoming features** (`/admin/settings/upcoming`, Master Admin) lists planned
 work by area with Now / Next / Later priorities, starting with email (Gmail now, Resend
-later), a company domain, inquiry acknowledgements and customer replies.
-The list lives in `src/lib/roadmap.ts`.
+later), a company domain, inquiry acknowledgements and customer replies, and what is
+already done. The list lives in `src/lib/roadmap.ts`. The same list, as a table of done,
+in-progress and pending features with linked details, is in
+[docs/UPCOMING-FEATURES.md](docs/UPCOMING-FEATURES.md); after changing the list, rewrite it
+with `npm run docs:features`.
 
 ## Email
 

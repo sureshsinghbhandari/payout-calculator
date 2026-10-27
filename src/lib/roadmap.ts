@@ -1,6 +1,7 @@
 /**
- * Upcoming features shown to Master Admins on /admin/settings/upcoming.
- * Update the status or priority here as work progresses.
+ * Upcoming features shown to Master Admins on /admin/settings/upcoming, and
+ * in docs/UPCOMING-FEATURES.md. Update the status or priority here as work
+ * progresses, then run `npm run docs:features` to rewrite the Markdown file.
  */
 export type RoadmapStatus = "planned" | "in-progress" | "done";
 export type RoadmapPriority = "now" | "next" | "later";
@@ -106,7 +107,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "in-progress",
     description:
-      "Customers' replies arrive through the Resend webhook and are attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.",
+      "Customers' replies are picked up (from the Gmail inbox now, through the Resend webhook later) and attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.",
     outcome: "Admins see the conversation on the inquiry; each response is recorded in the audit log under Customer responses.",
     dependsOn: ["email-setup", "inquiry-acknowledgement"],
   },
@@ -150,6 +151,34 @@ export const ROADMAP: RoadmapItem[] = [
 
   // ---------- Sales and inquiries ----------
   {
+    id: "visitor-inquiries",
+    title: "Inquiries from the calculator",
+    category: "sales",
+    priority: "now",
+    status: "done",
+    description:
+      "Visitors send an inquiry with their plan, name, email, phone and a message. Spam protection: a hidden honeypot field and at most 5 inquiries per client per hour.",
+    outcome: "Admins see every inquiry on the Inquiries page (the admin home), newest first.",
+  },
+  {
+    id: "inquiry-statuses",
+    title: "Inquiry statuses, delete and restore",
+    category: "sales",
+    priority: "now",
+    status: "done",
+    description:
+      "New, Contacted and Converted statuses. Mark as contacted asks for a note (call, meeting or note). Delete moves an inquiry to Deleted inquiries, where a Master Admin can restore it.",
+  },
+  {
+    id: "convert-to-investor",
+    title: "Convert an inquiry into an investor",
+    category: "sales",
+    priority: "now",
+    status: "done",
+    description:
+      "A contacted inquiry becomes an investor with one click: the form is pre-filled from the inquiry and the interest rate is fixed at that moment.",
+  },
+  {
     id: "assign-inquiries",
     title: "Assign inquiries and follow-up dates",
     category: "sales",
@@ -164,7 +193,8 @@ export const ROADMAP: RoadmapItem[] = [
     category: "sales",
     priority: "next",
     status: "done",
-    description: "Add notes, calls and meetings to an inquiry, shown as a timeline with who added each entry.",
+    description:
+      "Add notes, calls and meetings to an inquiry, shown as a timeline with who added each entry, together with every audit event about the inquiry. The Inquiries list shows each inquiry's latest note.",
   },
   {
     id: "lead-source",
@@ -195,6 +225,24 @@ export const ROADMAP: RoadmapItem[] = [
   },
 
   // ---------- Investor portal ----------
+  {
+    id: "investor-portal",
+    title: "Investor portal",
+    category: "portal",
+    priority: "now",
+    status: "done",
+    description:
+      "Investors sign in at /portal and see each investment: amounts, dates, totals, the next payout and the full payout schedule. The interest rate is never shown.",
+  },
+  {
+    id: "investor-logins",
+    title: "Investor logins",
+    category: "portal",
+    priority: "now",
+    status: "done",
+    description:
+      "A Master Admin gives each investor a temporary password or a one-time setup link (valid 72 hours), can reset it, edit contact details and disable or enable the login.",
+  },
   {
     id: "forgot-password",
     title: "Forgot password by email",
@@ -240,6 +288,24 @@ export const ROADMAP: RoadmapItem[] = [
 
   // ---------- Payouts and operations ----------
   {
+    id: "payout-calculator",
+    title: "Payout calculator",
+    category: "operations",
+    priority: "now",
+    status: "done",
+    description:
+      "Payout schedule for a fixed-term investment (simple interest, Interest Only or Interest and Principal), comparisons with other payout terms and types, and an Excel download.",
+  },
+  {
+    id: "rates-management",
+    title: "Interest rates managed by Master Admins",
+    category: "operations",
+    priority: "now",
+    status: "done",
+    description:
+      "One rate per payout term, never sent to visitors or investors. Editing needs the admin's own password, locks again after saving or 10 minutes, and keeps the last 20 saves.",
+  },
+  {
     id: "record-payments",
     title: "Record actual payouts",
     category: "operations",
@@ -283,6 +349,24 @@ export const ROADMAP: RoadmapItem[] = [
   },
 
   // ---------- Security and compliance ----------
+  {
+    id: "admin-roles",
+    title: "Admin users and roles",
+    category: "security",
+    priority: "now",
+    status: "done",
+    description:
+      "Named admin users with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see interest rates.",
+  },
+  {
+    id: "audit-log",
+    title: "Audit log",
+    category: "security",
+    priority: "now",
+    status: "done",
+    description:
+      "Who did what and when: sign-ins, password changes, inquiries, investors, users, rates and emails, by month and category. Events about an inquiry also show on that inquiry.",
+  },
   {
     id: "two-factor",
     title: "Two-step sign-in",
@@ -371,6 +455,23 @@ export const ROADMAP: RoadmapItem[] = [
   },
 
   // ---------- Platform and experience ----------
+  {
+    id: "seminar-deck",
+    title: "Seminar presentation",
+    category: "platform",
+    priority: "now",
+    status: "done",
+    description: "A PowerPoint and PDF deck for investor seminars, with the calculator address, a QR code and the disclaimer (in docs/).",
+  },
+  {
+    id: "demo-data",
+    title: "Demo data for testing",
+    category: "platform",
+    priority: "now",
+    status: "done",
+    description:
+      "npm run seed:demo adds demo inquiries, investors, notes and activity, and removes them again with --remove, before go-live.",
+  },
   {
     id: "custom-domain",
     title: "Your own web address",
