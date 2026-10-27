@@ -190,16 +190,16 @@ removed before go-live.
 
 ## Seminar deck
 
-`seminar/Investment-Plans-Seminar.pptx` and `.pdf`: a 6-slide deck for investor
+`docs/Investment-Plans-Seminar.pptx` and `.pdf`: a 6-slide deck for investor
 seminars. It covers how it works, one slide each for Quarterly, Half-Yearly and Yearly
 payouts (what $25,000, $50,000 and $100,000 pay over 1 and 2 years, Interest Only), and a
 closing slide with the inquiry address, a QR code and the disclaimer. Speaker notes are
 included. Figures use the production rates at the time it was made (8%, 9%, 10%); the
 rates themselves are not shown.
 
-To rebuild after a rate change: edit `RATES` in `seminar/build-deck.cjs`, run it with
+To rebuild after a rate change: edit `RATES` in `docs/build-deck.cjs`, run it with
 Node (it needs the `pptxgenjs` and `qrcode` packages), then make the PDF with
-PowerPoint: `powershell -File seminar/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -ImageDir <folder>`.
+PowerPoint: `powershell -File docs/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -ImageDir <folder>`.
 
 ## Data storage
 

@@ -13,7 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Standalone Node scripts for the seminar deck (not part of the app).
-    "seminar/**",
+    "docs/**",
   ]),
 ]);
 
