@@ -3,10 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { SignInAlerts } from "@/components/admin/SignInAlerts";
 import { ROLE_LABELS, toPublicAdmin } from "@/lib/accounts";
 import {
   AUDIT_CATEGORY_LABELS,
+  AUDIT_EXPORT_MAX_DAYS,
   auditMonth,
+  auditMonthRange,
   isAuditMonth,
   type AuditCategory,
   type AuditEvent,
@@ -38,6 +41,9 @@ function monthLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
   return monthFormatter.format(new Date(Date.UTC(y, m - 1, 1)));
 }
+
+const dateInput =
+  "mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 shadow-sm focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30";
 
 const CATEGORIES = Object.keys(AUDIT_CATEGORY_LABELS) as AuditCategory[];
 
@@ -95,6 +101,14 @@ async function AuditContent({ searchParams }: { searchParams: SearchParams }) {
   if (!months.includes(currentMonth)) months = [currentMonth, ...months];
   if (!months.includes(requestedMonth)) months = [...months, requestedMonth].sort().reverse();
 
+  const exportRange = auditMonthRange(requestedMonth);
+  const exportProblem =
+    params.export === "invalid"
+      ? `The export needs a start date on or before the end date, at most ${AUDIT_EXPORT_MAX_DAYS} days apart.`
+      : params.export === "failed"
+        ? "The export could not be created. Please try again."
+        : null;
+
   const filtered = category ? events.filter((e) => e.category === category) : events;
   const shown = filtered.slice(0, MAX_ROWS);
 
@@ -120,8 +134,21 @@ async function AuditContent({ searchParams }: { searchParams: SearchParams }) {
         <h1 className="text-2xl font-semibold text-slate-900">Audit log</h1>
         <p className="mt-1 text-sm text-slate-600">
           Who did what, and when. Times are in UTC. Customer email responses will appear here once the Gmail
-          integration is added.
+          integration is added. Sign-in alerts flag repeated failed sign-ins and admin sign-ins from a new device or
+          network.
         </p>
+      </div>
+
+      <div className="mb-5">
+        <Suspense
+          fallback={
+            <AdminCard>
+              <p className="text-sm text-slate-600">Checking recent sign-ins…</p>
+            </AdminCard>
+          }
+        >
+          <SignInAlerts limit={20} showAuditLink={false} />
+        </Suspense>
       </div>
 
       <div className="mb-5 space-y-3">
@@ -143,6 +170,42 @@ async function AuditContent({ searchParams }: { searchParams: SearchParams }) {
           ))}
         </nav>
       </div>
+
+      <form
+        key={requestedMonth}
+        method="get"
+        action="/admin/settings/audit/export"
+        aria-labelledby="audit-export-heading"
+        className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      >
+        <h2 id="audit-export-heading" className="text-base font-semibold text-slate-900">
+          Export to Excel
+        </h2>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Downloads every event between the two dates (both included, UTC), in all categories.
+        </p>
+        {exportProblem && (
+          <p role="alert" className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+            {exportProblem}
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <label className="block text-sm font-medium text-slate-700">
+            From
+            <input type="date" name="from" required defaultValue={exportRange.from} className={dateInput} />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
+            To
+            <input type="date" name="to" required defaultValue={exportRange.to} className={dateInput} />
+          </label>
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+          >
+            Export to Excel
+          </button>
+        </div>
+      </form>
 
       {loadError ? (
         <AdminCard>

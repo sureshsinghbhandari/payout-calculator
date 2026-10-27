@@ -7,7 +7,8 @@ import { can, ROLE_LABELS, type PublicAdmin } from "@/lib/accounts";
 
 /**
  * Gear button in the admin header. Shows only what the admin's role allows:
- * Sales Admins see Inquiries and their account; Master Admins see everything.
+ * Sales Admins see Inquiries, the dashboard (inquiry figures only) and their
+ * account; Master Admins see everything.
  */
 export function SettingsMenu({ user }: { user: PublicAdmin }) {
   const [open, setOpen] = useState(false);
@@ -36,6 +37,7 @@ export function SettingsMenu({ user }: { user: PublicAdmin }) {
 
   const links = [
     { href: "/admin/inquiries", label: "Inquiries", permission: "inquiries.view" as const },
+    { href: "/admin/dashboard", label: "Dashboard", permission: "dashboard.view" as const },
     { href: "/admin/inquiries/deleted", label: "Deleted inquiries", permission: "inquiries.delete" as const },
     { href: "/admin/investors", label: "Investors", permission: "investors.manage" as const },
     { href: "/admin/settings/rates", label: "Interest rates", permission: "rates.manage" as const },

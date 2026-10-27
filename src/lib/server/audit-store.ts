@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { BlobError, BlobPreconditionFailedError, get, list, put } from "@vercel/blob";
 import { writableEtag } from "./blob-etag";
 import { after } from "next/server";
-import { auditMonth, isAuditMonth, parseAuditEvents, type AuditEvent, type NewAuditEvent } from "../audit";
+import { auditMonth, auditMonthsBetween, isAuditMonth, parseAuditEvents, type AuditEvent, type NewAuditEvent } from "../audit";
 import { isInquiryId } from "../inquiry";
 import type { InquiryLog } from "../inquiry-log";
 import { addInquiryEvents, readInquiryLog } from "./inquiry-log-store";
@@ -106,6 +106,20 @@ export async function listAuditEvents(month: string): Promise<AuditEvent[]> {
   if (!isConfigured()) return [];
   const { events } = await readMonth(month);
   return events.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+}
+
+/**
+ * Events from `fromIso` (inclusive) to `toIso` (exclusive), oldest first.
+ * Reads one file per month in the range, so keep ranges to about a year.
+ */
+export async function listAuditEventsBetween(fromIso: string, toIso: string): Promise<AuditEvent[]> {
+  if (!isConfigured()) return [];
+  const months = auditMonthsBetween(fromIso, toIso);
+  const perMonth = await Promise.all(months.map(async (month) => (await readMonth(month)).events));
+  return perMonth
+    .flat()
+    .filter((e) => e.at >= fromIso && e.at < toIso)
+    .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
 }
 
 /** Months that have audit events, newest first. */
