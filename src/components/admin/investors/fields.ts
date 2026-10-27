@@ -4,7 +4,6 @@
  * suggestion for converted inquiries, and display helpers.
  */
 import { normalizeUsername, setupState, validatePersonName, validateUsername, type Investor } from "@/lib/accounts";
-import { INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
 import { parseDollarsToCents } from "@/lib/investments";
 import {
   FREQUENCY_LABELS,
@@ -14,6 +13,7 @@ import {
   type PayoutFrequency,
   type PayoutType,
 } from "@/lib/payout";
+import { isOfferedAmount, isOfferedFrequency, isOfferedTerm, type ProductSettings } from "@/lib/products";
 
 export const CONTACT_FIELDS = ["name", "email", "phone", "username"] as const;
 export const PLAN_FIELDS = ["principal", "investmentDate", "lockInYears", "frequency", "payoutType"] as const;
@@ -100,14 +100,16 @@ export interface PlanValues {
   payoutType: PayoutType;
 }
 
+/** Validates the plan fields. Only the amounts, terms and payout terms on offer (`products`) are accepted. */
 export function parsePlanFields(
   raw: Partial<Record<PlanField, unknown>>,
+  products: ProductSettings,
 ): { ok: true; value: PlanValues } | { ok: false; errors: FieldErrors<PlanField> } {
   const errors: FieldErrors<PlanField> = {};
 
   const principalText = text(raw.principal);
   const principal = /^\d+$/.test(principalText) ? Number(principalText) : NaN;
-  if (!(INVESTMENT_AMOUNTS as readonly number[]).includes(principal)) {
+  if (!isOfferedAmount(products, principal)) {
     errors.principal = "Choose one of the listed investment amounts.";
   }
 
@@ -116,12 +118,13 @@ export function parsePlanFields(
 
   const yearsText = text(raw.lockInYears);
   const lockInYears = /^\d+$/.test(yearsText) ? Number(yearsText) : NaN;
-  if (!(LOCK_IN_YEARS as readonly number[]).includes(lockInYears)) {
+  if (!isOfferedTerm(products, lockInYears)) {
     errors.lockInYears = "Choose one of the listed terms.";
   }
 
   const frequency = text(raw.frequency);
   if (!Object.hasOwn(FREQUENCY_LABELS, frequency)) errors.frequency = "Choose a payout term.";
+  else if (!isOfferedFrequency(products, frequency)) errors.frequency = "Choose one of the listed payout terms.";
 
   const payoutType = text(raw.payoutType);
   if (!Object.hasOwn(PAYOUT_TYPE_LABELS, payoutType)) errors.payoutType = "Choose a payout type.";

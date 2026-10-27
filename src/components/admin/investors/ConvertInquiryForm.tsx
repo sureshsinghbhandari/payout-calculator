@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { convertInquiryAction, type ConvertState } from "@/app/admin/investors/actions";
+import type { ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
 import type { ConvertField } from "./fields";
 import { TextField } from "./FormControls";
@@ -14,6 +15,8 @@ interface Props {
   defaults: Record<ConvertField, string>;
   /** Current rates (admins may see them); the rate in effect at submission is stored. */
   rates: RateTable;
+  /** The amounts, terms and payout terms on offer. */
+  products: ProductSettings;
 }
 
 /** Form that converts a contacted inquiry into an investor with one investment. */
@@ -27,6 +30,7 @@ function ConvertFormBody({
   inquiryId,
   defaults,
   rates,
+  products,
   state,
   formAction,
   pending,
@@ -112,6 +116,7 @@ function ConvertFormBody({
             }}
             errors={errors}
             rates={rates}
+            products={products}
             submitLabel="Convert to investor"
           />
         </div>

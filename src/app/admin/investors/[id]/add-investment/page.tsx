@@ -7,20 +7,15 @@ import { AddInvestmentForm } from "@/components/admin/investors/AddInvestmentFor
 import { isInvestorIdLike, type PlanField } from "@/components/admin/investors/fields";
 import { textLink } from "@/components/admin/investors/ui";
 import { toPublicAdmin, type Investment, type Investor } from "@/lib/accounts";
-import {
-  DEFAULT_FREQUENCY,
-  DEFAULT_INVESTMENT_AMOUNT,
-  DEFAULT_LOCK_IN_YEARS,
-  DEFAULT_PAYOUT_TYPE,
-  INVESTMENT_AMOUNTS,
-  LOCK_IN_YEARS,
-} from "@/lib/config";
+import { DEFAULT_PAYOUT_TYPE } from "@/lib/config";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { isMatured, maturityDate, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
+import { isOfferedFrequency, type ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
+import { getCurrentProducts } from "@/lib/server/products-store";
 import { getCurrentRates } from "@/lib/server/rates-store";
 
 export const metadata: Metadata = {
@@ -52,8 +47,9 @@ function renewBlockedReason(investor: Investor, source: Investment | undefined, 
   return null;
 }
 
-function validOr<T extends number>(value: number, allowed: readonly T[], fallback: T): string {
-  return String((allowed as readonly number[]).includes(value) ? value : fallback);
+/** The value when it is still on offer, else the current default. */
+function validOr(value: number, allowed: readonly number[], fallback: number): string {
+  return String(allowed.includes(value) ? value : fallback);
 }
 
 async function AddInvestmentContent({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
@@ -67,6 +63,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
 
   let investor: Investor | null = null;
   let rates: RateTable | null = null;
+  let products: ProductSettings | null = null;
   let message: string | null = null;
   if (!isAccountStorageConfigured()) {
     message = "Account storage is not connected, so investments cannot be added.";
@@ -74,11 +71,12 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
     message = "This investor could not be found.";
   } else {
     try {
-      [investor, rates] = await Promise.all([getInvestor(id), getCurrentRates()]);
+      [investor, rates, products] = await Promise.all([getInvestor(id), getCurrentRates(), getCurrentProducts()]);
       if (!investor) message = "This investor could not be found.";
     } catch (error) {
       console.error("Loading investor for a new investment failed", error);
-      message = "The investor or the current interest rates could not be loaded. Reload the page to try again.";
+      message =
+        "The investor, the current interest rates or the amounts and terms on offer could not be loaded. Reload the page to try again.";
     }
   }
 
@@ -92,7 +90,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
     { label: title },
   ];
 
-  if (!investor || !rates || message) {
+  if (!investor || !rates || !products || message) {
     return (
       <AdminFrame user={user}>
         <AdminBreadcrumb items={breadcrumb} />
@@ -115,17 +113,17 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
   const sourceSchedule = source ? scheduleOrNull(source) : null;
   const defaults: Record<PlanField, string> = source
     ? {
-        principal: validOr(source.principal, INVESTMENT_AMOUNTS, DEFAULT_INVESTMENT_AMOUNT),
+        principal: validOr(source.principal, products.amounts, products.defaultAmount),
         investmentDate: sourceSchedule ? maturityDate(sourceSchedule) : today,
-        lockInYears: validOr(source.lockInYears, LOCK_IN_YEARS, DEFAULT_LOCK_IN_YEARS),
-        frequency: source.frequency,
+        lockInYears: validOr(source.lockInYears, products.terms, products.defaultTerm),
+        frequency: isOfferedFrequency(products, source.frequency) ? source.frequency : products.defaultFrequency,
         payoutType: source.payoutType,
       }
     : {
-        principal: String(DEFAULT_INVESTMENT_AMOUNT),
+        principal: String(products.defaultAmount),
         investmentDate: today,
-        lockInYears: String(DEFAULT_LOCK_IN_YEARS),
-        frequency: DEFAULT_FREQUENCY,
+        lockInYears: String(products.defaultTerm),
+        frequency: products.defaultFrequency,
         payoutType: DEFAULT_PAYOUT_TYPE,
       };
   const sourceDetails =
@@ -175,7 +173,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
         </section>
       )}
 
-      <AddInvestmentForm investorId={investor.id} renewedFromId={source?.id ?? null} defaults={defaults} rates={rates} />
+      <AddInvestmentForm investorId={investor.id} renewedFromId={source?.id ?? null} defaults={defaults} rates={rates} products={products} />
     </AdminFrame>
   );
 }

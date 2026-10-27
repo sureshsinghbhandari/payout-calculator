@@ -74,6 +74,7 @@ function targetHref(event: AuditEvent): string | null {
   if (t.type === "inquiry") return t.id && event.action !== "inquiry.purged" ? `/admin/inquiries/${t.id}` : "/admin/inquiries";
   if (t.type === "user") return "/admin/settings/users";
   if (t.type === "rates") return "/admin/settings/rates";
+  if (t.type === "products") return "/admin/settings/amounts-and-terms";
   return null;
 }
 

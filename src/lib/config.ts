@@ -12,6 +12,11 @@ export const DEFAULT_RATE_BY_FREQUENCY: Record<PayoutFrequency, number> = {
   yearly: 10,
 };
 
+/**
+ * Starting amounts and terms on offer, with the calculator's defaults. These
+ * apply until a Master Admin saves Settings > Amounts and terms; after that the
+ * saved values are used (see products.ts).
+ */
 export const INVESTMENT_AMOUNTS = [25_000, 50_000, 75_000, 100_000] as const;
 export const DEFAULT_INVESTMENT_AMOUNT = 100_000;
 

@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { PayoutCalculator } from "@/components/PayoutCalculator";
+import { defaultProductSettings, type ProductSettings } from "@/lib/products";
+import { getCurrentProducts } from "@/lib/server/products-store";
 
 export default function Home() {
   return (
@@ -37,7 +41,9 @@ export default function Home() {
           </p>
         </div>
 
-        <PayoutCalculator />
+        <Suspense fallback={<CalculatorLoading />}>
+          <Calculator />
+        </Suspense>
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
@@ -47,6 +53,34 @@ export default function Home() {
           the details you enter are stored so our team can respond.
         </div>
       </footer>
+    </div>
+  );
+}
+
+/**
+ * The calculator with the amounts and terms on offer. They are cached and
+ * built into the page, which is refreshed as soon as an admin saves new ones.
+ */
+async function Calculator() {
+  let products: ProductSettings;
+  try {
+    products = await getCurrentProducts();
+  } catch (error) {
+    // Never build the page from the defaults while storage cannot be read:
+    // this part is then rendered for each visit, which tries storage again.
+    await connection();
+    console.error("Reading amounts and terms for the calculator failed", error);
+    products = defaultProductSettings();
+  }
+  return <PayoutCalculator products={products} />;
+}
+
+function CalculatorLoading() {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <p role="status" className="text-sm text-slate-600">
+        Loading the calculator…
+      </p>
     </div>
   );
 }

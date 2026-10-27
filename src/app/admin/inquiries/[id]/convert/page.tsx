@@ -7,14 +7,15 @@ import { ConvertInquiryForm } from "@/components/admin/investors/ConvertInquiryF
 import { formatTimestamp, suggestUsername, type ConvertField } from "@/components/admin/investors/fields";
 import { textLink } from "@/components/admin/investors/ui";
 import { toPublicAdmin, type Investor } from "@/lib/accounts";
-import { DEFAULT_INVESTMENT_AMOUNT, DEFAULT_LOCK_IN_YEARS, INVESTMENT_AMOUNTS, LOCK_IN_YEARS } from "@/lib/config";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { inquiryReference, isInquiryId, type StoredInquiry } from "@/lib/inquiry";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
+import { isOfferedAmount, isOfferedFrequency, isOfferedTerm, type ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { getInquiry } from "@/lib/server/inquiry-store";
+import { getCurrentProducts } from "@/lib/server/products-store";
 import { getCurrentRates } from "@/lib/server/rates-store";
 
 export const metadata: Metadata = {
@@ -69,6 +70,7 @@ async function ConvertContent({ params }: { params: Params }) {
   let inquiry: StoredInquiry | null = null;
   let investors: Investor[] = [];
   let rates: RateTable | null = null;
+  let products: ProductSettings | null = null;
 
   if (!isAccountStorageConfigured()) {
     message = "Account storage is not connected, so inquiries cannot be converted.";
@@ -76,7 +78,12 @@ async function ConvertContent({ params }: { params: Params }) {
     message = "This inquiry could not be found.";
   } else {
     try {
-      [inquiry, investors, rates] = await Promise.all([getInquiry(id), listInvestors(), getCurrentRates()]);
+      [inquiry, investors, rates, products] = await Promise.all([
+        getInquiry(id),
+        listInvestors(),
+        getCurrentRates(),
+        getCurrentProducts(),
+      ]);
       if (!inquiry) message = "This inquiry could not be found.";
     } catch (error) {
       console.error("Loading inquiry for conversion failed", error);
@@ -88,14 +95,16 @@ async function ConvertContent({ params }: { params: Params }) {
   const existing = loaded ? investors.find((i) => i.sourceInquiryId === loaded.id) : undefined;
   const blocked = loaded ? blockedReason(loaded, existing) : null;
 
-  if (!inquiry || !rates || message || blocked) {
+  if (!inquiry || !rates || !products || message || blocked) {
     return (
       <AdminFrame user={user}>
         <AdminBreadcrumb items={BREADCRUMB} />
         <h1 className="mb-6 text-2xl font-semibold text-slate-900">Convert to investor</h1>
         <AdminCard>
           <p role="alert" className="text-sm font-medium text-slate-800">
-            {message ?? blocked?.text ?? "The current interest rates could not be loaded. Reload the page to try again."}
+            {message ??
+              blocked?.text ??
+              "The current interest rates or the amounts and terms on offer could not be loaded. Reload the page to try again."}
           </p>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {blocked?.investorId && (
@@ -119,12 +128,11 @@ async function ConvertContent({ params }: { params: Params }) {
     email: inquiry.email,
     phone: inquiry.phone,
     username: suggestUsername(inquiry.email, inquiry.name, taken),
-    principal: String(
-      (INVESTMENT_AMOUNTS as readonly number[]).includes(plan.principal) ? plan.principal : DEFAULT_INVESTMENT_AMOUNT,
-    ),
+    // A plan value no longer on offer starts at the current default instead.
+    principal: String(isOfferedAmount(products, plan.principal) ? plan.principal : products.defaultAmount),
     investmentDate: plan.investmentDate,
-    lockInYears: String((LOCK_IN_YEARS as readonly number[]).includes(plan.lockInYears) ? plan.lockInYears : DEFAULT_LOCK_IN_YEARS),
-    frequency: plan.frequency,
+    lockInYears: String(isOfferedTerm(products, plan.lockInYears) ? plan.lockInYears : products.defaultTerm),
+    frequency: isOfferedFrequency(products, plan.frequency) ? plan.frequency : products.defaultFrequency,
     payoutType: plan.payoutType,
   };
   const snapshot = [
@@ -172,7 +180,7 @@ async function ConvertContent({ params }: { params: Params }) {
         </dl>
       </section>
 
-      <ConvertInquiryForm inquiryId={inquiry.id} defaults={defaults} rates={rates} />
+      <ConvertInquiryForm inquiryId={inquiry.id} defaults={defaults} rates={rates} products={products} />
     </AdminFrame>
   );
 }

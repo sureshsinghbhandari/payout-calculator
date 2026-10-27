@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { INVESTMENT_AMOUNTS, INVESTMENT_DATE_MAX, INVESTMENT_DATE_MIN, LOCK_IN_YEARS } from "@/lib/config";
+import { INVESTMENT_DATE_MAX, INVESTMENT_DATE_MIN } from "@/lib/config";
 import { formatCents, formatDollars, formatIsoDateLong, formatPercent, formatYears } from "@/lib/format";
 import {
   calculatePayoutSchedule,
@@ -11,16 +11,11 @@ import {
   type PayoutSchedule,
   type PayoutType,
 } from "@/lib/payout";
+import type { ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
 import type { FieldErrors, PlanField } from "./fields";
 import { SelectField, TextField } from "./FormControls";
 
-const AMOUNT_OPTIONS = INVESTMENT_AMOUNTS.map((a) => ({ value: String(a), label: formatDollars(a) }));
-const TERM_OPTIONS = LOCK_IN_YEARS.map((y) => ({ value: String(y), label: formatYears(y) }));
-const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as PayoutFrequency[]).map((f) => ({
-  value: f,
-  label: FREQUENCY_LABELS[f],
-}));
 const TYPE_OPTIONS = (Object.keys(PAYOUT_TYPE_LABELS) as PayoutType[]).map((t) => ({
   value: t,
   label: PAYOUT_TYPE_LABELS[t],
@@ -51,12 +46,15 @@ export function InvestmentPlanFields({
   values,
   errors,
   rates,
+  products,
   submitLabel,
   dateLabel = "Planned investment date",
   dateHint,
 }: {
   values: PlanDraft;
   errors: FieldErrors<PlanField>;
+  /** The amounts, terms and payout terms on offer; only these can be chosen. */
+  products: ProductSettings;
   /** Current rates (admins may see them); the rate in effect at submission is stored. */
   rates: RateTable;
   /** The submit button's text, named in the rate note. */
@@ -65,6 +63,9 @@ export function InvestmentPlanFields({
   dateHint?: string;
 }) {
   const [plan, setPlan] = useState<PlanDraft>(values);
+  const amountOptions = products.amounts.map((a) => ({ value: String(a), label: formatDollars(a) }));
+  const termOptions = products.terms.map((y) => ({ value: String(y), label: formatYears(y) }));
+  const frequencyOptions = products.frequencies.map((f) => ({ value: f, label: FREQUENCY_LABELS[f] }));
 
   return (
     <div onChange={(e) => setPlan(readPlan(e.currentTarget))}>
@@ -74,7 +75,7 @@ export function InvestmentPlanFields({
           name="principal"
           defaultValue={values.principal}
           error={errors.principal}
-          options={AMOUNT_OPTIONS}
+          options={amountOptions}
         />
         <TextField
           label={dateLabel}
@@ -91,14 +92,14 @@ export function InvestmentPlanFields({
           name="lockInYears"
           defaultValue={values.lockInYears}
           error={errors.lockInYears}
-          options={TERM_OPTIONS}
+          options={termOptions}
         />
         <SelectField
           label="Payout term"
           name="frequency"
           defaultValue={values.frequency}
           error={errors.frequency}
-          options={FREQUENCY_OPTIONS}
+          options={frequencyOptions}
         />
         <SelectField
           label="Payout type"

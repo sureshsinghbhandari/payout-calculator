@@ -39,10 +39,12 @@ import { adminActor } from "@/lib/audit";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate } from "@/lib/format";
 import type { Investment, Investor, PayoutPayment } from "@/lib/accounts";
+import type { ProductSettings } from "@/lib/products";
 import { isMatured, latestPaidOn, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
 import { buildStatementData, type StatementResult } from "@/lib/statement";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
+import { getCurrentProducts } from "@/lib/server/products-store";
 import { getCurrentRates } from "@/lib/server/rates-store";
 import { paymentConfirmationBlocker, sendPaymentConfirmation } from "@/lib/server/payout-notices";
 import { siteOrigin } from "@/lib/server/site-url";
@@ -64,6 +66,8 @@ function errorMessage(error: unknown, fallback: string, context: string): string
 }
 
 // ---------- convert an inquiry into an investor ----------
+
+const PRODUCTS_UNAVAILABLE = "The amounts and terms on offer could not be loaded. Please try again.";
 
 
 function investorTarget(investor: Pick<Investor, "id" | "name" | "username">) {
@@ -110,8 +114,15 @@ export async function convertInquiryAction(prev: ConvertState, formData: FormDat
     };
   }
 
+  let products: ProductSettings;
+  try {
+    products = await getCurrentProducts();
+  } catch (error) {
+    console.error("Reading amounts and terms for conversion failed", error);
+    return { attempt, values, error: PRODUCTS_UNAVAILABLE };
+  }
   const contact = parseContactFields(values);
-  const plan = parsePlanFields(values);
+  const plan = parsePlanFields(values, products);
   if (!contact.ok || !plan.ok) {
     return {
       attempt,
@@ -396,7 +407,14 @@ export async function addInvestmentAction(prev: AddInvestmentState, formData: Fo
   }
   if (!isAccountStorageConfigured()) return { attempt, values, error: NO_STORAGE };
 
-  const plan = parsePlanFields(values);
+  let products: ProductSettings;
+  try {
+    products = await getCurrentProducts();
+  } catch (error) {
+    console.error("Reading amounts and terms for a new investment failed", error);
+    return { attempt, values, error: PRODUCTS_UNAVAILABLE };
+  }
+  const plan = parsePlanFields(values, products);
   if (!plan.ok) return { attempt, values, error: "Fix the highlighted fields.", fieldErrors: plan.errors };
 
   let investor: Investor | null;

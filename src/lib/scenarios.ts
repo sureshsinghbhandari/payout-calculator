@@ -3,7 +3,8 @@
  *
  * - Longer payout periods: the same investment and payout type, paid less often,
  *   each at that frequency's rate (Quarterly -> Half-Yearly and Yearly;
- *   Half-Yearly -> Yearly; Yearly has none).
+ *   Half-Yearly -> Yearly; Yearly has none). Only payout terms on offer are
+ *   compared.
  * - Other payout type: the same frequency and rate, with the other payout type.
  *
  * Rates are server-side only. `toPublicScenarioSet` removes them before results
@@ -23,9 +24,12 @@ import type { RateTable } from "./rates";
 
 export const FREQUENCY_ORDER: PayoutFrequency[] = ["quarterly", "half-yearly", "yearly"];
 
-/** Frequencies that pay less often than `frequency`, shortest interval first. */
-export function longerFrequencies(frequency: PayoutFrequency): PayoutFrequency[] {
-  return FREQUENCY_ORDER.filter((f) => PERIODS_PER_YEAR[f] < PERIODS_PER_YEAR[frequency]);
+/** Offered frequencies that pay less often than `frequency`, shortest interval first. */
+export function longerFrequencies(
+  frequency: PayoutFrequency,
+  offered: readonly PayoutFrequency[] = FREQUENCY_ORDER,
+): PayoutFrequency[] {
+  return FREQUENCY_ORDER.filter((f) => offered.includes(f) && PERIODS_PER_YEAR[f] < PERIODS_PER_YEAR[frequency]);
 }
 
 export function otherPayoutType(type: PayoutType): PayoutType {
@@ -43,12 +47,19 @@ export interface ScenarioSet {
 /** Visitor inputs without the rate. */
 export type QuoteInputs = Omit<PayoutInputs, "annualRatePercent">;
 
-/** Calculates the selected schedule and all scenarios using the rate table. */
-export function buildScenarios(inputs: QuoteInputs, rates: RateTable): ScenarioSet {
+/**
+ * Calculates the selected schedule and all scenarios using the rate table.
+ * `offered` limits the longer-period scenarios to the payout terms on offer.
+ */
+export function buildScenarios(
+  inputs: QuoteInputs,
+  rates: RateTable,
+  offered: readonly PayoutFrequency[] = FREQUENCY_ORDER,
+): ScenarioSet {
   const selected = calculatePayoutSchedule({ ...inputs, annualRatePercent: rates[inputs.frequency] });
   return {
     selected,
-    longerFrequencies: longerFrequencies(inputs.frequency).map((frequency) =>
+    longerFrequencies: longerFrequencies(inputs.frequency, offered).map((frequency) =>
       calculatePayoutSchedule({ ...inputs, frequency, annualRatePercent: rates[frequency] }),
     ),
     otherPayoutType: calculatePayoutSchedule({

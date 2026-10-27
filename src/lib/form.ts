@@ -2,13 +2,9 @@
  * Calculator form state. The interest rate is not part of the form: it is
  * managed by an admin and applied on the server.
  */
-import {
-  DEFAULT_FREQUENCY,
-  DEFAULT_INVESTMENT_AMOUNT,
-  DEFAULT_LOCK_IN_YEARS,
-  DEFAULT_PAYOUT_TYPE,
-} from "./config";
+import { DEFAULT_PAYOUT_TYPE } from "./config";
 import type { PayoutFrequency, PayoutType } from "./payout";
+import { defaultProductSettings, type ProductSettings } from "./products";
 
 export interface FormState {
   principal: number;
@@ -19,12 +15,13 @@ export interface FormState {
   investmentDate: string | null;
 }
 
-export function initialFormState(): FormState {
+/** The form's starting values: the defaults from Settings > Amounts and terms. */
+export function initialFormState(products: ProductSettings = defaultProductSettings()): FormState {
   return {
-    principal: DEFAULT_INVESTMENT_AMOUNT,
-    lockInYears: DEFAULT_LOCK_IN_YEARS,
+    principal: products.defaultAmount,
+    lockInYears: products.defaultTerm,
     payoutType: DEFAULT_PAYOUT_TYPE,
-    frequency: DEFAULT_FREQUENCY,
+    frequency: products.defaultFrequency,
     investmentDate: null,
   };
 }
