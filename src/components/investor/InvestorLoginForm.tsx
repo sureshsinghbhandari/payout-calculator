@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId } from "react";
 import { investorLoginAction, type InvestorLoginState } from "@/app/portal/actions";
 
@@ -52,6 +53,14 @@ export function InvestorLoginForm() {
           aria-describedby={describedBy}
           className={`${inputClass} ${state.error ? errorInput : okInput}`}
         />
+        <p className="mt-2 text-sm">
+          <Link
+            href="/portal/forgot-password"
+            className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
+          >
+            Forgot password?
+          </Link>
+        </p>
       </div>
       {state.error && (
         <p id={errorId} role="alert" className="text-sm font-medium text-red-700">

@@ -76,7 +76,7 @@ async function SetupContent({ searchParams }: { searchParams: SearchParams }) {
   if (!account) {
     return (
       <InvalidSetupLink
-        message={`This setup link has expired, has already been used or was replaced by a newer one. Links work once and expire after ${SETUP_LINK_HOURS} hours. Ask an administrator to send you a new link.`}
+        message={`This setup link has expired, has already been used or was replaced by a newer one. Links work once and expire after ${SETUP_LINK_HOURS} hours. Ask an administrator to send you a new link, or use Forgot password on the sign-in page.`}
       />
     );
   }

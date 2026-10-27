@@ -2,10 +2,9 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Resend } from "resend";
 import { adminActor, SYSTEM_ACTOR, visitorActor } from "../audit";
-import type { AdminUser } from "../accounts";
+import { SETUP_LINK_HOURS, type AdminUser } from "../accounts";
 import {
   acknowledgementSubject,
-  acknowledgementText,
   addressOf,
   displayNameOf,
   EMAIL_DELIVERY_LABELS,
@@ -17,7 +16,9 @@ import {
   type EmailDelivery,
   type EmailMessage,
 } from "../email";
+import { firstNameOf, inquiryTemplateValues, renderTemplate } from "../email-templates";
 import { inquiryReference, isInquiryId, type StoredInquiry } from "../inquiry";
+import { listAdminUsers } from "./accounts-store";
 import { recordAudit } from "./audit-store";
 import { scanGmailInbox, sendViaGmail, type GmailAccount, type InboxEnvelope } from "./email-gmail";
 import {
@@ -29,6 +30,7 @@ import {
   setMessageDelivery,
   type GmailCheckState,
 } from "./email-store";
+import { getEmailTemplate } from "./email-templates-store";
 import { findInquiryIdByReference, getInquiry, noteInquiryEmail } from "./inquiry-store";
 
 /**
@@ -121,6 +123,13 @@ function senderOf(env: EmailEnv): string | null {
 
 function teamName(env: EmailEnv, from: string): string {
   return displayNameOf(from) || env.senderName || "Our team";
+}
+
+/** The team name emails are signed with (for template previews). */
+export function emailTeamName(): string {
+  const env = readEnv();
+  const from = senderOf(env);
+  return from ? teamName(env, from) : env.senderName || "Our team";
 }
 
 export interface EmailStatus {
@@ -286,6 +295,8 @@ export async function sendInquiryEmail(input: {
   inquiry: StoredInquiry;
   kind: "acknowledgement" | "reply";
   text: string;
+  /** Subject from a template; the standard subject for the kind when missing. */
+  subject?: string;
   sentBy?: Pick<AdminUser, "id" | "name">;
   /** Message-ID of the customer email being answered. */
   inReplyTo?: string;
@@ -295,7 +306,7 @@ export async function sendInquiryEmail(input: {
   const from = senderOf(env);
   if (!from) return { ok: false, error: "Email is not set up." };
   const { inquiry } = input;
-  const subject = input.kind === "acknowledgement" ? acknowledgementSubject(inquiry.id) : replySubject(inquiry.id);
+  const subject = input.subject ?? (input.kind === "acknowledgement" ? acknowledgementSubject(inquiry.id) : replySubject(inquiry.id));
   const result = await deliver(env, from, {
     to: inquiry.email,
     subject,
@@ -337,10 +348,13 @@ export async function sendAcknowledgement(inquiry: StoredInquiry): Promise<void>
   const ref = inquiryReference(inquiry.id);
   const target = { type: "inquiry" as const, id: inquiry.id, label: `${ref} (${inquiry.name})` };
   try {
+    // The saved template (Settings > Email templates), or the default wording.
+    const email = renderTemplate(await getEmailTemplate("acknowledgement"), inquiryTemplateValues(inquiry, teamName(env, from)));
     const result = await sendInquiryEmail({
       inquiry,
       kind: "acknowledgement",
-      text: acknowledgementText(inquiry, teamName(env, from)),
+      subject: email.subject,
+      text: email.body,
       idempotencyKey: `ack-${inquiry.id}`,
     });
     recordAudit({
@@ -362,6 +376,83 @@ export async function sendAcknowledgement(inquiry: StoredInquiry): Promise<void>
       target,
     });
   }
+}
+
+/**
+ * Emails each active admin who has an email address and new inquiry alerts on
+ * (My account). `origin` is the site address for the link, e.g.
+ * "https://example.com". The interest rate is never included. Records one
+ * audit event for the batch. Never throws; does nothing when email is not set up.
+ */
+export async function sendInquiryAlerts(inquiry: StoredInquiry, origin: string): Promise<void> {
+  const env = readEnv();
+  const from = senderOf(env);
+  if (!from) return;
+  const ref = inquiryReference(inquiry.id);
+  const target = { type: "inquiry" as const, id: inquiry.id, label: `${ref} (${inquiry.name})` };
+  try {
+    const recipients = (await listAdminUsers()).filter((u) => u.active && u.email && u.inquiryAlerts);
+    if (recipients.length === 0) return;
+    const link = `${origin}/admin/inquiries/${encodeURIComponent(inquiry.id)}`;
+    const email = renderTemplate(await getEmailTemplate("alert"), inquiryTemplateValues(inquiry, teamName(env, from), link));
+
+    const sent: string[] = [];
+    const failed: string[] = [];
+    // One email per admin, so admins do not see each other's addresses.
+    for (const admin of recipients) {
+      const result = await deliver(env, from, {
+        to: admin.email!,
+        subject: email.subject,
+        text: email.body,
+        tags: { kind: "alert" },
+        idempotencyKey: `alert-${inquiry.id}-${admin.id}`,
+      }).catch((error: unknown) => ({ ok: false as const, error: error instanceof Error ? error.message : "Sending failed." }));
+      if (result.ok) sent.push(admin.name);
+      else failed.push(`${admin.name} (${result.error})`);
+    }
+
+    recordAudit({
+      actor: SYSTEM_ACTOR,
+      category: "email",
+      action: sent.length > 0 ? "email.inquiry_alert" : "email.failed",
+      summary:
+        sent.length > 0
+          ? `Emailed the new inquiry alert for ${ref} to ${sent.join(", ")}${failed.length > 0 ? `; could not reach ${failed.join(", ")}` : ""}`
+          : `Could not email the new inquiry alert for ${ref} to ${failed.join(", ")}`,
+      target,
+    });
+  } catch (error) {
+    console.error("Sending new inquiry alerts failed", error);
+    recordAudit({
+      actor: SYSTEM_ACTOR,
+      category: "email",
+      action: "email.failed",
+      summary: `Could not send the new inquiry alerts for ${ref}`,
+      target,
+    });
+  }
+}
+
+/** Emails a password reset link (Forgot password). The caller records the audit event. */
+export async function sendPasswordResetEmail(input: {
+  to: string;
+  name: string;
+  username: string;
+  link: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const env = readEnv();
+  const from = senderOf(env);
+  if (!from) return { ok: false, error: "Email is not set up." };
+  const email = renderTemplate(await getEmailTemplate("reset"), {
+    name: input.name,
+    firstName: firstNameOf(input.name),
+    username: input.username,
+    link: input.link,
+    hours: String(SETUP_LINK_HOURS),
+    team: teamName(env, from),
+  });
+  const result = await deliver(env, from, { to: input.to, subject: email.subject, text: email.body, tags: { kind: "password-reset" } });
+  return result.ok ? { ok: true } : result;
 }
 
 /** Message-ID of the latest customer email in a thread, to thread a staff reply. */

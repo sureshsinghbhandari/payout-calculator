@@ -2,8 +2,10 @@
 
 import { refresh } from "next/cache";
 import {
+  normalizeEmail,
   normalizeUsername,
   ROLE_LABELS,
+  validateEmailAddress,
   validatePersonName,
   validateUsername,
   type AdminRole,
@@ -161,6 +163,51 @@ export async function setActiveAction(_prev: ActionMessage, formData: FormData):
     };
   } catch (error) {
     return failure(error, "The user could not be updated.");
+  }
+}
+
+// ---------- email address ----------
+
+export interface UserEmailState extends ActionMessage {
+  fieldError?: string;
+  /** What the Master Admin typed, kept after an error. */
+  email?: string;
+}
+
+/** Sets or removes another user's email address (used for new inquiry alerts and password resets). */
+export async function setUserEmailAction(_prev: UserEmailState, formData: FormData): Promise<UserEmailState> {
+  const admin = await requireAdminPermission("users.manage");
+  if (!admin) return { status: "error", message: NO_PERMISSION };
+
+  const id = formData.get("id");
+  if (!isAdminId(id)) return { status: "error", message: "Something went wrong. Reload the page and try again." };
+  if (id === admin.id) {
+    return { status: "error", message: "To change your own email address, use My account." };
+  }
+  const typed = text(formData, "email").slice(0, 300);
+  const email = normalizeEmail(typed);
+  const emailError = validateEmailAddress(email, true);
+  if (emailError) return { status: "error", message: emailError, fieldError: emailError, email: typed };
+
+  try {
+    const current = await getAdminUser(id);
+    if (!current) return { status: "error", message: "User not found." };
+    if ((current.email ?? "") === email) return { status: "ok", message: "No changes to save.", email };
+    const user = await updateAdminUser(id, { email: email || null });
+    recordAudit({
+      actor: adminActor(admin),
+      category: "user",
+      action: "user.email_changed",
+      summary: user.email
+        ? `Set the email address of ${user.name} (${user.username}) to ${user.email}`
+        : `Removed the email address of ${user.name} (${user.username})`,
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
+    refresh();
+    return { status: "ok", message: user.email ? `Email address saved for ${user.name}.` : `Email address removed for ${user.name}.`, email };
+  } catch (error) {
+    const result = failure(error, "The email address could not be saved.");
+    return { ...result, fieldError: error instanceof AccountError ? result.message : undefined, email: typed };
   }
 }
 

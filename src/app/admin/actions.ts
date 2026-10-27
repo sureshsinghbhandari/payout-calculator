@@ -3,13 +3,14 @@
 import { refresh, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { normalizeEmail, validateEmailAddress } from "@/lib/accounts";
 import { adminActor, visitorActor } from "@/lib/audit";
 import { formatPercent } from "@/lib/format";
 import { inquiryReference, isInquiryId, type StoredInquiry } from "@/lib/inquiry";
 import { FREQUENCY_LABELS } from "@/lib/payout";
 import type { PayoutFrequency } from "@/lib/payout";
 import { RATE_FREQUENCIES, validateRateTable, type RateTable } from "@/lib/rates";
-import { setAdminPassword } from "@/lib/server/accounts-store";
+import { AccountError, setAdminPassword, updateAdminUser } from "@/lib/server/accounts-store";
 import { recordAudit } from "@/lib/server/audit-store";
 import {
   authConfig,
@@ -17,6 +18,7 @@ import {
   getCurrentAdmin,
   isRatesUnlocked,
   lockRates,
+  needsNewPassword,
   requireAdminPermission,
   startAdminSession,
   unlockRates,
@@ -138,6 +140,85 @@ export async function changeOwnPasswordAction(_prev: ChangePasswordState, formDa
   // The password version changed, so issue a new session for this admin.
   await startAdminSession(updated);
   redirect("/admin/inquiries?password=changed");
+}
+
+// ---------- own email address and alerts ----------
+
+export interface MyEmailState {
+  status: "idle" | "saved" | "error";
+  message?: string;
+  fieldErrors?: Partial<Record<"email" | "current", string>>;
+  /** What the admin typed, kept after an error. */
+  email?: string;
+}
+
+/**
+ * Sets or removes the signed-in admin's own email address. The address can
+ * reset the password, so changing it needs the current password.
+ */
+export async function saveMyEmailAction(_prev: MyEmailState, formData: FormData): Promise<MyEmailState> {
+  const user = await getCurrentAdmin();
+  if (!user || needsNewPassword(user)) return { status: "error", message: "Your session has ended. Sign in again." };
+
+  const typed = String(formData.get("email") ?? "").slice(0, 300);
+  const email = normalizeEmail(typed);
+  const emailError = validateEmailAddress(email, true);
+  if (emailError) return { status: "error", fieldErrors: { email: emailError }, email: typed };
+  if (email === (user.email ?? "")) return { status: "saved", message: "No changes to save.", email };
+
+  const { client, error } = await throttled();
+  if (error) return { status: "error", message: error, email: typed };
+  const current = String(formData.get("current") ?? "");
+  if (current === "" || current.length > 200 || !(await verifyPassword(current, user.passwordHash))) {
+    await failedAttempt(client);
+    return { status: "error", fieldErrors: { current: "Your current password is not correct." }, email: typed };
+  }
+  loginThrottle.reset(client);
+
+  try {
+    const updated = await updateAdminUser(user.id, { email: email || null });
+    recordAudit({
+      actor: adminActor(user),
+      category: "user",
+      action: "user.email_changed",
+      summary: updated.email ? `Changed their own email address to ${updated.email}` : "Removed their own email address",
+      target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+    });
+  } catch (saveError) {
+    if (saveError instanceof AccountError) return { status: "error", fieldErrors: { email: saveError.message }, email: typed };
+    console.error("Saving own email address failed", saveError);
+    return { status: "error", message: "Your email address could not be saved. Please try again.", email: typed };
+  }
+  refresh();
+  return { status: "saved", message: email ? "Your email address is saved." : "Your email address is removed.", email };
+}
+
+export interface AlertsState {
+  status: "idle" | "saved" | "error";
+  message?: string;
+}
+
+/** Switches the signed-in admin's new inquiry alerts on or off. */
+export async function saveMyAlertsAction(_prev: AlertsState, formData: FormData): Promise<AlertsState> {
+  const user = await getCurrentAdmin();
+  if (!user || needsNewPassword(user)) return { status: "error", message: "Your session has ended. Sign in again." };
+  const on = formData.get("inquiryAlerts") === "on";
+  if (on === user.inquiryAlerts) return { status: "saved", message: "No changes to save." };
+  try {
+    await updateAdminUser(user.id, { inquiryAlerts: on });
+  } catch (error) {
+    console.error("Saving inquiry alerts failed", error);
+    return { status: "error", message: "Your choice could not be saved. Please try again." };
+  }
+  recordAudit({
+    actor: adminActor(user),
+    category: "user",
+    action: on ? "user.alerts_on" : "user.alerts_off",
+    summary: on ? "Switched on new inquiry alerts by email" : "Switched off new inquiry alerts by email",
+    target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
+  });
+  refresh();
+  return { status: "saved", message: on ? "New inquiry alerts are on." : "New inquiry alerts are off." };
 }
 
 // ---------- interest rates (Master Admin) ----------

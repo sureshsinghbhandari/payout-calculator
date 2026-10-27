@@ -14,10 +14,11 @@ import { buildScenarios } from "@/lib/scenarios";
 import { visitorActor } from "@/lib/audit";
 import { formatDollars } from "@/lib/format";
 import { recordAudit } from "@/lib/server/audit-store";
-import { isEmailEnabled, sendAcknowledgement } from "@/lib/server/email";
+import { isEmailEnabled, sendAcknowledgement, sendInquiryAlerts } from "@/lib/server/email";
 import { isInquiryStorageConfigured, saveInquiry } from "@/lib/server/inquiry-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { getCurrentRates } from "@/lib/server/rates-store";
+import { siteOrigin } from "@/lib/server/site-url";
 
 export interface InquiryState {
   status: "idle" | "sent" | "error";
@@ -107,8 +108,12 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
       summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}`,
       target: { type: "inquiry", id: inquiry.id, label: `${reference} (${inquiry.name})` },
     });
-    // The thank-you email goes out after the response, so the visitor never waits for it.
-    if (isEmailEnabled()) after(() => sendAcknowledgement(inquiry));
+    // The thank-you email and the alerts to admins go out after the response, so the visitor never waits for them.
+    if (isEmailEnabled()) {
+      const origin = siteOrigin(await headers());
+      after(() => sendAcknowledgement(inquiry));
+      after(() => sendInquiryAlerts(inquiry, origin));
+    }
   } catch (error) {
     console.error("Saving inquiry failed", error);
     return { status: "error", message: "Your inquiry could not be sent. Please try again.", values };
