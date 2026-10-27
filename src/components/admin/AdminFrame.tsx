@@ -14,9 +14,10 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link
             href={user ? "/admin/inquiries" : "/admin"}
-            className="text-base font-semibold text-slate-900 hover:text-blue-900"
+            className="min-w-0 truncate text-base font-semibold text-slate-900 hover:text-blue-900"
           >
-            Investment Payout Calculator: Admin
+            <span className="sm:hidden">Admin</span>
+            <span className="hidden sm:inline">Investment Payout Calculator: Admin</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             {user && (
@@ -26,8 +27,12 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
               </span>
             )}
             {user && <SettingsMenu user={user} />}
-            <Link href="/inquiries" className="text-sm font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
-              View calculator
+            <Link
+              href="/inquiries"
+              className="whitespace-nowrap text-sm font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
+            >
+              <span className="sm:hidden">Calculator</span>
+              <span className="hidden sm:inline">View calculator</span>
             </Link>
           </div>
         </div>

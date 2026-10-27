@@ -10,8 +10,41 @@
 
 html {
   background: #f8fafc;
+  /* Keep text sizes stable when a phone is rotated. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans);
+}
+
+/* Taps respond immediately (no double-tap-to-zoom wait) on buttons and links. */
+a,
+button,
+summary,
+label,
+select,
+input,
+textarea {
+  touch-action: manipulation;
+}
+
+/*
+ * Mobile browsers (iOS Safari in particular) zoom into a form field whose text
+ * is smaller than 16px. These rules are unlayered, so they override the smaller
+ * Tailwind text sizes on phones only.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Momentum scrolling for tables that scroll sideways on phones. */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }

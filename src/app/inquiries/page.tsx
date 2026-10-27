@@ -8,17 +8,17 @@ export default function Home() {
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-900 text-white"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
               <rect x="4" y="3" width="16" height="18" rx="2" />
               <path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15v2" strokeLinecap="round" />
             </svg>
           </span>
-          <span className="text-base font-semibold text-slate-900">Investment Payout Calculator</span>
+          <span className="min-w-0 truncate text-base font-semibold text-slate-900">Investment Payout Calculator</span>
           <Link
             href="/portal"
-            className="ml-auto rounded-lg border border-blue-900 px-3 py-1.5 text-sm font-semibold text-blue-900 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-lg border border-blue-900 px-3 py-1.5 text-sm font-semibold text-blue-900 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
           >
             Investor login
           </Link>
