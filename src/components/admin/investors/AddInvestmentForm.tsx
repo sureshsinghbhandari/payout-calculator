@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { addInvestmentAction, type AddInvestmentState } from "@/app/admin/investors/actions";
+import type { ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
 import type { PlanField } from "./fields";
 import { InvestmentPlanFields } from "./InvestmentPlanFields";
@@ -14,6 +15,8 @@ interface Props {
   renewedFromId: string | null;
   defaults: Record<PlanField, string>;
   rates: RateTable;
+  /** The amounts, terms and payout terms on offer. */
+  products: ProductSettings;
 }
 
 /** Adds another investment to an investor, or renews a matured one. */
@@ -28,6 +31,7 @@ function AddFormBody({
   renewedFromId,
   defaults,
   rates,
+  products,
   state,
   formAction,
   pending,
@@ -68,6 +72,7 @@ function AddFormBody({
             values={values}
             errors={state.fieldErrors ?? {}}
             rates={rates}
+            products={products}
             submitLabel={submitLabel}
             dateLabel={renewedFromId ? "Investment date" : "Planned investment date"}
             dateHint={renewedFromId ? "The maturity date of the investment being renewed." : undefined}

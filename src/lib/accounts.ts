@@ -26,6 +26,7 @@ export type Permission =
   | "payouts.manage"
   | "sources.manage"
   | "rates.manage"
+  | "products.manage"
   | "users.manage"
   | "email.manage"
   | "audit.view"
@@ -48,6 +49,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "payouts.manage",
     "sources.manage",
     "rates.manage",
+    "products.manage",
     "users.manage",
     "email.manage",
     "audit.view",

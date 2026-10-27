@@ -3,6 +3,7 @@
  * Pure functions so they can be unit tested.
  */
 import { isValidIsoDate } from "./dates";
+import type { ProductSettings } from "./products";
 import { parseQuoteInputs } from "./quote";
 import type { QuoteInputs } from "./scenarios";
 import type { PayoutFrequency, PayoutType } from "./payout";
@@ -145,8 +146,11 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-/** Validates the inquiry form. `website` is a hidden honeypot field bots tend to fill. */
-export function parseInquiryForm(raw: Record<string, unknown>): InquiryParse {
+/**
+ * Validates the inquiry form. `website` is a hidden honeypot field bots tend to fill.
+ * The plan must use amounts and terms on offer (`products`; the config.ts defaults when omitted).
+ */
+export function parseInquiryForm(raw: Record<string, unknown>, products?: ProductSettings): InquiryParse {
   const errors: Partial<Record<InquiryField | "plan", string>> = {};
   const name = text(raw.name).replace(/\s+/g, " ");
   const email = text(raw.email).toLowerCase();
@@ -181,8 +185,10 @@ export function parseInquiryForm(raw: Record<string, unknown>): InquiryParse {
     frequency: text(raw.frequency),
     payoutType: text(raw.payoutType),
     investmentDate: text(raw.investmentDate),
-  });
-  if (!plan.ok) errors.plan = "The plan details are missing. Calculate your payout again, then send the inquiry.";
+  }, products);
+  if (!plan.ok) {
+    errors.plan = "The plan details are missing or no longer offered. Calculate your payout again, then send the inquiry.";
+  }
 
   if (Object.keys(errors).length > 0 || !plan.ok) return { ok: false, errors };
   return {

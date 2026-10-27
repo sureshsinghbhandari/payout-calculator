@@ -15,7 +15,7 @@ export interface AuditActor {
 }
 
 /** "email" is emails sent by the app or staff; "customer" is emails received from customers. */
-export type AuditCategory = "sign-in" | "inquiry" | "investor" | "user" | "rates" | "email" | "customer";
+export type AuditCategory = "sign-in" | "inquiry" | "investor" | "user" | "rates" | "products" | "email" | "customer";
 
 export const AUDIT_CATEGORY_LABELS: Record<AuditCategory, string> = {
   "sign-in": "Sign-in and passwords",
@@ -23,12 +23,13 @@ export const AUDIT_CATEGORY_LABELS: Record<AuditCategory, string> = {
   investor: "Investors",
   user: "Users",
   rates: "Interest rates",
+  products: "Amounts and terms",
   email: "Emails sent",
   customer: "Customer responses",
 };
 
 export interface AuditTarget {
-  type: "inquiry" | "investor" | "user" | "rates";
+  type: "inquiry" | "investor" | "user" | "rates" | "products";
   id?: string;
   label: string;
 }

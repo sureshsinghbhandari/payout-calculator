@@ -10,7 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { calculateQuoteAction } from "@/app/actions";
-import { INVESTMENT_AMOUNTS, INVESTMENT_DATE_MAX, INVESTMENT_DATE_MIN, LOCK_IN_YEARS } from "@/lib/config";
+import { INVESTMENT_DATE_MAX, INVESTMENT_DATE_MIN } from "@/lib/config";
 import { effectiveInvestmentDate, initialFormState, type FormState } from "@/lib/form";
 import { formatDollars, formatIsoDateLong, formatYears } from "@/lib/format";
 import {
@@ -23,7 +23,8 @@ import {
   type PayoutFrequency,
   type PayoutType,
 } from "@/lib/payout";
-import { FREQUENCY_ORDER, type PublicScenarioSet } from "@/lib/scenarios";
+import type { ProductSettings } from "@/lib/products";
+import type { PublicScenarioSet } from "@/lib/scenarios";
 import { PayoutResults } from "./PayoutResults";
 
 const PAYOUT_TYPE_HINTS: Record<PayoutType, string> = {
@@ -76,9 +77,10 @@ function sameInputs(form: FormState, investmentDate: string, scenarios: PublicSc
   );
 }
 
-export function PayoutCalculator() {
+/** The calculator form. `products` are the amounts and terms on offer (Settings > Amounts and terms). */
+export function PayoutCalculator({ products }: { products: ProductSettings }) {
   const today = useToday();
-  const [form, setForm] = useState<FormState>(initialFormState);
+  const [form, setForm] = useState<FormState>(() => initialFormState(products));
   const [dateError, setDateError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [scenarios, setScenarios] = useState<PublicScenarioSet | null>(null);
@@ -154,7 +156,7 @@ export function PayoutCalculator() {
   }
 
   function handleReset() {
-    setForm(initialFormState());
+    setForm(initialFormState(products));
     setDateError(null);
     setSubmitError(null);
     setScenarios(null);
@@ -194,7 +196,7 @@ export function PayoutCalculator() {
                   onChange={(e) => update("principal", Number(e.target.value))}
                   className={`${selectClass} tabular-nums`}
                 >
-                  {INVESTMENT_AMOUNTS.map((amount) => (
+                  {products.amounts.map((amount) => (
                     <option key={amount} value={amount}>
                       {formatDollars(amount)}
                     </option>
@@ -251,7 +253,7 @@ export function PayoutCalculator() {
                   onChange={(e) => update("lockInYears", Number(e.target.value))}
                   className={selectClass}
                 >
-                  {LOCK_IN_YEARS.map((years) => (
+                  {products.terms.map((years) => (
                     <option key={years} value={years}>
                       {formatYears(years)}
                     </option>
@@ -273,7 +275,7 @@ export function PayoutCalculator() {
                   onChange={(e) => update("frequency", e.target.value as PayoutFrequency)}
                   className={selectClass}
                 >
-                  {FREQUENCY_ORDER.map((f) => (
+                  {products.frequencies.map((f) => (
                     <option key={f} value={f}>
                       {FREQUENCY_LABELS[f]}
                     </option>

@@ -11,12 +11,14 @@ import {
   type InquiryField,
   type StoredInquiry,
 } from "@/lib/inquiry";
+import type { ProductSettings } from "@/lib/products";
 import { buildScenarios } from "@/lib/scenarios";
 import { visitorActor } from "@/lib/audit";
 import { formatDollars } from "@/lib/format";
 import { recordAudit } from "@/lib/server/audit-store";
 import { isEmailEnabled, sendAcknowledgement, sendInquiryAlerts } from "@/lib/server/email";
 import { isInquiryStorageConfigured, saveInquiry } from "@/lib/server/inquiry-store";
+import { getCurrentProducts } from "@/lib/server/products-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { getCurrentRates } from "@/lib/server/rates-store";
 import { siteOrigin } from "@/lib/server/site-url";
@@ -60,7 +62,14 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
   const raw = formValues(formData);
   const values = { name: raw.name, email: raw.email, phone: raw.phone, message: raw.message };
 
-  const parsed = parseInquiryForm(raw);
+  let products: ProductSettings;
+  try {
+    products = await getCurrentProducts();
+  } catch (error) {
+    console.error("Reading amounts and terms for an inquiry failed", error);
+    return { status: "error", message: "Inquiries cannot be received right now. Please try again later.", values };
+  }
+  const parsed = parseInquiryForm(raw, products);
   if (!parsed.ok) {
     return { status: "error", message: "Please fix the highlighted fields.", fieldErrors: parsed.errors, values };
   }
@@ -88,7 +97,7 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
 
   try {
     const rates = await getCurrentRates();
-    const { selected } = buildScenarios(parsed.plan, rates);
+    const { selected } = buildScenarios(parsed.plan, rates, products.frequencies);
     const inquiry: StoredInquiry = {
       id,
       createdAt: new Date(now).toISOString(),

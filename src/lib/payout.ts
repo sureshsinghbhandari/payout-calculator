@@ -3,7 +3,8 @@
  *
  * All money is handled as integer cents and the rate as an integer number of
  * ten-thousandths of a percent, so every calculation is exact integer math
- * (well inside Number.MAX_SAFE_INTEGER) and fully deterministic.
+ * and fully deterministic. Interest products are worked out with BigInt, so
+ * large amounts and long terms stay exact too.
  * Interest is simple interest; it is never compounded.
  */
 import {
@@ -110,8 +111,9 @@ export function validateRate(input: string | number): RateValidation {
 const RATE_SCALE = 10 ** MAX_RATE_DECIMALS; // rate units per 1%
 
 /** Divides two non-negative integers, rounding half up. */
-function divRoundHalfUp(numerator: number, denominator: number): number {
-  return Math.floor((2 * numerator + denominator) / (2 * denominator));
+function divRoundHalfUp(numerator: bigint, denominator: bigint): bigint {
+  const two = BigInt(2);
+  return (two * numerator + denominator) / (two * denominator);
 }
 
 /** Simple interest in cents for `principalCents` over `yearsNum / yearsDen` years. */
@@ -121,7 +123,10 @@ function simpleInterestCents(
   yearsNum: number,
   yearsDen: number,
 ): number {
-  return divRoundHalfUp(principalCents * rateUnits * yearsNum, 100 * RATE_SCALE * yearsDen);
+  // principal x rate x years can pass Number.MAX_SAFE_INTEGER for large
+  // amounts over long terms; the result itself is always small enough.
+  const numerator = BigInt(principalCents) * BigInt(rateUnits) * BigInt(yearsNum);
+  return Number(divRoundHalfUp(numerator, BigInt(100 * RATE_SCALE * yearsDen)));
 }
 
 export type DateValidation = { ok: true; value: string } | { ok: false; error: string };

@@ -42,6 +42,7 @@ export function SettingsMenu({ user }: { user: PublicAdmin }) {
     { href: "/admin/investors", label: "Investors", permission: "investors.manage" as const },
     { href: "/admin/payouts", label: "Payout calendar", permission: "payouts.manage" as const },
     { href: "/admin/settings/rates", label: "Interest rates", permission: "rates.manage" as const },
+    { href: "/admin/settings/amounts-and-terms", label: "Amounts and terms", permission: "products.manage" as const },
     { href: "/admin/settings/sources", label: "Lead sources", permission: "sources.manage" as const },
     { href: "/admin/settings/users", label: "Users", permission: "users.manage" as const },
     { href: "/admin/settings/email", label: "Email", permission: "email.manage" as const },
