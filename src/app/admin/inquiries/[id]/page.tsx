@@ -17,6 +17,7 @@ import { inquiryReference, isInquiryId, todayUtc, type InquiryAssignee } from "@
 import { inquiryTimeline, type TimelineEntry } from "@/lib/inquiry-log";
 import { listAdminUsers } from "@/lib/server/accounts-store";
 import { getInquiryActivity } from "@/lib/server/audit-store";
+import { markInquiryRead } from "@/lib/server/notifications-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
 import { getThread } from "@/lib/server/email-store";
@@ -46,6 +47,9 @@ async function InquiryContent({ params }: { params: Params }) {
   const inquiry = await getInquiry(id);
   // Sales Admins do not see deleted inquiries.
   if (!inquiry || (inquiry.status === "deleted" && !can(user.role, "inquiries.delete"))) notFound();
+
+  // Opening an inquiry reads it for this admin only; the header bell then shows one less.
+  await markInquiryRead(user.id, inquiry.id).catch((error) => console.error("Marking the inquiry as read failed", error));
 
   const permissions = {
     status: can(user.role, "inquiries.status"),

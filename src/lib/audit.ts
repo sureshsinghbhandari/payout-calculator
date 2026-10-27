@@ -21,7 +21,7 @@ export const AUDIT_CATEGORY_LABELS: Record<AuditCategory, string> = {
   "sign-in": "Sign-in and passwords",
   inquiry: "Inquiries",
   investor: "Investors",
-  user: "Users",
+  user: "Employees",
   rates: "Interest rates",
   products: "Amounts and terms",
   email: "Emails sent",

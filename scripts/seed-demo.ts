@@ -42,6 +42,7 @@ const paths = {
   inquiries: `inquiries/${env}/`,
   logs: `inquiry-log/${env}/`,
   audit: `audit/${env}/`,
+  notifications: `notifications/${env}/`,
   investors: `accounts/${env}/investors.json`,
   rates: env === "production" ? "config/interest-rates.json" : `config/${env}/interest-rates.json`,
 };
@@ -50,6 +51,10 @@ const isDemoInvestor = (id: string) => id.startsWith("inv_demo");
 const isDemoEvent = (e: AuditEvent) => e.id.startsWith("demo-");
 
 // ---------- people ----------
+
+/** The starting admins: the demo's new inquiries show as unread on both of their bells. */
+const NOTIFIED_ADMIN_IDS = ["adm_apatel", "adm_sbhandari"];
+const isDemoInquiryId = (id: string) => new RegExp(`-${DEMO_HEX}\\d{2}$`).test(id);
 
 const admins: Record<"ashwin" | "suresh", AuditActor> = {
   ashwin: admin("adm_apatel", "Ashwin Patel", "apatel", "master"),
@@ -259,6 +264,15 @@ async function removeDemo(): Promise<void> {
     });
   }
 
+  for (const adminId of NOTIFIED_ADMIN_IDS) {
+    const path = `${paths.notifications}${adminId}.json`;
+    const { data } = await readJson(path);
+    if (!data) continue;
+    await mutate(path, (current) => ({
+      unread: ((current as { unread?: { id: string }[] } | null)?.unread ?? []).filter((u) => !isDemoInquiryId(u.id)),
+    }));
+  }
+
   for (const path of await listPaths(paths.audit)) {
     const { data } = await readJson(path);
     if (!parseAuditEvents((data as { events?: unknown })?.events).some(isDemoEvent)) continue;
@@ -274,6 +288,7 @@ async function removeDemo(): Promise<void> {
 async function addDemo(): Promise<void> {
   const rates = await readRates();
   const events: AuditEvent[] = [];
+  const unreadEntries: { id: string; at: string }[] = [];
   const investors: Investor[] = [];
   const credentials = {
     passwordHash: null,
@@ -392,6 +407,7 @@ async function addDemo(): Promise<void> {
     await put(`${paths.logs}${id}.json`, JSON.stringify(log), {
       access: "private", addRandomSuffix: false, allowOverwrite: true, contentType: "application/json",
     });
+    if (demo.status === "new") unreadEntries.push({ id, at: inquiry.createdAt });
     console.log(`  Inquiry ${ref}  ${demo.status.padEnd(9)} ${demo.name}`);
   }
 
@@ -440,6 +456,14 @@ async function addDemo(): Promise<void> {
     return { ...(data as object | null), investors: [...current, ...fresh] };
   });
   for (const i of investors) console.log(`  Investor ${i.username.padEnd(9)} ${i.name}`);
+
+  for (const adminId of NOTIFIED_ADMIN_IDS) {
+    await mutate(`${paths.notifications}${adminId}.json`, (data) => {
+      const current = ((data as { unread?: { id: string; at: string }[] } | null)?.unread ?? []).filter((u) => !isDemoInquiryId(u.id));
+      return { unread: [...unreadEntries, ...current].sort((x, y) => (x.at < y.at ? 1 : -1)) };
+    });
+  }
+  console.log(`  Unread: ${unreadEntries.length} new inquiries on each admin's bell`);
 
   const byMonth = new Map<string, AuditEvent[]>();
   for (const e of events) byMonth.set(auditMonth(e.at), [...(byMonth.get(auditMonth(e.at)) ?? []), e]);

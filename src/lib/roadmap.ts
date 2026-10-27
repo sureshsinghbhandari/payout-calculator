@@ -164,6 +164,16 @@ export const ROADMAP: RoadmapItem[] = [
 
   // ---------- Sales and inquiries ----------
   {
+    id: "inquiry-notifications",
+    title: "New inquiry notifications",
+    category: "sales",
+    priority: "now",
+    status: "done",
+    description:
+      "A bell in the admin header counts the new inquiries an admin has not opened yet. Master and Sales Admins each have their own counter: opening an inquiry (or Mark all as read) lowers only that admin's count. The Inquiries list marks unread ones and has an Unread filter.",
+    outcome: "Every admin sees at a glance how many new inquiries are waiting for them, without needing email.",
+  },
+  {
     id: "visitor-inquiries",
     title: "Inquiries from the calculator",
     category: "sales",
@@ -377,12 +387,12 @@ export const ROADMAP: RoadmapItem[] = [
   // ---------- Security and compliance ----------
   {
     id: "admin-roles",
-    title: "Admin users and roles",
+    title: "Employees and roles",
     category: "security",
     priority: "now",
     status: "done",
     description:
-      "Named admin users with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see interest rates.",
+      "Named employees with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see interest rates.",
   },
   {
     id: "audit-log",
@@ -391,7 +401,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "Who did what and when: sign-ins, password changes, inquiries, investors, users, rates and emails, by month and category. Events about an inquiry also show on that inquiry.",
+      "Who did what and when: sign-ins, password changes, inquiries, investors, employees, rates and emails, by month and category. Events about an inquiry also show on that inquiry.",
   },
   {
     id: "two-factor",

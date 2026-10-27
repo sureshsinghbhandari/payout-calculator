@@ -89,7 +89,7 @@ export async function addUserAction(_prev: AddUserState, formData: FormData): Pr
       actor: adminActor(admin),
       category: "user",
       action: "user.created",
-      summary: `Added user ${user.name} (${user.username}) as ${ROLE_LABELS[user.role]}`,
+      summary: `Added employee ${user.name} (${user.username}) as ${ROLE_LABELS[user.role]}`,
       target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
     });
     refresh();
@@ -98,7 +98,7 @@ export async function addUserAction(_prev: AddUserState, formData: FormData): Pr
       message: `${user.name} (${user.username}) was added as a ${ROLE_LABELS[user.role]}. Create a setup link or set a temporary password so they can sign in.`,
     };
   } catch (error) {
-    const result = failure(error, "The user could not be added.");
+    const result = failure(error, "The employee could not be added.");
     return /taken/i.test(result.message)
       ? { ...result, fieldErrors: { username: result.message }, message: "Fix the highlighted fields.", values }
       : { ...result, values };
@@ -156,7 +156,7 @@ export async function setActiveAction(_prev: ActionMessage, formData: FormData):
       actor: adminActor(admin),
       category: "user",
       action: user.active ? "user.enabled" : "user.disabled",
-      summary: `${user.active ? "Enabled" : "Disabled"} user ${user.name} (${user.username})`,
+      summary: `${user.active ? "Enabled" : "Disabled"} employee ${user.name} (${user.username})`,
       target: { type: "user", id: user.id, label: `${user.name} (${user.username})` },
     });
     refresh();
@@ -165,7 +165,7 @@ export async function setActiveAction(_prev: ActionMessage, formData: FormData):
       message: user.active ? `${user.name} can sign in again.` : `${user.name} is disabled and has been signed out.`,
     };
   } catch (error) {
-    return failure(error, "The user could not be updated.");
+    return failure(error, "The employee could not be updated.");
   }
 }
 

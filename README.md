@@ -88,7 +88,7 @@ Admins sign in at `/admin` with a **username and password**.
 
 | Role | Can do |
 | --- | --- |
-| **Master Admin** | Everything: inquiries (view, add notes, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Users, Email settings. |
+| **Master Admin** | Everything: inquiries (view, add notes, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Employees, Email settings. |
 | **Sales Admin** | Inquiries only: view them, add notes, email the customer, and mark them contacted or new. They do not see interest rates. |
 
 Starting users (created automatically the first time the admin area is used):
@@ -105,7 +105,7 @@ Nobody's password is stored in the code or the README. People set their own:
 - **First Master Admin (apatel):** the first time, sign in as `apatel` with the
   `ADMIN_PASSWORD` value from Vercel. You are asked to choose your own password straight
   away; after that, `ADMIN_PASSWORD` no longer works for sign-in.
-- **Everyone else:** a Master Admin opens **Settings (gear) > Users** and either
+- **Everyone else:** a Master Admin opens **Settings (gear) > Employees** and either
   - selects **Set temporary password** and types one (at least 12 characters). The
     person must choose their own password the first time they sign in, or
   - selects **Create setup link** and sends the one-time link (valid for 72 hours) to
@@ -122,11 +122,11 @@ and similar) as a second step after their password. **Master Admins must use it:
 it they are asked to set it up right after signing in. Setting it up shows a QR code and 10
 one-time recovery codes; save them, because they are shown only once. Lost your phone?
 Sign in with a recovery code, or ask a Master Admin to reset two-step sign-in (Settings >
-Users, or the investor's page). Password resets never skip the second step.
+Employees, or the investor's page). Password resets never skip the second step.
 
 ### Managing users (Master Admin)
 
-**Settings > Users** (`/admin/settings/users`): add users (name, username, role),
+**Settings > Employees** (`/admin/settings/users`): add employees (name, username, role),
 change roles, disable or enable users, set temporary passwords and create setup links.
 There must always be at least one active Master Admin.
 
@@ -188,6 +188,12 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - Delete (Master Admin) is a soft delete: the inquiry keeps its data, gets the status
   "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
   can be restored.
+- **New inquiry notifications:** a bell in the admin header shows how many new inquiries
+  you have not opened yet. Master and Sales Admins each have their own counter, so one
+  person opening an inquiry never changes another person's count. Opening an inquiry
+  (or **Mark all as read**) lowers your count; deleting an inquiry removes it from
+  everyone's. Unread inquiries carry an **Unread** badge on the Inquiries list, and the
+  **Unread** filter shows only those.
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
 - Each inquiry has its own page (**Notes and activity** button) with:
   - **Notes and activity:** Master and Sales Admins add notes, calls and meetings, each
@@ -312,7 +318,7 @@ they are.
 
 These need email to be set up (Settings > Email); until then the pages say so.
 
-- **New inquiry alerts:** admins add an email address (Settings > Users, or My account for
+- **New inquiry alerts:** admins add an email address (Settings > Employees, or My account for
   yourself) and switch on "Email me when a new inquiry arrives". The interest rate is never
   included.
 - **Forgot password:** "Forgot password?" on the admin and investor sign-in pages emails a
@@ -371,7 +377,7 @@ PowerPoint: `powershell -File docs/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -Image
 
 Everything is stored as private JSON files in the Vercel Blob store
 `payout-calculator-rates`: interest rates, inquiries (one file each), admin users,
-investors, emails, inquiry notes and activity, and the audit log. Production, preview deployments and local
+investors, emails, inquiry notes and activity, unread-inquiry notifications, and the audit log. Production, preview deployments and local
 development use separate folders, so testing never touches live data.
 
 ## Demo data

@@ -28,6 +28,7 @@ import {
   verifyAdminCredentials,
 } from "@/lib/server/auth";
 import { purgeInquiry, restoreInquiry, setInquiryStatus, softDeleteInquiry } from "@/lib/server/inquiry-store";
+import { dropInquiryNotifications } from "@/lib/server/notifications-store";
 import { signInClientHash } from "@/lib/server/client-fingerprint";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
@@ -394,6 +395,8 @@ export async function deleteInquiryAction(formData: FormData): Promise<void> {
         summary: `Deleted inquiry ${inquiryReference(updated.id)} (${updated.name})`,
         target: inquiryTarget(updated),
       });
+      // A deleted inquiry no longer counts in anyone's bell.
+      await dropInquiryNotifications(updated.id).catch((error) => console.error("Removing notifications failed", error));
     }
   } catch (error) {
     console.error("Deleting inquiry failed", error);

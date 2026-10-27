@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ROLE_LABELS, type PublicAdmin } from "@/lib/accounts";
+import { NotificationBell } from "./NotificationBell";
 import { SettingsMenu } from "./SettingsMenu";
 
 /**
@@ -25,6 +27,11 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
                 <span className="block font-semibold text-slate-900">{user.name}</span>
                 {ROLE_LABELS[user.role]}
               </span>
+            )}
+            {user && (
+              <Suspense fallback={null}>
+                <NotificationBell adminId={user.id} />
+              </Suspense>
             )}
             {user && <SettingsMenu user={user} />}
             <Link

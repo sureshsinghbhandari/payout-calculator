@@ -15,9 +15,11 @@ import {
   todayUtc,
   type InquiryListQuery,
 } from "@/lib/inquiry";
+import { markAllReadAction } from "@/app/admin/notification-actions";
 import { requireAdminPage } from "@/lib/server/auth";
 import { checkGmailRepliesQuietly, emailStatus } from "@/lib/server/email";
 import { INQUIRY_LIST_LIMIT, isInquiryStorageConfigured, listInquiries } from "@/lib/server/inquiry-store";
+import { unreadInquiryIds } from "@/lib/server/notifications-store";
 import { AdminCard, AdminFrame } from "./AdminFrame";
 import { InquiryCard } from "./InquiryCard";
 
@@ -60,7 +62,12 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
   };
   const canExport = can(user.role, "inquiries.export");
   const today = todayUtc();
-  const context = { userId: user.id, today };
+  // The inquiries this admin has not opened yet (each admin has their own list).
+  const unreadIds: ReadonlySet<string> = await unreadInquiryIds(user.id).then(
+    (ids) => new Set(ids),
+    (error) => (console.error("Reading the unread inquiries failed", error), new Set<string>()),
+  );
+  const context = { userId: user.id, today, unreadIds };
 
   // With Gmail, customer replies are picked up by checking the inbox in the background.
   const email = emailStatus();
@@ -92,6 +99,7 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
   const newCount = active.filter((i) => i.status === "new").length;
   const convertedCount = active.filter((i) => i.status === "converted").length;
   const dueCount = active.filter((i) => isFollowUpDue(i, today)).length;
+  const unreadCount = active.filter((i) => unreadIds.has(i.id)).length;
   const mineCount = active.filter((i) => i.assignedTo?.id === user.id && matchesInquiryFilter(i, "open")).length;
   // Every source seen so far, the website first; a source in the URL stays selectable.
   const sources = [
@@ -141,6 +149,7 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
             {view === "active" && listQuery.status !== "open" && <input type="hidden" name="status" value={listQuery.status} />}
             {view === "active" && listQuery.mine && <input type="hidden" name="mine" value="1" />}
             {view === "active" && listQuery.due && <input type="hidden" name="due" value="1" />}
+            {view === "active" && listQuery.unread && <input type="hidden" name="unread" value="1" />}
             <div className="flex flex-wrap items-center gap-2">
               <label htmlFor="inquiry-search" className="sr-only">
                 Search by name, email, phone or reference
@@ -229,6 +238,14 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <nav aria-label="Show only" className="flex flex-wrap gap-2">
                   <Link
+                    href={listHref(base, { ...listQuery, unread: !listQuery.unread })}
+                    aria-current={listQuery.unread ? "true" : undefined}
+                    className={chipClass(listQuery.unread)}
+                  >
+                    {listQuery.unread && <span aria-hidden="true">✓ </span>}
+                    Unread ({unreadCount})
+                  </Link>
+                  <Link
                     href={listHref(base, { ...listQuery, mine: !listQuery.mine })}
                     aria-current={listQuery.mine ? "true" : undefined}
                     className={chipClass(listQuery.mine)}
@@ -245,6 +262,16 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
                     Follow-ups due ({dueCount})
                   </Link>
                 </nav>
+                {unreadCount > 0 && (
+                  <form action={markAllReadAction}>
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
+                    >
+                      Mark all as read ({unreadCount})
+                    </button>
+                  </form>
+                )}
                 {canExport && shown.length > 0 && (
                   // A plain link: the file comes from a route handler, not a page.
                   <a
@@ -292,7 +319,13 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
       ) : (
         <ul className="space-y-4">
           {shown.map((inquiry) => (
-            <InquiryCard key={inquiry.id} inquiry={inquiry} permissions={permissions} today={today} />
+            <InquiryCard
+              key={inquiry.id}
+              inquiry={inquiry}
+              permissions={permissions}
+              today={today}
+              unread={view === "active" && unreadIds.has(inquiry.id)}
+            />
           ))}
         </ul>
       )}

@@ -42,12 +42,15 @@ export function InquiryCard({
   inquiry,
   permissions,
   today,
+  unread = false,
   showDetailsLink = true,
 }: {
   inquiry: StoredInquiry;
   permissions: InquiryPermissions;
   /** Today (YYYY-MM-DD, UTC), to highlight follow-ups that are due. */
   today: string;
+  /** The signed-in admin has not opened this inquiry yet. */
+  unread?: boolean;
   /** Link to the inquiry page with its notes, activity and emails, and the latest note (off on that page itself). */
   showDetailsLink?: boolean;
 }) {
@@ -73,6 +76,11 @@ export function InquiryCard({
         <div>
           <h2 className="flex flex-wrap items-center gap-2 text-base font-semibold text-slate-900">
             {inquiry.name}
+            {unread && (
+              <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                Unread
+              </span>
+            )}
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${style.badge}`}>
               {style.label}
             </span>

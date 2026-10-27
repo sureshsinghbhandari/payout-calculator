@@ -15,7 +15,7 @@ interface Props {
   storageConfigured: boolean;
 }
 
-/** Master Admin screen: list admin users, add users, change roles and access, reset passwords. */
+/** Master Admin screen: list employees, add employees, change roles and access, reset passwords. */
 export function UsersManager({ users, currentUserId, nowMs, minPasswordLength, storageConfigured }: Props) {
   const headingId = useId();
   const activeCount = users.filter((u) => u.active).length;
@@ -25,10 +25,10 @@ export function UsersManager({ users, currentUserId, nowMs, minPasswordLength, s
       <section aria-labelledby={headingId}>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 id={headingId} className="text-base font-semibold text-slate-900">
-            All users
+            All employees
           </h2>
           <p className="text-sm text-slate-600">
-            {users.length} {users.length === 1 ? "user" : "users"}, {activeCount} active
+            {users.length} {users.length === 1 ? "employee" : "employees"}, {activeCount} active
           </p>
         </div>
         <ul className="space-y-3">

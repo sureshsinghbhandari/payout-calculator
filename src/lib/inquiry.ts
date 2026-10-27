@@ -356,6 +356,8 @@ export interface InquiryListQuery {
   mine: boolean;
   /** Only open inquiries with a follow-up date today or earlier. */
   due: boolean;
+  /** Only inquiries the signed-in admin has not opened yet. */
+  unread: boolean;
   source: string;
   /** Received on or after / on or before, YYYY-MM-DD (UTC). */
   from: string;
@@ -384,6 +386,7 @@ export function parseInquiryListQuery(params: ListParams): InquiryListQuery {
     status: parseInquiryFilter(param(params, "status")),
     mine: param(params, "mine") === "1",
     due: param(params, "due") === "1",
+    unread: param(params, "unread") === "1",
     source: isLeadSource(source) ? source : "",
     from,
     to,
@@ -397,6 +400,7 @@ export function inquiryListSearch(query: InquiryListQuery): string {
   if (query.status !== "open") params.set("status", query.status);
   if (query.mine) params.set("mine", "1");
   if (query.due) params.set("due", "1");
+  if (query.unread) params.set("unread", "1");
   if (query.source) params.set("source", query.source);
   if (query.from) params.set("from", query.from);
   if (query.to) params.set("to", query.to);
@@ -406,20 +410,22 @@ export function inquiryListSearch(query: InquiryListQuery): string {
 
 /** True when anything besides the status filter narrows the list. */
 export function isInquiryListNarrowed(query: InquiryListQuery): boolean {
-  return Boolean(query.q || query.mine || query.due || query.source || query.from || query.to);
+  return Boolean(query.q || query.mine || query.due || query.unread || query.source || query.from || query.to);
 }
 
 /** Whether an inquiry is on the list for this query, for the signed-in admin on this day. */
 export function matchesInquiryListQuery(
   inquiry: StoredInquiry,
   query: InquiryListQuery,
-  context: { userId: string; today: string },
+  /** `unreadIds`: the inquiries the signed-in admin has not opened (the Unread filter is skipped without it). */
+  context: { userId: string; today: string; unreadIds?: ReadonlySet<string> },
 ): boolean {
   const received = inquiry.createdAt.slice(0, 10);
   return (
     matchesInquiryFilter(inquiry, query.status) &&
     (!query.mine || inquiry.assignedTo?.id === context.userId) &&
     (!query.due || isFollowUpDue(inquiry, context.today)) &&
+    (!query.unread || !context.unreadIds || context.unreadIds.has(inquiry.id)) &&
     (!query.source || inquiry.source === query.source) &&
     (!query.from || received >= query.from) &&
     (!query.to || received <= query.to) &&

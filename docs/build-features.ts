@@ -1,7 +1,8 @@
 /**
  * Writes docs/UPCOMING-FEATURES.md from src/lib/roadmap.ts (the same list as
  * Settings > Upcoming features): a summary table first, then the details of
- * each feature, linked from the table.
+ * each feature, linked from the table. Screen layouts (text sketches) come
+ * from docs/feature-layouts.ts.
  *
  *   npm run docs:features
  */
@@ -16,6 +17,7 @@ import {
   type RoadmapPriority,
   type RoadmapStatus,
 } from "../src/lib/roadmap";
+import { APP_MAP, LAYOUTS } from "./feature-layouts";
 
 const OUT = fileURLToPath(new URL("./UPCOMING-FEATURES.md", import.meta.url));
 
@@ -77,6 +79,8 @@ function details(item: RoadmapItem): string[] {
     lines.push("", `**Depends on:** ${deps.join(", ")}`);
   }
   if (item.needs?.length) lines.push("", "**Needs:**", "", ...item.needs.map((n) => `- ${n}`));
+  const layout = LAYOUTS[item.id];
+  if (layout) lines.push("", "**Layout** (a sketch, not a screenshot):", "", "```text", layout, "```");
   lines.push("", "[Back to the table](#summary)", "");
   return lines;
 }
@@ -119,6 +123,18 @@ const md = [
   "| # | Feature | Status | What is needed from you |",
   "| --- | --- | --- | --- |",
   ...waiting.map((item, i) => `| ${i + 1} | ${cell(link(item))} | ${STATUS_TEXT[item.status]} | ${cell(item.fromYou ?? "")} |`),
+  "",
+  '<a id="app-map"></a>',
+  "",
+  "## Where things are",
+  "",
+  "Every screen of the app and its address. Under **Details** below, each feature that has a",
+  "screen also has a layout sketch. The sketches show what is on the page and where; the",
+  "exact wording, colours and spacing differ. Features that are still pending have no sketch yet.",
+  "",
+  "```text",
+  APP_MAP,
+  "```",
   "",
   ...STATUS_ORDER.flatMap((status) => {
     const group = items.filter((i) => i.status === status);

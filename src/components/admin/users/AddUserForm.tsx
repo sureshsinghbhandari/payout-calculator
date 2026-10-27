@@ -7,7 +7,7 @@ import { inputClass, labelClass, primaryButton } from "./ui";
 
 const ROLE_OPTIONS: { role: AdminRole; description: string }[] = [
   { role: "sales", description: "Views inquiries and marks them contacted." },
-  { role: "master", description: "Everything: inquiries, investors, interest rates and users." },
+  { role: "master", description: "Everything: inquiries, investors, interest rates and employees." },
 ];
 
 export function AddUserForm({ storageConfigured }: { storageConfigured: boolean }) {
@@ -24,10 +24,10 @@ export function AddUserForm({ storageConfigured }: { storageConfigured: boolean 
   return (
     <section aria-labelledby={headingId} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <h2 id={headingId} className="text-base font-semibold text-slate-900">
-        Add a user
+        Add an employee
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        New users have no password. After adding them, create a setup link or set a temporary password.
+        New employees have no password. After adding them, create a setup link or set a temporary password.
       </p>
 
       <form action={formAction} className="mt-5 space-y-5" noValidate>
@@ -119,7 +119,7 @@ export function AddUserForm({ storageConfigured }: { storageConfigured: boolean 
 
         {!storageConfigured && (
           <p className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Account storage is not connected, so users cannot be added or changed.
+            Account storage is not connected, so employees cannot be added or changed.
           </p>
         )}
 
@@ -132,7 +132,7 @@ export function AddUserForm({ storageConfigured }: { storageConfigured: boolean 
             {state.message}
           </p>
           <button type="submit" disabled={pending || !storageConfigured} className={`${primaryButton} shrink-0`}>
-            {pending ? "Adding…" : "Add user"}
+            {pending ? "Adding…" : "Add employee"}
           </button>
         </div>
       </form>

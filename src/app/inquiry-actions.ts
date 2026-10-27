@@ -18,6 +18,7 @@ import { formatDollars } from "@/lib/format";
 import { recordAudit } from "@/lib/server/audit-store";
 import { isEmailEnabled, sendAcknowledgement, sendInquiryAlerts } from "@/lib/server/email";
 import { isInquiryStorageConfigured, saveInquiry } from "@/lib/server/inquiry-store";
+import { notifyNewInquiry } from "@/lib/server/notifications-store";
 import { getCurrentProducts } from "@/lib/server/products-store";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { getCurrentRates } from "@/lib/server/rates-store";
@@ -121,6 +122,8 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
       summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}${via}`,
       target: { type: "inquiry", id: inquiry.id, label: `${reference} (${inquiry.name})` },
     });
+    // Each Master and Sales Admin gets the inquiry on their own unread list (the bell in the admin header).
+    after(() => notifyNewInquiry(inquiry.id, inquiry.createdAt));
     // The thank-you email and the alerts to admins go out after the response, so the visitor never waits for them.
     if (isEmailEnabled()) {
       const origin = siteOrigin(await headers());
