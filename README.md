@@ -114,6 +114,16 @@ Nobody's password is stored in the code or the README. People set their own:
 - Passwords are at least 12 characters and stored only as scrypt hashes. Changing a
   password signs out that person's other sessions.
 
+### Two-step sign-in
+
+Admins (**My account**) and investors (Investor portal > **Sign-in security**) can add a
+code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password
+and similar) as a second step after their password. **Master Admins must use it:** without
+it they are asked to set it up right after signing in. Setting it up shows a QR code and 10
+one-time recovery codes; save them, because they are shown only once. Lost your phone?
+Sign in with a recovery code, or ask a Master Admin to reset two-step sign-in (Settings >
+Users, or the investor's page). Password resets never skip the second step.
+
 ### Managing users (Master Admin)
 
 **Settings > Users** (`/admin/settings/users`): add users (name, username, role),
@@ -137,6 +147,16 @@ Investors sign in at `/portal` (the calculator page also has an **Investor login
 investment: amount, planned investment date, interest start date, term locked, payout
 term and type, totals, the next payout, and the full payout schedule with each payout
 marked Paid or Upcoming by its scheduled date. The interest rate is not shown.
+
+## Amounts and terms (Master Admin)
+
+**Settings > Amounts and terms** sets the investment amounts (whole dollars, up to
+$10,000,000, at most 30), the terms (1 to 30 years) and the payout terms on offer, plus the
+calculator's default amount, term and payout term. Until it is first saved, the values in
+`src/lib/config.ts` are used. Changes apply straight away to the calculator, quotes,
+inquiries, the convert and add-investment forms and the comparisons; existing investments
+and inquiries keep their original values. The last 20 saves are kept, and every save is in
+the audit log. Rates stay one per payout term, whatever the length of the term.
 
 ## Managing interest rates (Master Admin)
 
@@ -205,6 +225,22 @@ Until the first save, the starting rates in `src/lib/config.ts`
   investment with the schedule and payments. The investor's copy never shows the rate.
 - **Install on phones:** investors can add the Investor Portal to their home screen
   ("Add to Home Screen" on iPhone, "Install app" on Android).
+
+- **Documents:** Master Admins upload PDF, JPEG or PNG files (up to 10 MB) on the
+  investor's page; the browser sends them straight to private Blob storage and the app
+  checks each file's real type. Investors download their own under **Your documents** in
+  the portal. Uploads, deletions and downloads are in the audit log.
+- **Your details:** at `/portal/details` investors ask for changes to their email, phone or
+  bank details. Nothing changes until a Master Admin approves it, on the investor's page or
+  under Investors > **Change requests** (`/admin/investors/requests`). Bank details are
+  encrypted at rest and shown with only the last 4 digits; each **Show** is audited.
+- **Payout emails:** investors with an email address get a reminder before each payout
+  (Settings > Email: days before, default 3, 0 = off) and, when a payout is recorded with
+  "Email the investor a payment confirmation" ticked, a confirmation. A daily Vercel Cron
+  job (`vercel.json`, 13:00 UTC) calls `/api/cron/payout-notices`, which needs
+  `CRON_SECRET`; a sent-log makes sure nothing is sent twice. Investors can switch these
+  emails off in the portal; they never include the rate. Settings > Email shows the last
+  run and has **Run now**.
 
 ## Dashboard
 
@@ -357,9 +393,10 @@ have no password, so they cannot sign in to the portal.
 
 | Variable | Purpose |
 | --- | --- |
-| `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, that signs all sign-in sessions. Required. |
+| `ADMIN_SESSION_SECRET` | Random value, at least 32 characters, that signs all sign-in sessions. Required. It also encrypts two-step sign-in secrets and investors' bank details: changing it means everyone sets up two-step sign-in again and investors send their bank details again. |
 | `ADMIN_PASSWORD` | One-time bootstrap password for the first Master Admin (`apatel`), at least 12 characters. Not used once apatel has set a personal password. |
 | `BLOB_READ_WRITE_TOKEN` | Access to the private Blob store. Added automatically when the store was connected. |
+| `CRON_SECRET` | Random value, at least 16 characters, that Vercel Cron sends to the daily payout email job. Without it the job is refused. Secret. |
 | `EMAIL_PROVIDER` | `gmail` or `resend`. Without it, Resend is used when set up, otherwise Gmail. Without either, no email is sent. |
 | `EMAIL_SENDER_NAME` | Optional name customers see on emails and in the sign-off, e.g. `Acme Investments`. |
 | `GMAIL_USER` | Gmail: the account address. |

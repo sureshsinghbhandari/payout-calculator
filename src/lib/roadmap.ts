@@ -145,10 +145,11 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Payout notices to investors",
     category: "communication",
     priority: "later",
-    status: "planned",
-    fromYou: "Email set up (Gmail settings in Vercel).",
+    status: "in-progress",
+    fromYou: "Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job.",
     description: "Email investors a few days before each payout, and confirm when it has been paid.",
     dependsOn: ["email-setup", "record-payments"],
+    outcome: "Built: a daily reminder before each payout and a confirmation when a payout is recorded, with templates and an opt-out in the portal.",
   },
   {
     id: "sms-whatsapp",
@@ -282,8 +283,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Document vault",
     category: "portal",
     priority: "later",
-    status: "planned",
+    status: "done",
     description: "Share agreements, certificates and tax documents with each investor securely in the portal.",
+    outcome: "Master Admins upload PDF, JPEG or PNG files (up to 10 MB) on the investor's page; investors download their own under Your documents in the portal.",
   },
   {
     id: "multiple-investments",
@@ -300,8 +302,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Profile and bank detail updates",
     category: "portal",
     priority: "later",
-    status: "planned",
+    status: "done",
     description: "Investors request changes to their contact or bank details; a Master Admin approves them.",
+    outcome: "Investors ask for contact or bank detail changes at /portal/details; a Master Admin approves or rejects them. Bank details are encrypted and shown masked.",
   },
 
   // ---------- Payouts and operations ----------
@@ -366,8 +369,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Amounts and terms in settings",
     category: "operations",
     priority: "later",
-    status: "planned",
+    status: "done",
     description: "Let Master Admins change the investment amounts and terms on a settings page instead of in the code.",
+    outcome: "Settings > Amounts and terms sets the amounts, terms and payout terms on offer and the calculator defaults, with a change history.",
   },
 
   // ---------- Security and compliance ----------
@@ -394,8 +398,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Two-step sign-in",
     category: "security",
     priority: "next",
-    status: "planned",
+    status: "done",
     description: "Optional authenticator-app codes for staff and investors, required for Master Admins.",
+    outcome: "Admins and investors can add authenticator-app codes with 10 recovery codes; Master Admins must set it up at their next sign-in. A Master Admin can reset it for someone who lost their phone.",
   },
   {
     id: "kyc",
