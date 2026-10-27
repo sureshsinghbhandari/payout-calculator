@@ -39,6 +39,7 @@ export function SettingsMenu({ user }: { user: PublicAdmin }) {
     { href: "/admin/inquiries/deleted", label: "Deleted inquiries", permission: "inquiries.delete" as const },
     { href: "/admin/investors", label: "Investors", permission: "investors.manage" as const },
     { href: "/admin/settings/rates", label: "Interest rates", permission: "rates.manage" as const },
+    { href: "/admin/settings/sources", label: "Lead sources", permission: "sources.manage" as const },
     { href: "/admin/settings/users", label: "Users", permission: "users.manage" as const },
     { href: "/admin/settings/email", label: "Email", permission: "email.manage" as const },
     { href: "/admin/settings/audit", label: "Audit log", permission: "audit.view" as const },
