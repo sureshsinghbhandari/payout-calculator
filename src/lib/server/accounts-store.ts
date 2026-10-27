@@ -15,6 +15,13 @@ import {
   type PayoutPayment,
 } from "../accounts";
 import type { PayoutFrequency, PayoutType } from "../payout";
+import {
+  CHANGE_HISTORY_KEEP,
+  type ChangeRequest,
+  type ChangeRequestKind,
+  type ChangeRequestStatus,
+  type StoredBankDetails,
+} from "../profile-requests";
 import { hashSetupToken, newSetupToken } from "./passwords";
 
 /**
@@ -29,6 +36,7 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *   Investors: listInvestors, getInvestor, findInvestorByUsername, findInvestorsByEmail,
  *     createInvestor, updateInvestor, setInvestorPayoutEmails, setInvestorPassword, issueInvestorSetupToken
  *   Investments: addInvestment, setPayoutPayment, removePayoutPayment
+ *   Change requests: addChangeRequest, withdrawChangeRequest, decideChangeRequest
  *   Setup links: findAccountBySetupToken
  */
 const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
@@ -186,6 +194,51 @@ function parseInvestment(raw: unknown): Investment | null {
   };
 }
 
+function parseBankDetails(raw: unknown): StoredBankDetails | null {
+  const d = (raw ?? {}) as Record<string, unknown>;
+  const encrypted = str(d.encrypted);
+  const accountLast4 = str(d.accountLast4);
+  if (!encrypted || accountLast4 === null) return null;
+  return { encrypted, accountLast4, updatedAt: str(d.updatedAt) ?? new Date(0).toISOString() };
+}
+
+const REQUEST_KINDS: ChangeRequestKind[] = ["contact", "bank"];
+const REQUEST_STATUSES: ChangeRequestStatus[] = ["pending", "approved", "rejected", "withdrawn"];
+
+/** Keeps the well-formed change requests. */
+function parseChangeRequests(list: unknown): ChangeRequest[] {
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((raw): ChangeRequest[] => {
+    const d = (raw ?? {}) as Record<string, unknown>;
+    const id = str(d.id);
+    const kind = str(d.kind) as ChangeRequestKind | null;
+    const status = str(d.status) as ChangeRequestStatus | null;
+    const requestedAt = str(d.requestedAt);
+    if (!id || !kind || !REQUEST_KINDS.includes(kind) || !status || !REQUEST_STATUSES.includes(status) || !requestedAt) {
+      return [];
+    }
+    const c = (d.contact ?? null) as Record<string, unknown> | null;
+    const b = (d.bank ?? null) as Record<string, unknown> | null;
+    const contact = kind === "contact" && c ? { email: str(c.email) ?? "", phone: str(c.phone) ?? "" } : null;
+    const bank = kind === "bank" && b ? { encrypted: str(b.encrypted), accountLast4: str(b.accountLast4) ?? "" } : null;
+    if ((kind === "contact" && !contact) || (kind === "bank" && !bank)) return [];
+    return [
+      {
+        id,
+        kind,
+        status,
+        requestedAt,
+        contact,
+        bank,
+        decidedAt: str(d.decidedAt),
+        decidedBy: str(d.decidedBy),
+        decidedById: str(d.decidedById),
+        reason: str(d.reason) ?? "",
+      },
+    ];
+  });
+}
+
 function parseInvestors(data: unknown): Investor[] {
   const list = (data as { investors?: unknown })?.investors;
   if (!Array.isArray(list)) throw new Error("Invalid investors file.");
@@ -210,6 +263,8 @@ function parseInvestors(data: unknown): Investor[] {
         sourceInquiryId: str(d.sourceInquiryId),
         investments,
         payoutEmails: d.payoutEmails !== false,
+        bankDetails: parseBankDetails(d.bankDetails),
+        changeRequests: parseChangeRequests(d.changeRequests),
         ...parseCredentials(d),
       },
     ];
@@ -448,6 +503,8 @@ export function createInvestor(input: {
       sourceInquiryId: input.sourceInquiryId,
       investments: [{ id: newId("ivt"), createdAt: now, renewedFromId: null, payments: [], ...input.investment }],
       payoutEmails: true,
+      bankDetails: null,
+      changeRequests: [],
       ...blankCredentials(),
     };
     return { investors: [...investors, investor], result: investor };
@@ -560,6 +617,119 @@ export function removePayoutPayment(
       }),
     );
     return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, removed } };
+  });
+}
+
+// ---------- change requests (contact and bank details) ----------
+
+/** Pending requests, plus the most recent decided ones. */
+function trimRequests(requests: ChangeRequest[]): ChangeRequest[] {
+  const decided = requests
+    .filter((r) => r.status !== "pending")
+    .sort((a, b) => ((a.decidedAt ?? a.requestedAt) < (b.decidedAt ?? b.requestedAt) ? 1 : -1))
+    .slice(0, CHANGE_HISTORY_KEEP);
+  return requests.filter((r) => r.status === "pending" || decided.includes(r));
+}
+
+/** Adds a pending request. An investor can have one pending request of each kind. */
+export function addChangeRequest(
+  investorId: string,
+  input: Pick<ChangeRequest, "kind" | "contact" | "bank">,
+): Promise<{ investor: Investor; request: ChangeRequest }> {
+  return mutateInvestors((investors) => {
+    let request: ChangeRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      if (i.changeRequests.some((r) => r.kind === input.kind && r.status === "pending")) {
+        throw new AccountError(
+          `You already have a change to your ${input.kind === "bank" ? "bank" : "contact"} details waiting for review. Withdraw it first to send a new one.`,
+        );
+      }
+      request = {
+        id: newId("chg"),
+        kind: input.kind,
+        status: "pending",
+        requestedAt: new Date().toISOString(),
+        contact: input.contact,
+        bank: input.bank,
+        decidedAt: null,
+        decidedBy: null,
+        decidedById: null,
+        reason: "",
+      };
+      return { ...i, changeRequests: trimRequests([...i.changeRequests, request]) };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, request: request! } };
+  });
+}
+
+function pendingRequestIn(investor: Investor, requestId: string): ChangeRequest {
+  const request = investor.changeRequests.find((r) => r.id === requestId);
+  if (!request) throw new AccountError("This request could not be found. Reload the page.");
+  if (request.status !== "pending") throw new AccountError("This request has already been dealt with. Reload the page.");
+  return request;
+}
+
+/** Closes a request; the encrypted bank details it carried are dropped. */
+function closeRequest(request: ChangeRequest, patch: Partial<ChangeRequest>): ChangeRequest {
+  return { ...request, ...patch, bank: request.bank ? { ...request.bank, encrypted: null } : null };
+}
+
+/** The investor withdraws one of their own pending requests. */
+export function withdrawChangeRequest(
+  investorId: string,
+  requestId: string,
+): Promise<{ investor: Investor; request: ChangeRequest }> {
+  return mutateInvestors((investors) => {
+    let request: ChangeRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      const closed = closeRequest(pendingRequestIn(i, requestId), { status: "withdrawn", decidedAt: new Date().toISOString() });
+      request = closed;
+      return { ...i, changeRequests: trimRequests(i.changeRequests.map((r) => (r.id === requestId ? closed : r))) };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, request: request! } };
+  });
+}
+
+/**
+ * Approves or rejects a pending request. Approving applies it: new contact
+ * details replace the current ones; new bank details (still encrypted) become
+ * the investor's bank details. Returns the investor before and after.
+ */
+export function decideChangeRequest(
+  investorId: string,
+  requestId: string,
+  decision: { approve: boolean; reason: string; by: Pick<AdminUser, "id" | "name"> },
+): Promise<{ before: Investor; investor: Investor; request: ChangeRequest }> {
+  return mutateInvestors((investors) => {
+    const before = investors.find((i) => i.id === investorId);
+    let request: ChangeRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      const pending = pendingRequestIn(i, requestId);
+      const now = new Date().toISOString();
+      let updated: Investor = i;
+      if (decision.approve && pending.kind === "contact" && pending.contact) {
+        updated = { ...i, email: pending.contact.email, phone: pending.contact.phone };
+      } else if (decision.approve && pending.kind === "bank") {
+        if (!pending.bank?.encrypted) throw new AccountError("The bank details in this request could not be read.");
+        updated = {
+          ...i,
+          bankDetails: { encrypted: pending.bank.encrypted, accountLast4: pending.bank.accountLast4, updatedAt: now },
+        };
+      }
+      const closed = closeRequest(pending, {
+        status: decision.approve ? "approved" : "rejected",
+        decidedAt: now,
+        decidedBy: decision.by.name,
+        decidedById: decision.by.id,
+        reason: decision.reason,
+      });
+      request = closed;
+      return { ...updated, changeRequests: trimRequests(i.changeRequests.map((r) => (r.id === requestId ? closed : r))) };
+    });
+    return {
+      investors: next,
+      result: { before: before!, investor: next.find((i) => i.id === investorId)!, request: request! },
+    };
   });
 }
 

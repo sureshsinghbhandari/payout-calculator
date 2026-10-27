@@ -490,6 +490,61 @@ export async function payoutEmailSender(key: "payoutReminder" | "paymentConfirma
   };
 }
 
+/**
+ * Tells an investor that a new document is in their portal (no attachment:
+ * they sign in to download it). Records the result in the audit log. Never
+ * throws; does nothing when email is not set up.
+ */
+export async function sendDocumentNotice(input: {
+  investor: { id: string; name: string; username: string; email: string };
+  title: string;
+  /** Site address for the portal link, e.g. "https://example.com". */
+  origin: string;
+}): Promise<void> {
+  const env = readEnv();
+  const from = senderOf(env);
+  const { investor } = input;
+  if (!from || !investor.email) return;
+  const target = { type: "investor" as const, id: investor.id, label: `${investor.name} (${investor.username})` };
+  const text = [
+    `Hello ${firstNameOf(investor.name)},`,
+    "",
+    `A new document, "${input.title}", is available in your investor portal.`,
+    "",
+    "To download it, sign in here:",
+    `${input.origin}/portal`,
+    "",
+    "Kind regards,",
+    teamName(env, from),
+  ].join("\n");
+  try {
+    const result = await deliver(env, from, {
+      to: investor.email,
+      subject: "A new document is available",
+      text,
+      tags: { kind: "document-notice" },
+    });
+    recordAudit({
+      actor: SYSTEM_ACTOR,
+      category: "email",
+      action: result.ok ? "email.document_notice" : "email.failed",
+      summary: result.ok
+        ? `Emailed ${investor.name} (${investor.username}) at ${investor.email} that the document "${input.title}" is available`
+        : `Could not email ${investor.name} (${investor.username}) about the document "${input.title}": ${result.error}`,
+      target,
+    });
+  } catch (error) {
+    console.error("Sending document notice failed", error);
+    recordAudit({
+      actor: SYSTEM_ACTOR,
+      category: "email",
+      action: "email.failed",
+      summary: `Could not email ${investor.name} (${investor.username}) about the document "${input.title}"`,
+      target,
+    });
+  }
+}
+
 /** Message-ID of the latest customer email in a thread, to thread a staff reply. */
 export async function latestCustomerMessageId(inquiryId: string): Promise<string | undefined> {
   const thread = await getThread(inquiryId);

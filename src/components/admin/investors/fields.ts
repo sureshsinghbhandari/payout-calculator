@@ -3,7 +3,14 @@
  * the server actions; nothing from the browser is trusted), the username
  * suggestion for converted inquiries, and display helpers.
  */
-import { normalizeUsername, setupState, validatePersonName, validateUsername, type Investor } from "@/lib/accounts";
+import {
+  normalizeUsername,
+  setupState,
+  validatePersonName,
+  validatePhoneNumber,
+  validateUsername,
+  type Investor,
+} from "@/lib/accounts";
 import { parseDollarsToCents } from "@/lib/investments";
 import {
   FREQUENCY_LABELS,
@@ -26,9 +33,7 @@ export type ConvertField = ContactField | PlanField;
 export type FieldErrors<F extends string> = Partial<Record<F, string>>;
 
 const EMAIL_MAX = 254;
-const PHONE_MAX = 25;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PHONE_PATTERN = /^[+()\-.\s\d]+$/;
 // Control characters are never valid in these single-line fields.
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 /** Longest value echoed back into a form after an error. */
@@ -78,12 +83,8 @@ export function parseContactFields(
     errors.email = "Enter a valid email address, like name@example.com.";
   }
 
-  if (phone !== "") {
-    const digits = phone.replace(/\D/g, "").length;
-    if (phone.length > PHONE_MAX || !PHONE_PATTERN.test(phone) || digits < 7 || digits > 15) {
-      errors.phone = "Enter a valid phone number, or leave it empty.";
-    }
-  }
+  const phoneError = validatePhoneNumber(phone);
+  if (phoneError) errors.phone = phoneError;
 
   const usernameError = validateUsername(username);
   if (usernameError) errors.username = usernameError;

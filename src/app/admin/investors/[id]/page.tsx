@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { revealAccountNumberAction } from "@/app/admin/investors/request-actions";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { BankDetailsSummary } from "@/components/BankDetailsSummary";
+import { ChangeRequestHistory } from "@/components/ChangeRequestHistory";
+import { ChangeRequestReview } from "@/components/admin/investors/ChangeRequestReview";
+import { DocumentVault } from "@/components/admin/investors/DocumentVault";
 import { InvestmentCard } from "@/components/admin/investors/InvestmentCard";
 import { InvestorAccess } from "@/components/admin/investors/InvestorAccess";
 import { InvestorSignInInfo } from "@/components/admin/investors/InvestorSignInInfo";
@@ -13,14 +18,17 @@ import {
   isInvestorIdLike,
   LOGIN_STATE_BADGES,
 } from "@/components/admin/investors/fields";
-import { primaryButton, successNotice, textLink } from "@/components/admin/investors/ui";
+import { errorNotice, primaryButton, successNotice, textLink } from "@/components/admin/investors/ui";
 import { can, toPublicAdmin, toPublicInvestor, type Investor } from "@/lib/accounts";
+import { toPublicDocument, type PublicDocument } from "@/lib/documents";
 import { formatDollars } from "@/lib/format";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { todayUtc } from "@/lib/investments";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
 import { paymentConfirmationBlocker } from "@/lib/server/payout-notices";
 import { requireAdminPage } from "@/lib/server/auth";
+import { bankDetailsView, changeRequestViews } from "@/lib/server/change-requests";
+import { documentFolder, isDocumentStorageConfigured, listDocuments } from "@/lib/server/documents-store";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 
 export const metadata: Metadata = {
@@ -55,6 +63,16 @@ async function loadInvestor(id: string): Promise<{ investor: Investor | null; lo
   }
 }
 
+/** The investor's documents, or null when they could not be loaded. */
+async function loadDocuments(investorId: string): Promise<PublicDocument[] | null> {
+  try {
+    return (await listDocuments(investorId)).map(toPublicDocument);
+  } catch (error) {
+    console.error("Listing investor documents failed", error);
+    return null;
+  }
+}
+
 async function InvestorContent({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   await connection();
   const admin = await requireAdminPage("investors.manage");
@@ -64,6 +82,7 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
   const created = query.created === "1";
   const added = query.added === "1";
   const renewed = query.renewed === "1";
+  const decided = query.decided === "approved" || query.decided === "rejected" ? query.decided : null;
 
   const { investor, loadFailed, readAtMs } = await loadInvestor(id);
 
@@ -97,6 +116,12 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
     const index = investmentId ? pub.investments.findIndex((i) => i.id === investmentId) : -1;
     return index === -1 ? null : index + 1;
   };
+  // Bank details and change requests are decrypted here and masked before they reach the browser.
+  const bank = bankDetailsView(investor);
+  const requests = changeRequestViews(investor);
+  const pendingRequests = requests.filter((r) => r.status === "pending");
+  const pastRequests = requests.filter((r) => r.status !== "pending");
+  const documents = isDocumentStorageConfigured() ? await loadDocuments(investor.id) : null;
 
   return (
     <AdminFrame user={user}>
@@ -149,6 +174,23 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
         </div>
       )}
 
+      {decided && (
+        <div role="status" className={`mb-6 ${successNotice}`}>
+          {decided === "approved"
+            ? "Request approved. The new details are saved."
+            : "Request not approved. The investor can see this, and your reason, in the portal."}
+        </div>
+      )}
+
+      {pendingRequests.length > 0 && !decided && (
+        <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+          {pub.name} asked to change their details.{" "}
+          <a href="#change-requests" className={textLink}>
+            Review {pendingRequests.length === 1 ? "the request" : `${pendingRequests.length} requests`}
+          </a>
+        </p>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section aria-labelledby="investor-contact-heading">
           <AdminCard>
@@ -182,6 +224,59 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
           </AdminCard>
         </section>
       </div>
+
+      <section id="change-requests" aria-labelledby="investor-bank-heading" className="mt-6 scroll-mt-6">
+        <AdminCard>
+          <h2 id="investor-bank-heading" className="text-base font-semibold text-slate-900">
+            Bank details and change requests
+          </h2>
+          <p className="mb-5 mt-1 text-sm text-slate-600">
+            Investors ask for changes to their contact and bank details in the portal. Changes apply once you approve them.
+            Account numbers are stored encrypted; only the last 4 digits are shown unless you select Show.
+          </p>
+
+          {bank.state === "ok" ? (
+            <BankDetailsSummary details={bank.details} reveal={revealAccountNumberAction.bind(null, pub.id, null)} />
+          ) : bank.state === "unreadable" ? (
+            <p role="alert" className={errorNotice}>
+              The bank details on file (account ending {bank.accountLast4}) could not be read. Ask {pub.name} to send them
+              again from the portal.
+            </p>
+          ) : (
+            <p className="text-sm text-slate-600">
+              No bank details yet. {pub.name} can send them from Your details in the investor portal.
+            </p>
+          )}
+
+          {pendingRequests.length > 0 && (
+            <div className="mt-6 border-t border-slate-200 pt-6">
+              <h3 className="mb-4 text-sm font-semibold text-slate-900">Waiting for your review</h3>
+              <ul className="space-y-6">
+                {pendingRequests.map((request) => (
+                  <li key={request.id} className="rounded-xl border border-slate-200 p-4 sm:p-5">
+                    <ChangeRequestReview
+                      investorId={pub.id}
+                      request={request}
+                      current={{ email: pub.email, phone: pub.phone, bank: bank.state === "ok" ? bank.details : null }}
+                      reveal={request.bank ? revealAccountNumberAction.bind(null, pub.id, request.id) : undefined}
+                      from="investor"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {pastRequests.length > 0 && (
+            <details className="mt-6 border-t border-slate-200 pt-4">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                Earlier requests ({pastRequests.length})
+              </summary>
+              <ChangeRequestHistory requests={pastRequests} audience="admin" />
+            </details>
+          )}
+        </AdminCard>
+      </section>
 
       <section aria-labelledby="investor-investments-heading" className="mt-8">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -219,6 +314,28 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
             ))}
           </ol>
         )}
+      </section>
+
+      <section aria-labelledby="investor-documents-heading" className="mt-8">
+        <h2 id="investor-documents-heading" className="mb-3 text-lg font-semibold text-slate-900">
+          Documents
+        </h2>
+        <AdminCard>
+          {!isDocumentStorageConfigured() ? (
+            <p className="text-sm text-slate-700">Storage is not connected, so documents cannot be uploaded.</p>
+          ) : documents === null ? (
+            <p role="alert" className="text-sm font-medium text-red-700">
+              Documents could not be loaded. Reload the page to try again.
+            </p>
+          ) : (
+            <DocumentVault
+              investorId={pub.id}
+              investorName={pub.name}
+              uploadFolder={documentFolder(pub.id)}
+              documents={documents}
+            />
+          )}
+        </AdminCard>
       </section>
     </AdminFrame>
   );

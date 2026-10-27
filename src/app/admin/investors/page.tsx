@@ -9,6 +9,7 @@ import { can, INVESTOR_SEARCH_MAX, matchesInvestorSearch, toPublicAdmin, type In
 import { formatDollars, formatIsoDate } from "@/lib/format";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
+import { pendingCount } from "@/lib/server/change-requests";
 
 export const metadata: Metadata = {
   title: "Investors | Admin | Investment Payout Calculator",
@@ -47,6 +48,7 @@ async function InvestorsContent({ searchParams }: { searchParams: SearchParams }
   const sorted = (investors ?? [])
     .filter((investor) => matchesInvestorSearch(investor, query))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  const pending = pendingCount(investors ?? []);
 
   return (
     <AdminFrame user={toPublicAdmin(admin)}>
@@ -64,6 +66,14 @@ async function InvestorsContent({ searchParams }: { searchParams: SearchParams }
           </p>
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <Link href="/admin/investors/requests" className={textLink}>
+            Change requests
+            {pending > 0 && (
+              <span className="ml-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 no-underline">
+                {pending} pending
+              </span>
+            )}
+          </Link>
           {can(admin.role, "payouts.manage") && (
             <Link href="/admin/payouts" className={textLink}>
               Payout calendar
