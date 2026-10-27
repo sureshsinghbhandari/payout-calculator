@@ -20,8 +20,11 @@ export type Permission =
   | "inquiries.convert"
   | "inquiries.email"
   | "inquiries.notes"
+  | "inquiries.assign"
+  | "inquiries.export"
   | "investors.manage"
   | "payouts.manage"
+  | "sources.manage"
   | "rates.manage"
   | "users.manage"
   | "email.manage"
@@ -39,8 +42,11 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "inquiries.convert",
     "inquiries.email",
     "inquiries.notes",
+    "inquiries.assign",
+    "inquiries.export",
     "investors.manage",
     "payouts.manage",
+    "sources.manage",
     "rates.manage",
     "users.manage",
     "email.manage",
@@ -48,9 +54,18 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "roadmap.view",
     "inquiries.purge",
   ],
-  // Sales admins only work with inquiries: view them, add notes, email the customer and mark them contacted.
+  // Sales admins only work with inquiries: view them, add notes, email the customer, mark them contacted,
+  // assign them and set follow-up dates, and export them (without rates).
   // Their dashboard shows inquiry figures only (no money totals or rates).
-  sales: ["dashboard.view", "inquiries.view", "inquiries.status", "inquiries.email", "inquiries.notes"],
+  sales: [
+    "dashboard.view",
+    "inquiries.view",
+    "inquiries.status",
+    "inquiries.email",
+    "inquiries.notes",
+    "inquiries.assign",
+    "inquiries.export",
+  ],
 };
 
 export function can(role: AdminRole, permission: Permission): boolean {
@@ -219,6 +234,20 @@ export function toPublicAdmin(user: AdminUser): PublicAdmin {
     mustChangePassword: user.mustChangePassword,
     setupExpiresAt: user.setupTokenHash ? user.setupExpiresAt : null,
   };
+}
+
+export const INVESTOR_SEARCH_MAX = 100;
+
+/**
+ * Search investors by name, email, username (case-insensitive, part of the
+ * text is enough) or phone, matched on its digits.
+ */
+export function matchesInvestorSearch(investor: Pick<Investor, "name" | "email" | "username" | "phone">, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  if ([investor.name, investor.email, investor.username].some((v) => v.toLowerCase().includes(q))) return true;
+  const digits = q.replace(/\D/g, "");
+  return digits.length >= 3 && /^[+()\-.\s\d]+$/.test(q) && investor.phone.replace(/\D/g, "").includes(digits);
 }
 
 export interface PublicInvestor {

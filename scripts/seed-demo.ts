@@ -14,7 +14,14 @@ import { BlobError, BlobPreconditionFailedError, del, get, list, put } from "@ve
 import { ROLE_LABELS, type AdminRole, type Investor } from "../src/lib/accounts";
 import { auditMonth, parseAuditEvents, type AuditActor, type AuditEvent } from "../src/lib/audit";
 import { formatDollars } from "../src/lib/format";
-import { inquiryReference, makeInquiryId, NOTE_PREVIEW_LENGTH, type InquiryStatus, type StoredInquiry } from "../src/lib/inquiry";
+import {
+  DEFAULT_LEAD_SOURCE,
+  inquiryReference,
+  makeInquiryId,
+  NOTE_PREVIEW_LENGTH,
+  type InquiryStatus,
+  type StoredInquiry,
+} from "../src/lib/inquiry";
 import type { InquiryLog, InquiryNote, InquiryNoteKind } from "../src/lib/inquiry-log";
 import type { PayoutFrequency, PayoutType } from "../src/lib/payout";
 import { defaultRateTable, parseStoredRates, type RateTable } from "../src/lib/rates";
@@ -82,6 +89,8 @@ interface DemoInquiry {
   doneDaysAgo?: number;
   statusBeforeDelete?: "new" | "contacted";
   investor?: { username: string };
+  /** Lead source; the website when not set. */
+  source?: string;
   notes: DemoNote[];
 }
 
@@ -126,6 +135,7 @@ const INQUIRIES: DemoInquiry[] = [
     message: "Saw you at the seminar on Saturday.",
     daysAgo: 16, hour: 10, principal: 120_000, lockInYears: 5, frequency: "yearly", payoutType: "interest-only",
     investInDays: 7, status: "converted", contactedDaysAgo: 15, doneDaysAgo: 10, investor: { username: "jwilson" },
+    source: "seminar-2026-10",
     notes: [
       { daysAgo: 15, hour: 11, kind: "call", by: "suresh", text: "Ready to invest. Booked a meeting to sign." },
       { daysAgo: 10, hour: 15, kind: "meeting", by: "ashwin", text: "Signed. Funds arrive this week." },
@@ -311,6 +321,7 @@ async function addDemo(): Promise<void> {
       email: demo.email,
       phone: demo.phone,
       message: demo.message,
+      source: demo.source ?? DEFAULT_LEAD_SOURCE,
       plan: {
         ...quote,
         startDate: selected.startDate,

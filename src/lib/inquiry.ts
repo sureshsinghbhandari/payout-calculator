@@ -2,6 +2,7 @@
  * Visitor inquiries: validation of the public form and the stored format.
  * Pure functions so they can be unit tested.
  */
+import { isValidIsoDate } from "./dates";
 import { parseQuoteInputs } from "./quote";
 import type { QuoteInputs } from "./scenarios";
 import type { PayoutFrequency, PayoutType } from "./payout";
@@ -52,6 +53,65 @@ export interface StoredInquiry extends InquiryContact {
   emails?: InquiryEmailSummary;
   /** Summary of the notes (stored in the inquiry's log). */
   notes?: InquiryNotesSummary;
+  /** Where the visitor came from, e.g. "website" or "seminar-2026-11" (from ?source= on the calculator link). */
+  source: string;
+  /** Admin user who follows the inquiry up (name as it was when assigned). */
+  assignedTo?: InquiryAssignee;
+  /** When to follow up next, YYYY-MM-DD. */
+  followUpDate?: string;
+}
+
+export interface InquiryAssignee {
+  id: string;
+  name: string;
+}
+
+/** Source of inquiries sent without a ?source= on the link. */
+export const DEFAULT_LEAD_SOURCE = "website";
+export const LEAD_SOURCE_MAX = 40;
+const LEAD_SOURCE_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+
+/** A lead source is a short lowercase name: letters, digits and hyphens, at most 40 characters. */
+export function isLeadSource(value: string): boolean {
+  return value.length <= LEAD_SOURCE_MAX && LEAD_SOURCE_PATTERN.test(value);
+}
+
+/** The lead source in a form field or link, lowercased; anything invalid counts as the website. */
+export function parseLeadSource(value: unknown): string {
+  const source = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return isLeadSource(source) ? source : DEFAULT_LEAD_SOURCE;
+}
+
+/** The lead source of a calculator link: ?source=, or ?utm_source= from ad and email tools. */
+export function leadSourceFromSearch(search: string): string {
+  const params = new URLSearchParams(search);
+  return parseLeadSource(params.get("source") || params.get("utm_source"));
+}
+
+/** Follow-up dates are calendar dates within a sensible range. */
+export function isFollowUpDate(value: string): boolean {
+  return isValidIsoDate(value) && value >= "2000-01-01" && value <= "2100-12-31";
+}
+
+/** Today as YYYY-MM-DD in UTC, the time zone the admin pages show times in. */
+export function todayUtc(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+export type FollowUpState = "overdue" | "today" | "upcoming" | "closed";
+
+/** How a follow-up date stands today; "closed" when the inquiry is no longer open. Null without a date. */
+export function followUpState(inquiry: StoredInquiry, today: string): FollowUpState | null {
+  if (!inquiry.followUpDate) return null;
+  if (inquiry.status !== "new" && inquiry.status !== "contacted") return "closed";
+  if (inquiry.followUpDate < today) return "overdue";
+  return inquiry.followUpDate === today ? "today" : "upcoming";
+}
+
+/** An open inquiry whose follow-up date is today or earlier. */
+export function isFollowUpDue(inquiry: StoredInquiry, today: string): boolean {
+  const state = followUpState(inquiry, today);
+  return state === "overdue" || state === "today";
 }
 
 export interface InquiryNotesSummary {
@@ -73,7 +133,7 @@ export interface InquiryEmailSummary {
 }
 
 export type InquiryParse =
-  | { ok: true; contact: InquiryContact; plan: QuoteInputs; isSpam: boolean }
+  | { ok: true; contact: InquiryContact; plan: QuoteInputs; source: string; isSpam: boolean }
   | { ok: false; errors: Partial<Record<InquiryField | "plan", string>> };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -129,6 +189,7 @@ export function parseInquiryForm(raw: Record<string, unknown>): InquiryParse {
     ok: true,
     contact: { name, email, phone, message },
     plan: plan.value,
+    source: parseLeadSource(raw.source),
     isSpam: text(raw.website) !== "",
   };
 }
@@ -210,6 +271,10 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
         }
       : undefined;
   const statusBeforeDelete = d.statusBeforeDelete === "contacted" ? "contacted" : "new";
+  const assigned = (d.assignedTo ?? null) as Record<string, unknown> | null;
+  const assignedId = str(assigned?.id);
+  const assignedName = str(assigned?.name);
+  const followUpDate = str(d.followUpDate);
   return {
     id,
     createdAt,
@@ -233,6 +298,10 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     },
     ...(emails ? { emails } : {}),
     ...(notes ? { notes } : {}),
+    // Inquiries sent before lead sources existed came from the website.
+    source: parseLeadSource(d.source),
+    ...(assignedId && assignedName ? { assignedTo: { id: assignedId, name: assignedName } } : {}),
+    ...(followUpDate && isFollowUpDate(followUpDate) ? { followUpDate } : {}),
   };
 }
 
@@ -271,4 +340,83 @@ export function matchesInquirySearch(inquiry: StoredInquiry, query: string): boo
   if (inquiryReference(inquiry.id).toLowerCase() === q.replace(/^ref\s*/, "")) return true;
   const digits = q.replace(/\D/g, "");
   return digits.length >= 3 && /^[+()\-.\s\d]+$/.test(q) && inquiry.phone.replace(/\D/g, "").includes(digits);
+}
+
+/** Everything that narrows the Inquiries list, read from the URL. Empty values are not used. */
+export interface InquiryListQuery {
+  q: string;
+  status: InquiryFilter;
+  /** Only inquiries assigned to the signed-in admin. */
+  mine: boolean;
+  /** Only open inquiries with a follow-up date today or earlier. */
+  due: boolean;
+  source: string;
+  /** Received on or after / on or before, YYYY-MM-DD (UTC). */
+  from: string;
+  to: string;
+}
+
+type ListParams = Record<string, string | string[] | undefined>;
+
+function param(params: ListParams, key: string): string {
+  const value = params[key];
+  return ((Array.isArray(value) ? value[0] : value) ?? "").trim();
+}
+
+export function parseInquiryListQuery(params: ListParams): InquiryListQuery {
+  const date = (key: string) => {
+    const value = param(params, key);
+    return isValidIsoDate(value) ? value : "";
+  };
+  let from = date("from");
+  let to = date("to");
+  // Dates entered the wrong way round still find what was meant.
+  if (from && to && from > to) [from, to] = [to, from];
+  const source = param(params, "source").toLowerCase();
+  return {
+    q: param(params, "q").slice(0, INQUIRY_SEARCH_MAX),
+    status: parseInquiryFilter(param(params, "status")),
+    mine: param(params, "mine") === "1",
+    due: param(params, "due") === "1",
+    source: isLeadSource(source) ? source : "",
+    from,
+    to,
+  };
+}
+
+/** The query string for a list link ("" when nothing narrows it); the defaults are left out. */
+export function inquiryListSearch(query: InquiryListQuery): string {
+  const params = new URLSearchParams();
+  if (query.q) params.set("q", query.q);
+  if (query.status !== "open") params.set("status", query.status);
+  if (query.mine) params.set("mine", "1");
+  if (query.due) params.set("due", "1");
+  if (query.source) params.set("source", query.source);
+  if (query.from) params.set("from", query.from);
+  if (query.to) params.set("to", query.to);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** True when anything besides the status filter narrows the list. */
+export function isInquiryListNarrowed(query: InquiryListQuery): boolean {
+  return Boolean(query.q || query.mine || query.due || query.source || query.from || query.to);
+}
+
+/** Whether an inquiry is on the list for this query, for the signed-in admin on this day. */
+export function matchesInquiryListQuery(
+  inquiry: StoredInquiry,
+  query: InquiryListQuery,
+  context: { userId: string; today: string },
+): boolean {
+  const received = inquiry.createdAt.slice(0, 10);
+  return (
+    matchesInquiryFilter(inquiry, query.status) &&
+    (!query.mine || inquiry.assignedTo?.id === context.userId) &&
+    (!query.due || isFollowUpDue(inquiry, context.today)) &&
+    (!query.source || inquiry.source === query.source) &&
+    (!query.from || received >= query.from) &&
+    (!query.to || received <= query.to) &&
+    matchesInquirySearch(inquiry, query.q)
+  );
 }

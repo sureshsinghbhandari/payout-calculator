@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
-import { inquiryReference, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
+import { followUpState, inquiryReference, type FollowUpState, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
 import { NOTE_KIND_LABELS } from "@/lib/inquiry-log";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import { InquiryActions } from "./InquiryActions";
@@ -22,6 +22,13 @@ const STATUS_STYLES: Record<InquiryStatus, { label: string; badge: string; borde
   deleted: { label: "Deleted", badge: "bg-red-100 text-red-800", border: "border-slate-200" },
 };
 
+const FOLLOW_UP_STYLES: Record<FollowUpState, { prefix: string; badge: string }> = {
+  overdue: { prefix: "Follow-up overdue:", badge: "bg-red-100 text-red-800" },
+  today: { prefix: "Follow up today:", badge: "bg-amber-100 text-amber-900" },
+  upcoming: { prefix: "Follow up", badge: "bg-sky-100 text-sky-900" },
+  closed: { prefix: "Follow-up date", badge: "bg-slate-100 text-slate-600" },
+};
+
 export interface InquiryPermissions {
   status: boolean;
   remove: boolean;
@@ -34,15 +41,20 @@ export interface InquiryPermissions {
 export function InquiryCard({
   inquiry,
   permissions,
+  today,
   showDetailsLink = true,
 }: {
   inquiry: StoredInquiry;
   permissions: InquiryPermissions;
+  /** Today (YYYY-MM-DD, UTC), to highlight follow-ups that are due. */
+  today: string;
   /** Link to the inquiry page with its notes, activity and emails, and the latest note (off on that page itself). */
   showDetailsLink?: boolean;
 }) {
   const { plan } = inquiry;
   const style = STATUS_STYLES[inquiry.status];
+  const open = inquiry.status === "new" || inquiry.status === "contacted";
+  const followUp = followUpState(inquiry, today);
   const details = [
     { label: "Investment amount", value: formatDollars(plan.principal) },
     { label: "Planned investment date", value: formatIsoDate(plan.investmentDate) },
@@ -71,10 +83,26 @@ export function InquiryCard({
             )}
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
-            Received {formatTimestamp(inquiry.createdAt)} · Ref {inquiryReference(inquiry.id)}
+            Received {formatTimestamp(inquiry.createdAt)} · Ref {inquiryReference(inquiry.id)} · Source {inquiry.source}
             {inquiry.status === "deleted" && inquiry.deletedAt && <> · Deleted {formatTimestamp(inquiry.deletedAt)}</>}
             {inquiry.status === "converted" && inquiry.convertedAt && <> · Converted {formatTimestamp(inquiry.convertedAt)}</>}
           </p>
+          {(open || inquiry.assignedTo || followUp) && (
+            <p className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+              {(open || inquiry.assignedTo) && (
+                <span
+                  className={`rounded-full px-2 py-0.5 ${inquiry.assignedTo ? "bg-slate-100 text-slate-800" : "bg-slate-50 text-slate-500"}`}
+                >
+                  {inquiry.assignedTo ? `Assigned to ${inquiry.assignedTo.name}` : "Not assigned"}
+                </span>
+              )}
+              {followUp && inquiry.followUpDate && (
+                <span className={`rounded-full px-2 py-0.5 ${FOLLOW_UP_STYLES[followUp].badge}`}>
+                  {FOLLOW_UP_STYLES[followUp].prefix} {formatIsoDate(inquiry.followUpDate)}
+                </span>
+              )}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {showDetailsLink && (

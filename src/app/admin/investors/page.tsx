@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { investorLoginState, isoDay, LOGIN_STATE_BADGES } from "@/components/admin/investors/fields";
 import { textLink } from "@/components/admin/investors/ui";
-import { can, toPublicAdmin, type Investor } from "@/lib/accounts";
+import { can, INVESTOR_SEARCH_MAX, matchesInvestorSearch, toPublicAdmin, type Investor } from "@/lib/accounts";
 import { formatDollars, formatIsoDate } from "@/lib/format";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
@@ -15,10 +15,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function InvestorsPage() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default function InvestorsPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense fallback={<AdminLoading />}>
-      <InvestorsContent />
+      <InvestorsContent searchParams={searchParams} />
     </Suspense>
   );
 }
@@ -34,13 +36,16 @@ async function loadInvestors(): Promise<{ investors: Investor[] | null; readAtMs
   return { investors, readAtMs: Date.now() };
 }
 
-async function InvestorsContent() {
+/** Investors, newest first. Search by name, email, phone or username. */
+async function InvestorsContent({ searchParams }: { searchParams: SearchParams }) {
   await connection();
   const admin = await requireAdminPage("investors.manage");
+  const { q } = await searchParams;
+  const query = (typeof q === "string" ? q : "").trim().slice(0, INVESTOR_SEARCH_MAX);
   const configured = isAccountStorageConfigured();
   const { investors, readAtMs: nowMs } = configured ? await loadInvestors() : { investors: null, readAtMs: 0 };
   const sorted = (investors ?? [])
-    .slice()
+    .filter((investor) => matchesInvestorSearch(investor, query))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
 
   return (
@@ -53,6 +58,7 @@ async function InvestorsContent() {
             {investors
               ? `${investors.length} ${investors.length === 1 ? "investor" : "investors"}, newest first. `
               : ""}
+            {investors && query ? `${sorted.length} ${sorted.length === 1 ? "matches" : "match"} the search. ` : ""}
             Investors are added by converting a contacted inquiry. Further investments are added on the investor&apos;s
             page.
           </p>
@@ -69,6 +75,34 @@ async function InvestorsContent() {
         </div>
       </div>
 
+      {investors && investors.length > 0 && (
+        <form role="search" action="/admin/investors" className="mb-5 flex flex-wrap items-center gap-2">
+          <label htmlFor="investor-search" className="sr-only">
+            Search by name, email, phone or username
+          </label>
+          <input
+            id="investor-search"
+            type="search"
+            name="q"
+            defaultValue={query}
+            maxLength={INVESTOR_SEARCH_MAX}
+            placeholder="Search by name, email, phone or username"
+            className="min-w-0 flex-1 basis-64 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-blue-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+          >
+            Search
+          </button>
+          {query && (
+            <Link href="/admin/investors" className={`text-sm ${textLink}`}>
+              Clear search
+            </Link>
+          )}
+        </form>
+      )}
+
       {!configured ? (
         <AdminCard>
           <p className="text-sm text-slate-700">Account storage is not connected, so investors cannot be stored or shown.</p>
@@ -78,6 +112,10 @@ async function InvestorsContent() {
           <p role="alert" className="text-sm font-medium text-red-700">
             Investors could not be loaded. Reload the page to try again.
           </p>
+        </AdminCard>
+      ) : sorted.length === 0 && query ? (
+        <AdminCard>
+          <p className="text-sm text-slate-600">No investors match. Try another search.</p>
         </AdminCard>
       ) : sorted.length === 0 ? (
         <AdminCard>

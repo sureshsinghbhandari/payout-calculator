@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef } from "react";
+import { useActionState, useEffect, useId, useRef, useSyncExternalStore } from "react";
 import { submitInquiryAction, type InquiryState } from "@/app/inquiry-actions";
-import { INQUIRY_LIMITS, type InquiryField } from "@/lib/inquiry";
+import { DEFAULT_LEAD_SOURCE, INQUIRY_LIMITS, leadSourceFromSearch, type InquiryField } from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate, formatYears } from "@/lib/format";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import type { PublicSchedule } from "@/lib/scenarios";
@@ -17,10 +17,18 @@ interface FormProps {
   onCancel: () => void;
 }
 
+const noopSubscribe = () => () => {};
+
+/** Where the visitor came from: ?source= (or ?utm_source=) on the calculator link, else the website. */
+function useLeadSource(): string {
+  return useSyncExternalStore(noopSubscribe, () => leadSourceFromSearch(window.location.search), () => DEFAULT_LEAD_SOURCE);
+}
+
 function InquiryForm({ plan, onCancel }: FormProps) {
   const [state, formAction, pending] = useActionState<InquiryState, FormData>(submitInquiryAction, {
     status: "idle",
   });
+  const source = useLeadSource();
   const baseId = useId();
   const { inputs, totals } = plan;
 
@@ -103,6 +111,7 @@ function InquiryForm({ plan, onCancel }: FormProps) {
       <input type="hidden" name="frequency" value={inputs.frequency} />
       <input type="hidden" name="payoutType" value={inputs.payoutType} />
       <input type="hidden" name="investmentDate" value={inputs.investmentDate} />
+      <input type="hidden" name="source" value={source} />
       {/* Honeypot: hidden from people, often filled in by spam bots. */}
       <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
         <label>
