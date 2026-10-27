@@ -9,9 +9,14 @@ Behind it is an admin area with named users and roles (Master Admin, Sales Admin
 managing inquiries, investors and the interest rates, and an investor portal where
 investors sign in to see their investments.
 
-- **Live site:** https://payout-calculator-steel.vercel.app
-- **Admin:** https://payout-calculator-steel.vercel.app/admin
-- **Investor portal:** https://payout-calculator-steel.vercel.app/investor
+| Who | Address |
+| --- | --- |
+| Visitors: calculator and inquiries | https://payout-calculator-steel.vercel.app/inquiries |
+| Investors: sign in | https://payout-calculator-steel.vercel.app/portal |
+| Staff: admin | https://payout-calculator-steel.vercel.app/admin |
+
+The site root (`/`) intentionally shows a friendly "page not found" (404). The old
+`/investor` address redirects to `/portal`.
 
 Interest rates are never shown to visitors or investors.
 
@@ -128,7 +133,7 @@ There must always be at least one active Master Admin.
 
 ### Investor portal
 
-Investors sign in at `/investor` with their username and password and see each
+Investors sign in at `/portal` (the calculator page also has an **Investor login** button) with their username and password and see each
 investment: amount, planned investment date, interest start date, term locked, payout
 term and type, totals, the next payout, and the full payout schedule with each payout
 marked Paid or Upcoming by its scheduled date. The interest rate is not shown.
@@ -159,6 +164,43 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - Spam protection: a hidden honeypot field, and at most 5 inquiries per client per hour.
 - Email notifications are not set up yet.
 
+## Audit log
+
+Every action is recorded with who did it, what they did, the item it affected and the
+time (UTC): admin and investor sign-ins (including failed attempts), password changes,
+inquiries received, status changes, deletes and restores, conversions, investor and user
+changes, and interest rate unlocks and changes (with the old and new rates). Master
+Admins see it under **Settings > Audit log** (`/admin/settings/audit`), by month and by
+category. Customer email responses will be added with the Gmail integration. Events are
+stored as one private file per month in Vercel Blob.
+
+## Upcoming features
+
+**Settings > Upcoming features** (`/admin/settings/upcoming`, Master Admin) lists planned
+work by area with Now / Next / Later priorities, starting with linking a Gmail account,
+emailing inquiry acknowledgements with the reference number, and reading customer replies.
+The list lives in `src/lib/roadmap.ts`.
+
+## Temporary: permanent delete
+
+For now, Master Admins can **Delete permanently** an inquiry that is already in Deleted
+inquiries (recorded in the audit log). This is marked TEMPORARY in the code
+(`inquiries.purge` permission, `purgeInquiry`, `purgeInquiryAction`) and should be
+removed before go-live.
+
+## Seminar deck
+
+`seminar/Investment-Plans-Seminar.pptx` and `.pdf`: a 6-slide deck for investor
+seminars. It covers how it works, one slide each for Quarterly, Half-Yearly and Yearly
+payouts (what $25,000, $50,000 and $100,000 pay over 1 and 2 years, Interest Only), and a
+closing slide with the inquiry address, a QR code and the disclaimer. Speaker notes are
+included. Figures use the production rates at the time it was made (8%, 9%, 10%); the
+rates themselves are not shown.
+
+To rebuild after a rate change: edit `RATES` in `seminar/build-deck.cjs`, run it with
+Node (it needs the `pptxgenjs` and `qrcode` packages), then make the PDF with
+PowerPoint: `powershell -File seminar/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -ImageDir <folder>`.
+
 ## Data storage
 
 Everything is stored as private JSON files in the Vercel Blob store
@@ -182,7 +224,7 @@ then redeploy with `npx vercel deploy --prod`.
 - Sign-in, password changes and unlocking rates lock a client out for 15 minutes after
   5 wrong passwords (per server instance), with a 1-second wait after each wrong one.
 - A Vercel Firewall rule, **Sign-in rate limit**, allows at most 20 POST requests per IP
-  address per 5 minutes to `/admin` (admin sign-in), `/investor` (investor sign-in and
+  address per 5 minutes to `/admin` (admin sign-in), `/portal` (investor sign-in and
   password change) and `/setup` (setup links), counted together. An address that goes
   over is blocked from those requests for 15 minutes. Admin work on other pages (for
   example inquiries) does not count. The free (Hobby) plan allows one rate-limit rule,
@@ -190,7 +232,7 @@ then redeploy with `npx vercel deploy --prod`.
   `npx vercel firewall rules inspect "Sign-in rate limit"`, or in the Vercel dashboard
   under Firewall.
 - Sessions are HTTP-only, SameSite=Strict, Secure cookies: `/admin` for admins and
-  `/investor` for investors, valid for 8 hours.
+  `/portal` for investors, valid for 8 hours.
 
 For local development, put `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` in
 `.env.development.local`, and run `npx vercel env pull .env.local` for the Blob token.
