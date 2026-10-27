@@ -23,6 +23,7 @@ import {
   verifyAdminCredentials,
 } from "@/lib/server/auth";
 import { purgeInquiry, restoreInquiry, setInquiryStatus, softDeleteInquiry } from "@/lib/server/inquiry-store";
+import { signInClientHash } from "@/lib/server/client-fingerprint";
 import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
 import { isRateStorageConfigured, RATES_TAG, readStoredRates, saveRates } from "@/lib/server/rates-store";
@@ -54,7 +55,8 @@ export interface LoginState {
 }
 
 export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
-  if (!authConfig().ok) return { error: "Admin access is not configured." };
+  const config = authConfig();
+  if (!config.ok) return { error: "Admin access is not configured." };
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
 
@@ -75,7 +77,14 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   }
   loginThrottle.reset(client);
   await startAdminSession(result.user);
-  recordAudit({ actor: adminActor(result.user), category: "sign-in", action: "admin.sign_in", summary: "Signed in to admin" });
+  recordAudit({
+    actor: adminActor(result.user),
+    category: "sign-in",
+    action: "admin.sign_in",
+    summary: "Signed in to admin",
+    // A hash of the network and browser, for the new-device sign-in alert.
+    client: signInClientHash(await headers(), config.secret),
+  });
   redirect(result.mustChangePassword ? "/admin/account" : "/admin/inquiries");
 }
 
