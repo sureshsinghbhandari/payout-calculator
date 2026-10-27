@@ -7,12 +7,16 @@
  *   3. "<Other payout type>"   - the same schedule with the other payout type
  *   4. "Comparison"            - side-by-side totals for every scenario
  *
+ * Investment statements (buildStatementFile) are a separate workbook: the
+ * schedule of a recorded investment with each payout's status and payment,
+ * and a list of the payments received.
+ *
  * Amounts are written as real numbers with currency formatting, dates as real
  * Excel dates, and totals rows as SUM formulas (with cached results).
  */
 import * as ExcelJSModule from "exceljs";
 import type { Cell, Row, Workbook, Worksheet } from "exceljs";
-import { formatYears } from "./format";
+import { formatDollars, formatIsoDate, formatPercent, formatYears } from "./format";
 import {
   FREQUENCY_LABELS,
   interestStartDelayText,
@@ -27,6 +31,7 @@ import {
   type PublicScenarioSet,
 } from "./scenarios";
 import { DISCLAIMER } from "./disclaimer";
+import { statementFileName, type StatementData, type StatementRow } from "./statement";
 
 // ExcelJS is CommonJS: depending on the bundler the classes live on the
 // namespace itself or on its `default` export.
@@ -467,4 +472,191 @@ export function buildWorkbook(set: PublicScenarioSet): Workbook {
 export async function buildExcelFile(set: PublicScenarioSet): Promise<{ data: ArrayBuffer; fileName: string }> {
   const buffer = await buildWorkbook(set).xlsx.writeBuffer();
   return { data: buffer as ArrayBuffer, fileName: excelFileName(set.selected) };
+}
+
+// ---------- investment statements ----------
+
+const STATEMENT_STATUS_LABELS: Record<StatementRow["status"], string> = {
+  paid: "Paid",
+  due: "Due",
+  upcoming: "Upcoming",
+};
+
+const PAID_FILL = "FFECFDF5";
+const DUE_FILL = "FFFFFBEB";
+
+function statementHeaders(data: StatementData): string[] {
+  return [
+    ...SCHEDULE_HEADERS,
+    "Status",
+    "Paid On",
+    "Amount Paid",
+    "Reference",
+    ...(data.forAdmin ? ["Recorded By"] : []),
+  ];
+}
+
+function writeStatementSheet(workbook: Workbook, data: StatementData) {
+  const headers = statementHeaders(data);
+  const columns = headers.length;
+  const ws = workbook.addWorksheet("Statement", {
+    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  });
+  ws.columns = [
+    { width: 26 },
+    { width: 16 },
+    { width: 18 },
+    { width: 16 },
+    { width: 18 },
+    { width: 16 },
+    { width: 18 },
+    { width: 11 },
+    { width: 15 },
+    { width: 15 },
+    { width: 24 },
+    ...(data.forAdmin ? [{ width: 22 }] : []),
+  ];
+
+  styleTitle(ws.addRow(["Investment Statement"]));
+  styleSubtitle(ws.addRow([`Prepared for ${data.investorName} on ${formatIsoDate(data.preparedOn)}`]));
+  ws.addRow([]);
+
+  const paidCount = data.rows.filter((r) => r.status === "paid").length;
+  addDetail(ws, "Investor", data.investorName);
+  addDetail(ws, "Investment amount", data.principal, CURRENCY);
+  addDetail(ws, "Planned investment date", isoToExcelDate(data.investmentDate), DATE);
+  addDetail(ws, "Interest start date", isoToExcelDate(data.startDate), DATE);
+  addDetail(ws, "Maturity date", isoToExcelDate(data.maturityDate), DATE);
+  addDetail(ws, "Term locked", formatYears(data.lockInYears));
+  addDetail(ws, "Payout term", FREQUENCY_LABELS[data.frequency]);
+  addDetail(ws, "Payout type", PAYOUT_TYPE_LABELS[data.payoutType]);
+  if (data.forAdmin && data.annualRatePercent !== undefined) {
+    addDetail(ws, "Annual rate (admins only)", formatPercent(data.annualRatePercent));
+  }
+  addDetail(ws, "Total interest payable", dollars(data.totals.interestCents), CURRENCY);
+  addDetail(ws, "Total amount scheduled", dollars(data.totals.payoutCents), CURRENCY);
+  addDetail(ws, "Payouts paid", `${paidCount} of ${data.rows.length}`);
+  addDetail(ws, "Total paid so far", dollars(data.paidCents), CURRENCY).font = { bold: true };
+  ws.addRow([]);
+
+  styleSectionHeading(ws.addRow(["Payout schedule and payments"]));
+  styleHeader(ws.addRow(headers), columns);
+  const firstDataRow = ws.rowCount + 1;
+  for (const r of data.rows) {
+    const row = ws.addRow([
+      r.payoutNumber,
+      isoToExcelDate(r.payoutDate),
+      dollars(r.openingPrincipalCents),
+      dollars(r.interestCents),
+      dollars(r.principalRepaymentCents),
+      dollars(r.totalPayoutCents),
+      dollars(r.remainingPrincipalCents),
+      STATEMENT_STATUS_LABELS[r.status],
+      r.paidOn ? isoToExcelDate(r.paidOn) : null,
+      r.paidCents === null ? null : dollars(r.paidCents),
+      r.reference,
+      ...(data.forAdmin ? [r.recordedBy ?? ""] : []),
+    ]);
+    row.getCell(1).alignment = { horizontal: "left" };
+    setFormat(row.getCell(2), DATE);
+    for (let c = 3; c <= 7; c++) setFormat(row.getCell(c), CURRENCY);
+    setFormat(row.getCell(9), DATE);
+    setFormat(row.getCell(10), CURRENCY);
+    styleBodyRow(row, columns, r.status === "paid" ? PAID_FILL : r.status === "due" ? DUE_FILL : undefined);
+  }
+  const lastDataRow = ws.rowCount;
+  const sum = (column: number, resultCents: number) => ({
+    formula: `SUM(${columnLetter(column)}${firstDataRow}:${columnLetter(column)}${lastDataRow})`,
+    result: dollars(resultCents),
+  });
+  const totalsRow = ws.addRow([
+    "Total",
+    null,
+    null,
+    sum(4, data.totals.interestCents),
+    sum(5, data.totals.principalCents),
+    sum(6, data.totals.payoutCents),
+    dollars(data.rows[data.rows.length - 1].remainingPrincipalCents),
+    null,
+    null,
+    sum(10, data.paidCents),
+  ]);
+  styleTotalsRow(totalsRow, columns);
+  for (const c of [4, 5, 6, 7, 10]) setFormat(totalsRow.getCell(c), CURRENCY);
+
+  ws.addRow([]);
+  addParagraph(
+    ws,
+    "Status: Paid means the payment has been recorded, with the date it was paid. Due means the scheduled date has arrived and the payment has not been recorded yet. Upcoming means the scheduled date is still ahead. Dates are in UTC.",
+    SCHEDULE_HEADERS.length,
+  );
+  addParagraph(
+    ws,
+    "Amounts: simple interest, never compounded. Amounts are rounded to the cent, and the final payout absorbs any rounding difference. Payout dates are not moved for weekends.",
+    SCHEDULE_HEADERS.length,
+  );
+  addParagraph(ws, DISCLAIMER, SCHEDULE_HEADERS.length, "Disclaimer:");
+}
+
+function writePaymentsSheet(workbook: Workbook, data: StatementData) {
+  const headers = ["Payout No.", "Scheduled Date", "Scheduled Amount", "Paid On", "Amount Paid", "Reference"];
+  if (data.forAdmin) headers.push("Recorded By");
+  const columns = headers.length;
+  const ws = workbook.addWorksheet("Payments", {
+    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
+  });
+  ws.columns = [{ width: 14 }, { width: 16 }, { width: 18 }, { width: 15 }, { width: 15 }, { width: 28 }, { width: 22 }].slice(
+    0,
+    columns,
+  );
+
+  styleTitle(ws.addRow(["Payments Received"]));
+  styleSubtitle(ws.addRow([`${formatDollars(data.principal)} investment of ${data.investorName}`]));
+  ws.addRow([]);
+
+  const paid = data.rows.filter((r) => r.paidOn !== null && r.paidCents !== null);
+  if (paid.length === 0) {
+    styleSubtitle(ws.addRow(["No payments have been recorded yet."]));
+    return;
+  }
+  styleHeader(ws.addRow(headers), columns);
+  const firstDataRow = ws.rowCount + 1;
+  for (const r of paid) {
+    const row = ws.addRow([
+      r.payoutNumber,
+      isoToExcelDate(r.payoutDate),
+      dollars(r.totalPayoutCents),
+      isoToExcelDate(r.paidOn!),
+      dollars(r.paidCents!),
+      r.reference,
+      ...(data.forAdmin ? [r.recordedBy ?? ""] : []),
+    ]);
+    row.getCell(1).alignment = { horizontal: "left" };
+    setFormat(row.getCell(2), DATE);
+    setFormat(row.getCell(3), CURRENCY);
+    setFormat(row.getCell(4), DATE);
+    setFormat(row.getCell(5), CURRENCY);
+    styleBodyRow(row, columns);
+  }
+  const lastDataRow = ws.rowCount;
+  const totalsRow = ws.addRow([
+    "Total",
+    null,
+    null,
+    null,
+    { formula: `SUM(E${firstDataRow}:E${lastDataRow})`, result: dollars(data.paidCents) },
+  ]);
+  styleTotalsRow(totalsRow, columns);
+  setFormat(totalsRow.getCell(5), CURRENCY);
+}
+
+/** Builds an investment statement (schedule, statuses and recorded payments) as .xlsx bytes. */
+export async function buildStatementFile(data: StatementData): Promise<{ data: ArrayBuffer; fileName: string }> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Investment Payout Calculator";
+  workbook.title = "Investment Statement";
+  writeStatementSheet(workbook, data);
+  writePaymentsSheet(workbook, data);
+  const buffer = await workbook.xlsx.writeBuffer();
+  return { data: buffer as ArrayBuffer, fileName: statementFileName(data) };
 }

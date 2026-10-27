@@ -14,6 +14,8 @@ import { clientKey, LoginThrottle } from "@/lib/server/login-throttle";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/passwords";
 import { recordAudit } from "@/lib/server/audit-store";
 import { investorActor, visitorActor } from "@/lib/audit";
+import { todayUtc } from "@/lib/investments";
+import { buildStatementData, type StatementResult } from "@/lib/statement";
 
 /**
  * Investor portal actions. Server actions are public endpoints: every action
@@ -177,4 +179,30 @@ export async function investorChangePasswordAction(
   // The new password version signs out older sessions, including this one: start a fresh one.
   await startInvestorSession(updated);
   redirect(`${PORTAL}?changed=1`);
+}
+
+// ---------- statement download ----------
+
+/**
+ * Statement data for one of the signed-in investor's own investments (bound
+ * to the investment id on the portal page). Never includes the interest rate.
+ */
+export async function investorStatementAction(investmentId: string): Promise<StatementResult> {
+  let investor;
+  try {
+    investor = await getCurrentInvestor();
+  } catch (error) {
+    console.error("Loading investor for statement failed", error);
+    return { ok: false, error: "Your statement could not be created right now. Please try again." };
+  }
+  if (!investor || investor.mustChangePassword) return { ok: false, error: "Your session has ended. Sign in again." };
+
+  // Only the investor's own investments are found here.
+  const investment =
+    typeof investmentId === "string" ? investor.investments.find((i) => i.id === investmentId) : undefined;
+  if (!investment) return { ok: false, error: "This investment could not be found. Reload the page." };
+
+  const data = buildStatementData(investor, investment, todayUtc(), { forAdmin: false });
+  if (!data) return { ok: false, error: "The statement for this investment could not be created. Please contact us." };
+  return { ok: true, data };
 }

@@ -1,7 +1,16 @@
 import "server-only";
+import { investorStatementAction } from "@/app/portal/actions";
+import { StatementButton } from "@/components/StatementButton";
 import type { Investment } from "@/lib/accounts";
 import { formatCents, formatDollars, formatIsoDate, formatIsoDateLong, formatYears } from "@/lib/format";
-import { calculatePayoutSchedule, FREQUENCY_LABELS, PAYOUT_TYPE_LABELS, type PayoutSchedule } from "@/lib/payout";
+import {
+  maturityDate,
+  PAYOUT_STATUS_BADGES,
+  PAYOUT_STATUS_LABELS,
+  payoutsWithStatus,
+  scheduleOrNull,
+} from "@/lib/investments";
+import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 
 /**
  * One investment in the investor portal: summary and full payout schedule.
@@ -9,37 +18,22 @@ import { calculatePayoutSchedule, FREQUENCY_LABELS, PAYOUT_TYPE_LABELS, type Pay
  * Server-only on purpose: the investment carries its interest rate, which is
  * used for the calculation but must never reach the investor's browser. Only
  * the rendered amounts and dates are sent; never pass the investment or the
- * schedule (whose inputs include the rate) to a client component.
+ * schedule (whose inputs include the rate) to a client component. The
+ * statement download gets only a server action bound to the investment id.
  */
 
 const MONTHS_LABEL: Record<number, string> = { 4: "3 months", 2: "6 months", 1: "12 months" };
 
-function scheduleFor(investment: Investment): PayoutSchedule | null {
-  try {
-    return calculatePayoutSchedule({
-      principal: investment.principal,
-      annualRatePercent: investment.annualRatePercent,
-      lockInYears: investment.lockInYears,
-      payoutType: investment.payoutType,
-      frequency: investment.frequency,
-      investmentDate: investment.investmentDate,
-    });
-  } catch (error) {
-    console.error(`Payout schedule for investment ${investment.id} could not be calculated`, error);
-    return null;
-  }
-}
-
 interface Props {
   investment: Investment;
-  /** Today's date in UTC, YYYY-MM-DD. Payouts on or before it count as paid. */
+  /** Today's date in UTC, YYYY-MM-DD. Unrecorded payouts on or before it are Due. */
   today: string;
 }
 
 export function InvestmentOverview({ investment, today }: Props) {
   const headingId = `investment-${investment.id}-heading`;
   const title = `${formatDollars(investment.principal)} investment`;
-  const schedule = scheduleFor(investment);
+  const schedule = scheduleOrNull(investment);
 
   if (!schedule) {
     return (
@@ -54,9 +48,13 @@ export function InvestmentOverview({ investment, today }: Props) {
     );
   }
 
-  const { rows, totals, startDate, periodsPerYear } = schedule;
-  const next = rows.find((row) => row.payoutDate > today) ?? null;
-  const paidCount = rows.filter((row) => row.payoutDate <= today).length;
+  const { totals, startDate, periodsPerYear } = schedule;
+  const rows = payoutsWithStatus(investment, schedule, today);
+  // The first payout not yet paid: a Due one first, else the next Upcoming one.
+  const next = rows.find((row) => row.status !== "paid") ?? null;
+  const paidCount = rows.filter((row) => row.status === "paid").length;
+  const dueCount = rows.filter((row) => row.status === "due").length;
+  const paidCents = rows.reduce((sum, row) => sum + (row.payment?.amountCents ?? 0), 0);
 
   const details = [
     { label: "Investment amount", value: formatDollars(investment.principal) },
@@ -65,18 +63,26 @@ export function InvestmentOverview({ investment, today }: Props) {
     { label: "Term locked", value: formatYears(investment.lockInYears) },
     { label: "Payout term", value: FREQUENCY_LABELS[investment.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[investment.payoutType] },
+    { label: "Maturity date", value: formatIsoDate(maturityDate(schedule)) },
+    { label: "Paid to you so far", value: formatCents(paidCents) },
   ];
 
   return (
     <section aria-labelledby={headingId} className="space-y-6">
-      <div>
-        <h2 id={headingId} className="text-xl font-semibold text-slate-900 sm:text-2xl">
-          {title}
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          {rows.length} {rows.length === 1 ? "payout" : "payouts"}, {paidCount} paid. Interest starts{" "}
-          {formatIsoDateLong(startDate)}.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 id={headingId} className="text-xl font-semibold text-slate-900 sm:text-2xl">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {rows.length} {rows.length === 1 ? "payout" : "payouts"}, {paidCount} paid
+            {dueCount > 0 && <>, {dueCount} due</>}. Interest starts {formatIsoDateLong(startDate)}.
+          </p>
+        </div>
+        <StatementButton
+          load={investorStatementAction.bind(null, investment.id)}
+          label={`Download statement for the ${title}`}
+        />
       </div>
 
       {/* Summary */}
@@ -89,10 +95,12 @@ export function InvestmentOverview({ investment, today }: Props) {
                 <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
                   {formatCents(next.totalPayoutCents)}
                 </p>
-                <p className="mt-0.5 text-sm text-slate-600">on {formatIsoDateLong(next.payoutDate)}</p>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  {next.status === "due" ? "Due" : "On"} {formatIsoDateLong(next.payoutDate)}
+                </p>
               </>
             ) : (
-              <p className="mt-1 text-lg font-semibold text-emerald-800">All payouts completed</p>
+              <p className="mt-1 text-lg font-semibold text-emerald-800">All payouts paid</p>
             )}
           </div>
           <div className="bg-white p-5">
@@ -164,7 +172,6 @@ export function InvestmentOverview({ investment, today }: Props) {
               </thead>
               <tbody className="tabular-nums text-slate-800">
                 {rows.map((row, index) => {
-                  const paid = row.payoutDate <= today;
                   const isNext = next?.payoutNumber === row.payoutNumber;
                   const rowClass = isNext ? "bg-blue-50/70" : index % 2 === 1 ? "bg-slate-50/60" : "";
                   return (
@@ -182,14 +189,18 @@ export function InvestmentOverview({ investment, today }: Props) {
                       <td className="px-4 py-3 text-right">{formatCents(row.remainingPrincipalCents)}</td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            paid
-                              ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200"
-                              : "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200"
-                          }`}
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${PAYOUT_STATUS_BADGES[row.status]}`}
                         >
-                          {paid ? "Paid" : "Upcoming"}
+                          {PAYOUT_STATUS_LABELS[row.status]}
                         </span>
+                        {row.payment && (
+                          <span className="mt-1 block whitespace-nowrap text-xs text-slate-600">
+                            on {formatIsoDate(row.payment.paidOn)}
+                            {row.payment.amountCents !== row.totalPayoutCents && (
+                              <>, {formatCents(row.payment.amountCents)}</>
+                            )}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -211,8 +222,8 @@ export function InvestmentOverview({ investment, today }: Props) {
           </div>
         </div>
         <p className="text-xs leading-relaxed text-slate-500">
-          Statuses are based on the scheduled payout dates: a payout shows as Paid from its scheduled date (UTC), not
-          when a payment is confirmed. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the interest
+          A payout shows as Paid once our team has recorded the payment, with the date it was paid. Due means the
+          scheduled date (UTC) has arrived and the payment has not been recorded yet. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the interest
           start date and are not moved for weekends.
         </p>
       </div>

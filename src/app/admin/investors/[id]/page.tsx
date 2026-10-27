@@ -13,10 +13,11 @@ import {
   isInvestorIdLike,
   LOGIN_STATE_BADGES,
 } from "@/components/admin/investors/fields";
-import { successNotice, textLink } from "@/components/admin/investors/ui";
-import { toPublicAdmin, toPublicInvestor, type Investor } from "@/lib/accounts";
+import { primaryButton, successNotice, textLink } from "@/components/admin/investors/ui";
+import { can, toPublicAdmin, toPublicInvestor, type Investor } from "@/lib/accounts";
 import { formatDollars } from "@/lib/format";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
+import { todayUtc } from "@/lib/investments";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
@@ -58,7 +59,10 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
   const admin = await requireAdminPage("investors.manage");
   const user = toPublicAdmin(admin);
   const { id } = await params;
-  const created = (await searchParams).created === "1";
+  const query = await searchParams;
+  const created = query.created === "1";
+  const added = query.added === "1";
+  const renewed = query.renewed === "1";
 
   const { investor, loadFailed, readAtMs } = await loadInvestor(id);
 
@@ -87,6 +91,11 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
   // Only safe fields go to client components (no password or token hashes).
   const pub = toPublicInvestor(investor);
   const totalInvested = pub.investments.reduce((sum, i) => sum + i.principal, 0);
+  const today = todayUtc();
+  const numberOf = (investmentId: string | null) => {
+    const index = investmentId ? pub.investments.findIndex((i) => i.id === investmentId) : -1;
+    return index === -1 ? null : index + 1;
+  };
 
   return (
     <AdminFrame user={user}>
@@ -133,6 +142,12 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
         </div>
       )}
 
+      {(added || renewed) && (
+        <div role="status" className={`mb-6 ${successNotice}`}>
+          {renewed ? "Investment renewed. The new investment is listed under Investments." : "Investment added."}
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section aria-labelledby="investor-contact-heading">
           <AdminCard>
@@ -168,14 +183,19 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
       </div>
 
       <section aria-labelledby="investor-investments-heading" className="mt-8">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="investor-investments-heading" className="text-lg font-semibold text-slate-900">
-            Investments
-          </h2>
-          <p className="text-sm text-slate-600">
-            {pub.investments.length} {pub.investments.length === 1 ? "investment" : "investments"}, total{" "}
-            {formatDollars(totalInvested)}
-          </p>
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="investor-investments-heading" className="text-lg font-semibold text-slate-900">
+              Investments
+            </h2>
+            <p className="text-sm text-slate-600">
+              {pub.investments.length} {pub.investments.length === 1 ? "investment" : "investments"}, total{" "}
+              {formatDollars(totalInvested)}
+            </p>
+          </div>
+          <Link href={`/admin/investors/${encodeURIComponent(pub.id)}/add-investment`} className={primaryButton}>
+            Add investment
+          </Link>
         </div>
         {pub.investments.length === 0 ? (
           <AdminCard>
@@ -184,7 +204,16 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
         ) : (
           <ol className="space-y-4">
             {pub.investments.map((investment, index) => (
-              <InvestmentCard key={investment.id} investment={investment} number={index + 1} />
+              <InvestmentCard
+                key={investment.id}
+                investorId={pub.id}
+                investment={investment}
+                number={index + 1}
+                today={today}
+                canManagePayouts={can(admin.role, "payouts.manage")}
+                renewedFromNumber={numberOf(investment.renewedFromId)}
+                renewedByNumber={numberOf(pub.investments.find((i) => i.renewedFromId === investment.id)?.id ?? null)}
+              />
             ))}
           </ol>
         )}

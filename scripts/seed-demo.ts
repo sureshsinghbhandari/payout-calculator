@@ -341,7 +341,7 @@ async function addDemo(): Promise<void> {
         active: true,
         createdAt: when.toISOString(),
         sourceInquiryId: id,
-        investments: [{ id: `ivt_demo${demo.n}`, createdAt: when.toISOString(), ...quote, annualRatePercent: rates[demo.frequency] }],
+        investments: [{ id: `ivt_demo${demo.n}`, createdAt: when.toISOString(), ...quote, annualRatePercent: rates[demo.frequency], renewedFromId: null, payments: [] }],
         ...credentials,
       });
       event(when, admins.ashwin, "investor", "investor.created",
@@ -398,6 +398,8 @@ async function addDemo(): Promise<void> {
         frequency: inv.frequency,
         payoutType: inv.payoutType,
         annualRatePercent: rates[inv.frequency],
+        renewedFromId: null,
+        payments: [],
       };
     }),
     ...credentials,
