@@ -6,10 +6,11 @@ import type { AdminUser } from "@/lib/accounts";
 import { adminActor } from "@/lib/audit";
 import { inquiryReference, isInquiryId, type StoredInquiry } from "@/lib/inquiry";
 import { isNoteKind, NOTE_MAX_LENGTH, type InquiryNote, type InquiryNoteKind } from "@/lib/inquiry-log";
+import { formatMeeting, parseMeetingInput, type Meeting } from "@/lib/meeting";
 import { recordAudit } from "@/lib/server/audit-store";
 import { requireAdminPermission } from "@/lib/server/auth";
 import { addInquiryNote } from "@/lib/server/inquiry-log-store";
-import { getInquiry, noteInquiryNote, setInquiryStatus } from "@/lib/server/inquiry-store";
+import { clearInquiryMeeting, getInquiry, noteInquiryNote, setInquiryStatus } from "@/lib/server/inquiry-store";
 
 export interface NoteState {
   status: "idle" | "added" | "error";
@@ -23,7 +24,9 @@ export interface NoteState {
 // Control characters other than newline/tab are never valid in a note.
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
-type NoteInput = { ok: true; id: string; kind: InquiryNoteKind; text: string } | { ok: false; state: NoteState };
+type NoteInput =
+  | { ok: true; id: string; kind: InquiryNoteKind; text: string; meeting?: Meeting }
+  | { ok: false; state: NoteState };
 
 function readNoteInput(formData: FormData): NoteInput {
   const id = formData.get("id");
@@ -36,21 +39,34 @@ function readNoteInput(formData: FormData): NoteInput {
   if (text === "") return error("Write the note first.");
   if (text.length > NOTE_MAX_LENGTH) return error(`Use at most ${NOTE_MAX_LENGTH} characters.`);
   if (CONTROL_CHARS.test(text)) return error("Remove unusual characters from the note.");
+  // "A meeting was scheduled": the browser sends the instant and its time zone.
+  if (formData.get("meetingScheduled") === "1") {
+    const meeting = parseMeetingInput(formData.get("meetingAt"), formData.get("meetingZone"), Date.now());
+    if (!meeting.ok) return error(meeting.error);
+    return { ok: true, id, kind, text, meeting: meeting.meeting };
+  }
   return { ok: true, id, kind, text };
 }
 
 /** Saves a note on the inquiry and updates the latest-note preview on the list. */
-async function saveNote(inquiry: Pick<StoredInquiry, "id">, user: AdminUser, kind: InquiryNoteKind, text: string): Promise<InquiryNote> {
+async function saveNote(
+  inquiry: Pick<StoredInquiry, "id">,
+  user: AdminUser,
+  kind: InquiryNoteKind,
+  text: string,
+  meeting?: Meeting,
+): Promise<InquiryNote> {
   const note: InquiryNote = {
     id: randomBytes(6).toString("hex"),
     at: new Date().toISOString(),
     kind,
     author: adminActor(user),
     text,
+    ...(meeting ? { meeting } : {}),
   };
   await addInquiryNote(inquiry.id, note);
   try {
-    await noteInquiryNote(inquiry.id, { at: note.at, kind, by: user.name, text });
+    await noteInquiryNote(inquiry.id, { at: note.at, kind, by: user.name, text }, meeting && { ...meeting, by: user.name });
   } catch (error) {
     // The note is saved; only the preview on the Inquiries list is behind.
     console.error("Updating the notes summary failed", error);
@@ -74,7 +90,7 @@ export async function addInquiryNoteAction(_prev: NoteState, formData: FormData)
   }
   let note: InquiryNote;
   try {
-    note = await saveNote(inquiry, user, input.kind, input.text);
+    note = await saveNote(inquiry, user, input.kind, input.text, input.meeting);
   } catch (error) {
     console.error("Adding note failed", error);
     return { status: "error", message: "The note could not be saved. Try again.", text: input.text };
@@ -116,7 +132,7 @@ export async function markContactedAction(_prev: NoteState, formData: FormData):
 
   let note: InquiryNote;
   try {
-    note = await saveNote(inquiry, user, input.kind, input.text);
+    note = await saveNote(inquiry, user, input.kind, input.text, input.meeting);
   } catch (error) {
     console.error("Saving the contact note failed", error);
     refresh();
@@ -128,4 +144,25 @@ export async function markContactedAction(_prev: NoteState, formData: FormData):
   }
   refresh();
   return { status: "added", message: "Marked as contacted.", savedAt: note.at };
+}
+
+/**
+ * Cancels the meeting scheduled on an inquiry (Master and Sales Admins). The
+ * cancellation is saved as a note, so it shows in the inquiry's activity.
+ */
+export async function cancelMeetingAction(formData: FormData): Promise<void> {
+  const user = await requireAdminPermission("inquiries.notes");
+  if (!user) return;
+  const id = formData.get("id");
+  if (typeof id !== "string" || !isInquiryId(id)) return;
+  try {
+    const inquiry = await getInquiry(id);
+    if (!inquiry?.meeting || inquiry.status === "deleted") return;
+    const { local } = formatMeeting(inquiry.meeting);
+    if (!(await clearInquiryMeeting(id))) return;
+    await saveNote(inquiry, user, "note", `Cancelled the meeting that was scheduled for ${local}.`);
+  } catch (error) {
+    console.error("Cancelling the meeting failed", error);
+  }
+  refresh();
 }

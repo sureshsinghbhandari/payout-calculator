@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**29 done · 7 in progress · 14 pending** · 21 [waiting on you](#waiting-on-you)
+**30 done · 7 in progress · 14 pending** · 21 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -37,35 +37,36 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 19 | [Visitor analytics](#web-analytics) | ⏳ Pending | Later | Reports and insights | Turn on Web Analytics in the Vercel project. |
 | 20 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
 | 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
-| 22 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
-| 23 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 24 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 27 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 28 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 29 | [Interest rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 30 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 31 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 32 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 33 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 34 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 35 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 36 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 37 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 39 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 40 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 41 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 42 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 43 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 44 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 45 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 46 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
-| 47 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
-| 48 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
-| 49 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
-| 50 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
+| 22 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
+| 23 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
+| 24 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 25 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 27 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 28 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 29 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 30 | [Interest rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 31 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 32 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 33 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 34 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 35 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 36 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 37 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 39 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 40 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 41 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 42 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 43 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 44 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 45 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 46 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 47 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 48 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 49 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
+| 50 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
+| 51 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
 
 <a id="waiting-on-you"></a>
 
@@ -517,6 +518,46 @@ A full check against WCAG 2.2 AA with screen readers and keyboard-only use.
 [Back to the table](#summary)
 
 ## Done
+
+<a id="meeting-info"></a>
+
+### Meetings booked in a call
+
+**Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
+
+When a meeting is booked during a call, the admin ticks "A meeting was scheduled" and picks the date and time (in their own time zone) on the note or in Mark as contacted. The inquiry then shows the meeting with its date, time and time zone (and UTC), green while it is still to come. The Inquiries list has a Meeting scheduled filter, and the meeting can be cancelled from the inquiry page.
+
+**Outcome:** Everyone can see at a glance which inquiries have a meeting booked and when.
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+Admin > Inquiries > Ref DE300003
+------------------------------------------------------------------
+ Meera Iyer  [NEW]
+ +--------------------------------------------------------------+
+ | Meeting scheduled: Thu, Nov 5, 2026, 2:00 PM EST             |
+ |   (Nov 5, 2026, 7:00 PM UTC) · Set by Suresh Bhandari        |
+ |                                          [ Cancel meeting ]  |
+ +--------------------------------------------------------------+   (green)
+ (turns grey, "Meeting was scheduled", once the time has passed)
+
+ Add a note, or Mark as contacted:
+   Type  ( ) Note  (o) Call  ( ) Meeting
+   Details [ Reached her in the evening, booked a meeting.     ]
+   [x] A meeting was scheduled
+       Meeting date and time [ 11/05/2026  02:00 PM ]
+       Enter it in your own time zone (America/New_York).
+
+ Notes and activity
+   CALL  Suresh Bhandari (Sales Admin)                 Oct 26, 18:05
+         Reached her in the evening, booked a meeting.
+         Meeting scheduled for Thu, Nov 5, 2026, 2:00 PM EST
+
+ Inquiries list:  [ Meeting scheduled (2) ]  shows only these
+```
+
+[Back to the table](#summary)
 
 <a id="inquiry-notifications"></a>
 

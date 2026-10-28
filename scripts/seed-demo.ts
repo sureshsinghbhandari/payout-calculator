@@ -73,6 +73,8 @@ interface DemoNote {
   kind: InquiryNoteKind;
   by: keyof typeof admins;
   text: string;
+  /** A meeting booked in this call: days from now, hour (UTC) and the time zone it was entered in. */
+  meeting?: { inDays: number; hour: number; zone: string };
 }
 
 interface DemoInquiry {
@@ -116,7 +118,13 @@ const INQUIRIES: DemoInquiry[] = [
     message: "Please call me in the evening.",
     daysAgo: 2, hour: 11, principal: 100_000, lockInYears: 5, frequency: "half-yearly", payoutType: "interest-only",
     investInDays: 45, status: "new",
-    notes: [{ daysAgo: 1, hour: 18, kind: "call", by: "suresh", text: "No answer, left a voicemail. Try again tomorrow evening." }],
+    notes: [
+      {
+        daysAgo: 1, hour: 18, kind: "call", by: "suresh",
+        text: "Reached her in the evening. She wants to talk it through, so we booked a meeting.",
+        meeting: { inDays: 3, hour: 19, zone: "America/New_York" },
+      },
+    ],
   },
   {
     n: 4, name: "Robert Chen", email: "robert.chen@example.com", phone: "+1 (555) 010-1004",
@@ -133,7 +141,13 @@ const INQUIRIES: DemoInquiry[] = [
     n: 5, name: "Anita Desai", email: "anita.desai@example.com", phone: "+1 (555) 010-1005",
     message: "", daysAgo: 8, hour: 13, principal: 40_000, lockInYears: 1, frequency: "quarterly",
     payoutType: "interest-only", investInDays: 10, status: "contacted", contactedDaysAgo: 7,
-    notes: [{ daysAgo: 7, hour: 12, kind: "call", by: "suresh", text: "Interested, but only for one year. Sent the plan details again." }],
+    notes: [
+      {
+        daysAgo: 7, hour: 12, kind: "call", by: "suresh",
+        text: "Interested, but only for one year. Sent the plan details again and booked a meeting.",
+        meeting: { inDays: 5, hour: 16, zone: "America/Chicago" },
+      },
+    ],
   },
   {
     n: 6, name: "James Wilson", email: "james.wilson@example.com", phone: "+1 (555) 010-1006",
@@ -186,6 +200,14 @@ function at(daysAgo: number, hour: number, minute = 0): Date {
   d.setUTCHours(hour, minute, 0, 0);
   // Never in the future (today's entries before the current time).
   return d > now ? new Date(now.getTime() - 60_000 * (60 - minute)) : d;
+}
+
+/** A moment in the future: `inDays` days from now at `hour` UTC. */
+function futureAt(inDays: number, hour: number): Date {
+  const d = new Date(now);
+  d.setUTCDate(d.getUTCDate() + inDays);
+  d.setUTCHours(hour, 0, 0, 0);
+  return d;
 }
 
 function isoDate(d: Date): string {
@@ -391,7 +413,10 @@ async function addDemo(): Promise<void> {
       kind: n.kind,
       author: admins[n.by],
       text: n.text,
+      ...(n.meeting ? { meeting: { at: futureAt(n.meeting.inDays, n.meeting.hour).toISOString(), zone: n.meeting.zone } } : {}),
     }));
+    const booked = notes.filter((n) => n.meeting).sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+    if (booked?.meeting) inquiry.meeting = { ...booked.meeting, by: booked.author.name };
     const last = [...notes].sort((a, b) => (a.at < b.at ? 1 : -1))[0];
     if (last) {
       inquiry.notes = {

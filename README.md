@@ -190,6 +190,13 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - Delete (Master Admin) is a soft delete: the inquiry keeps its data, gets the status
   "deleted" and moves to **Deleted inquiries** (`/admin/inquiries/deleted`), where it
   can be restored.
+- **Meetings booked in a call:** in a note, or in **Mark as contacted**, tick **A meeting was
+  scheduled** and pick the date and time in your own time zone. The inquiry then shows the
+  meeting with its date, time and time zone (and the same moment in UTC), in green while it
+  is still to come and grey afterwards, and the note shows it in the activity. The
+  Inquiries list has a **Meeting scheduled** filter. **Cancel meeting** (on the inquiry's
+  page) removes it and adds a note about the cancellation. A newly booked meeting replaces
+  the earlier one.
 - **New inquiry notifications:** a bell in the admin header shows how many new inquiries
   you have not opened yet. Master and Sales Admins each have their own counter, so one
   person opening an inquiry never changes another person's count. Opening an inquiry

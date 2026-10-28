@@ -3,6 +3,7 @@ import { after, connection } from "next/server";
 import { can, toPublicAdmin } from "@/lib/accounts";
 import {
   DEFAULT_LEAD_SOURCE,
+  hasUpcomingMeeting,
   INQUIRY_FILTERS,
   INQUIRY_SEARCH_MAX,
   inquiryListSearch,
@@ -100,6 +101,7 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
   const convertedCount = active.filter((i) => i.status === "converted").length;
   const dueCount = active.filter((i) => isFollowUpDue(i, today)).length;
   const unreadCount = active.filter((i) => unreadIds.has(i.id)).length;
+  const meetingCount = active.filter((i) => hasUpcomingMeeting(i)).length;
   const mineCount = active.filter((i) => i.assignedTo?.id === user.id && matchesInquiryFilter(i, "open")).length;
   // Every source seen so far, the website first; a source in the URL stays selectable.
   const sources = [
@@ -150,6 +152,7 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
             {view === "active" && listQuery.mine && <input type="hidden" name="mine" value="1" />}
             {view === "active" && listQuery.due && <input type="hidden" name="due" value="1" />}
             {view === "active" && listQuery.unread && <input type="hidden" name="unread" value="1" />}
+            {view === "active" && listQuery.meeting && <input type="hidden" name="meeting" value="1" />}
             <div className="flex flex-wrap items-center gap-2">
               <label htmlFor="inquiry-search" className="sr-only">
                 Search by name, email, phone or reference
@@ -244,6 +247,14 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
                   >
                     {listQuery.unread && <span aria-hidden="true">✓ </span>}
                     Unread ({unreadCount})
+                  </Link>
+                  <Link
+                    href={listHref(base, { ...listQuery, meeting: !listQuery.meeting })}
+                    aria-current={listQuery.meeting ? "true" : undefined}
+                    className={chipClass(listQuery.meeting)}
+                  >
+                    {listQuery.meeting && <span aria-hidden="true">✓ </span>}
+                    Meeting scheduled ({meetingCount})
                   </Link>
                   <Link
                     href={listHref(base, { ...listQuery, mine: !listQuery.mine })}

@@ -98,7 +98,13 @@ async function InquiryContent({ params }: { params: Params }) {
       <h1 className="mb-5 text-2xl font-semibold text-slate-900">Inquiry from {inquiry.name}</h1>
 
       <ul>
-        <InquiryCard inquiry={inquiry} permissions={permissions} today={todayUtc()} showDetailsLink={false} />
+        <InquiryCard
+          inquiry={inquiry}
+          permissions={permissions}
+          today={todayUtc()}
+          showDetailsLink={false}
+          canCancelMeeting={canAddNotes}
+        />
       </ul>
 
       {canAssign && (

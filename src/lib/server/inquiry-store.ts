@@ -10,6 +10,7 @@ import {
   type InquiryNotesSummary,
   type StoredInquiry,
 } from "../inquiry";
+import type { InquiryMeeting } from "../meeting";
 import { deleteInquiryLog } from "./inquiry-log-store";
 
 /** Rewrite attempts when two changes to the same inquiry overlap. */
@@ -145,7 +146,11 @@ export async function noteInquiryEmail(id: string, direction: "in" | "out", at: 
 }
 
 /** Updates the notes summary on an inquiry after a note is added. Retries on conflicts. */
-export async function noteInquiryNote(id: string, last: InquiryNotesSummary["last"]): Promise<void> {
+export async function noteInquiryNote(
+  id: string,
+  last: InquiryNotesSummary["last"],
+  meeting?: InquiryMeeting,
+): Promise<void> {
   const preview = last.text.length > NOTE_PREVIEW_LENGTH ? `${last.text.slice(0, NOTE_PREVIEW_LENGTH - 1)}…` : last.text;
   await updateInquiryWithRetry(id, (inquiry) => ({
     ...inquiry,
@@ -153,7 +158,20 @@ export async function noteInquiryNote(id: string, last: InquiryNotesSummary["las
       count: (inquiry.notes?.count ?? 0) + 1,
       last: inquiry.notes && inquiry.notes.last.at > last.at ? inquiry.notes.last : { ...last, text: preview },
     },
+    // A newly scheduled meeting replaces the earlier one (rescheduling).
+    ...(meeting ? { meeting } : {}),
   }));
+}
+
+/** Removes the scheduled meeting from an inquiry. Returns false when it had none. Retries on conflicts. */
+export async function clearInquiryMeeting(id: string): Promise<boolean> {
+  const updated = await updateInquiryWithRetry(id, (inquiry) => {
+    if (!inquiry.meeting) return null;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { meeting, ...rest } = inquiry;
+    return rest;
+  });
+  return updated !== null;
 }
 
 /**

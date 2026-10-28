@@ -3,6 +3,7 @@
  * inquiry, plus the notes, calls and meetings staff add to it. Pure helpers.
  */
 import { parseAuditEvents, type AuditActor, type AuditEvent } from "./audit";
+import { parseMeeting, type Meeting } from "./meeting";
 
 export type InquiryNoteKind = "note" | "call" | "meeting";
 
@@ -23,6 +24,8 @@ export interface InquiryNote {
   kind: InquiryNoteKind;
   author: AuditActor;
   text: string;
+  /** A meeting scheduled in this note or call. */
+  meeting?: Meeting;
 }
 
 export interface InquiryLog {
@@ -46,7 +49,8 @@ function parseNotes(list: unknown): InquiryNote[] {
     const author = d.author as AuditActor | undefined;
     if (typeof d.id !== "string" || typeof d.at !== "string" || typeof d.text !== "string") return [];
     if (typeof author?.name !== "string") return [];
-    return [{ id: d.id, at: d.at, kind: isNoteKind(d.kind) ? d.kind : "note", author, text: d.text }];
+    const meeting = parseMeeting(d.meeting);
+    return [{ id: d.id, at: d.at, kind: isNoteKind(d.kind) ? d.kind : "note", author, text: d.text, ...(meeting ? { meeting } : {}) }];
   });
 }
 

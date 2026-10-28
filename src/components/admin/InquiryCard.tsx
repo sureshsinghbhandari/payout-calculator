@@ -2,8 +2,10 @@ import Link from "next/link";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
 import { followUpState, inquiryReference, type FollowUpState, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
 import { NOTE_KIND_LABELS } from "@/lib/inquiry-log";
+import { formatMeeting, isMeetingUpcoming } from "@/lib/meeting";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import { InquiryActions } from "./InquiryActions";
+import { CancelMeetingButton } from "./inquiry/CancelMeetingButton";
 
 const timestampFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
@@ -43,6 +45,7 @@ export function InquiryCard({
   permissions,
   today,
   unread = false,
+  canCancelMeeting = false,
   showDetailsLink = true,
 }: {
   inquiry: StoredInquiry;
@@ -51,6 +54,8 @@ export function InquiryCard({
   today: string;
   /** The signed-in admin has not opened this inquiry yet. */
   unread?: boolean;
+  /** Show a button to cancel the scheduled meeting (on the inquiry page). */
+  canCancelMeeting?: boolean;
   /** Link to the inquiry page with its notes, activity and emails, and the latest note (off on that page itself). */
   showDetailsLink?: boolean;
 }) {
@@ -58,6 +63,10 @@ export function InquiryCard({
   const style = STATUS_STYLES[inquiry.status];
   const open = inquiry.status === "new" || inquiry.status === "contacted";
   const followUp = followUpState(inquiry, today);
+  // A meeting booked during a call, shown while the inquiry is open.
+  const meeting = open && inquiry.meeting ? inquiry.meeting : null;
+  const meetingUpcoming = meeting ? isMeetingUpcoming(meeting) : false;
+  const meetingText = meeting ? formatMeeting(meeting) : null;
   const details = [
     { label: "Investment amount", value: formatDollars(plan.principal) },
     { label: "Planned investment date", value: formatIsoDate(plan.investmentDate) },
@@ -148,6 +157,22 @@ export function InquiryCard({
           />
         </div>
       </div>
+
+      {meeting && meetingText && (
+        <div
+          className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
+            meetingUpcoming ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-slate-50 text-slate-600"
+          }`}
+        >
+          <p>
+            <span className="font-semibold">{meetingUpcoming ? "Meeting scheduled:" : "Meeting was scheduled:"}</span>{" "}
+            {meetingText.local}
+            {meetingText.utc && <span className="text-xs opacity-80"> ({meetingText.utc})</span>}
+            <span className="block text-xs opacity-80">Set by {meeting.by}</span>
+          </p>
+          {canCancelMeeting && <CancelMeetingButton inquiryId={inquiry.id} />}
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
         <a href={`mailto:${inquiry.email}`} className="font-medium text-blue-800 underline underline-offset-2 hover:text-blue-950">

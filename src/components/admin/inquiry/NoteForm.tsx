@@ -3,6 +3,7 @@
 import { useActionState, useId } from "react";
 import { addInquiryNoteAction, type NoteState } from "@/app/admin/note-actions";
 import { NOTE_KIND_LABELS, NOTE_KINDS, NOTE_MAX_LENGTH, type InquiryNoteKind } from "@/lib/inquiry-log";
+import { MeetingFields } from "./MeetingFields";
 
 /** Type (note, call, meeting) and text of a note. Shared by the note form and Mark as contacted. */
 export function NoteFields({
@@ -50,6 +51,8 @@ export function NoteFields({
           className="mt-2 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-900 shadow-sm focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30"
         />
       </div>
+      {/* A new, unticked box after each saved note. */}
+      <MeetingFields key={state.status === "added" ? state.savedAt : "meeting"} />
       {state.status === "error" && state.message && (
         <p role="alert" className="text-sm font-medium text-red-700">
           {state.message}

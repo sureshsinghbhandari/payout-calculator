@@ -93,6 +93,30 @@ export const LAYOUTS: Record<string, string> = {
    +--------------------------------------------------+
  A contacted inquiry shows [ Convert to investor ] and [ Mark as new ].`,
 
+  "meeting-info": `Admin > Inquiries > Ref DE300003
+------------------------------------------------------------------
+ Meera Iyer  [NEW]
+ +--------------------------------------------------------------+
+ | Meeting scheduled: Thu, Nov 5, 2026, 2:00 PM EST             |
+ |   (Nov 5, 2026, 7:00 PM UTC) · Set by Suresh Bhandari        |
+ |                                          [ Cancel meeting ]  |
+ +--------------------------------------------------------------+   (green)
+ (turns grey, "Meeting was scheduled", once the time has passed)
+
+ Add a note, or Mark as contacted:
+   Type  ( ) Note  (o) Call  ( ) Meeting
+   Details [ Reached her in the evening, booked a meeting.     ]
+   [x] A meeting was scheduled
+       Meeting date and time [ 11/05/2026  02:00 PM ]
+       Enter it in your own time zone (America/New_York).
+
+ Notes and activity
+   CALL  Suresh Bhandari (Sales Admin)                 Oct 26, 18:05
+         Reached her in the evening, booked a meeting.
+         Meeting scheduled for Thu, Nov 5, 2026, 2:00 PM EST
+
+ Inquiries list:  [ Meeting scheduled (2) ]  shows only these`,
+
   "inquiry-notes": `Admin > Inquiries > Ref DE300004
 Inquiry from Robert Chen
 ------------------------------------------------------------------

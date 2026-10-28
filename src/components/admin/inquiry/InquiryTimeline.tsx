@@ -1,6 +1,7 @@
 import { ROLE_LABELS } from "@/lib/accounts";
 import { AUDIT_CATEGORY_LABELS, type AuditActor } from "@/lib/audit";
 import { NOTE_KIND_LABELS, type TimelineEntry } from "@/lib/inquiry-log";
+import { formatMeeting, type Meeting } from "@/lib/meeting";
 
 const timestampFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
@@ -21,6 +22,17 @@ const NOTE_STYLES = {
   meeting: "border-violet-200 bg-violet-50",
 } as const;
 
+/** "Meeting scheduled for ..." under the note or call that booked it. */
+function MeetingLine({ meeting }: { meeting: Meeting }) {
+  const { local, utc } = formatMeeting(meeting);
+  return (
+    <p className="mt-2 text-sm font-semibold text-emerald-800">
+      Meeting scheduled for {local}
+      {utc && <span className="font-normal text-slate-600"> ({utc})</span>}
+    </p>
+  );
+}
+
 /** Notes and activity of one inquiry, newest first: one row per entry. */
 export function InquiryTimeline({ entries }: { entries: TimelineEntry[] }) {
   if (entries.length === 0) return <p className="text-sm text-slate-600">Nothing recorded yet.</p>;
@@ -40,6 +52,7 @@ export function InquiryTimeline({ entries }: { entries: TimelineEntry[] }) {
                 <p className="text-xs text-slate-500">{when}</p>
               </div>
               <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-slate-900">{note.text}</p>
+              {note.meeting && <MeetingLine meeting={note.meeting} />}
             </li>
           );
         }

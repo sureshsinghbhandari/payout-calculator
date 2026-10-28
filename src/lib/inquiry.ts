@@ -3,6 +3,7 @@
  * Pure functions so they can be unit tested.
  */
 import { isValidIsoDate } from "./dates";
+import { isMeetingUpcoming, parseMeeting, type InquiryMeeting } from "./meeting";
 import type { ProductSettings } from "./products";
 import { parseQuoteInputs } from "./quote";
 import type { QuoteInputs } from "./scenarios";
@@ -60,6 +61,8 @@ export interface StoredInquiry extends InquiryContact {
   assignedTo?: InquiryAssignee;
   /** When to follow up next, YYYY-MM-DD. */
   followUpDate?: string;
+  /** The meeting scheduled during a call or note (the latest one wins; cleared when cancelled). */
+  meeting?: InquiryMeeting;
 }
 
 export interface InquiryAssignee {
@@ -97,6 +100,15 @@ export function isFollowUpDate(value: string): boolean {
 /** Today as YYYY-MM-DD in UTC, the time zone the admin pages show times in. */
 export function todayUtc(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
+}
+
+/** An open inquiry (new or contacted) with a scheduled meeting that is still to come. */
+export function hasUpcomingMeeting(inquiry: StoredInquiry, nowMs: number = Date.now()): boolean {
+  return (
+    (inquiry.status === "new" || inquiry.status === "contacted") &&
+    inquiry.meeting !== undefined &&
+    isMeetingUpcoming(inquiry.meeting, nowMs)
+  );
 }
 
 export type FollowUpState = "overdue" | "today" | "upcoming" | "closed";
@@ -281,6 +293,9 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   const assignedId = str(assigned?.id);
   const assignedName = str(assigned?.name);
   const followUpDate = str(d.followUpDate);
+  const meetingBase = parseMeeting(d.meeting);
+  const meetingBy = str(((d.meeting ?? null) as Record<string, unknown> | null)?.by);
+  const meeting: InquiryMeeting | undefined = meetingBase && meetingBy ? { ...meetingBase, by: meetingBy } : undefined;
   return {
     id,
     createdAt,
@@ -308,6 +323,7 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     source: parseLeadSource(d.source),
     ...(assignedId && assignedName ? { assignedTo: { id: assignedId, name: assignedName } } : {}),
     ...(followUpDate && isFollowUpDate(followUpDate) ? { followUpDate } : {}),
+    ...(meeting ? { meeting } : {}),
   };
 }
 
@@ -358,6 +374,8 @@ export interface InquiryListQuery {
   due: boolean;
   /** Only inquiries the signed-in admin has not opened yet. */
   unread: boolean;
+  /** Only open inquiries with a meeting still to come. */
+  meeting: boolean;
   source: string;
   /** Received on or after / on or before, YYYY-MM-DD (UTC). */
   from: string;
@@ -387,6 +405,7 @@ export function parseInquiryListQuery(params: ListParams): InquiryListQuery {
     mine: param(params, "mine") === "1",
     due: param(params, "due") === "1",
     unread: param(params, "unread") === "1",
+    meeting: param(params, "meeting") === "1",
     source: isLeadSource(source) ? source : "",
     from,
     to,
@@ -401,6 +420,7 @@ export function inquiryListSearch(query: InquiryListQuery): string {
   if (query.mine) params.set("mine", "1");
   if (query.due) params.set("due", "1");
   if (query.unread) params.set("unread", "1");
+  if (query.meeting) params.set("meeting", "1");
   if (query.source) params.set("source", query.source);
   if (query.from) params.set("from", query.from);
   if (query.to) params.set("to", query.to);
@@ -410,7 +430,7 @@ export function inquiryListSearch(query: InquiryListQuery): string {
 
 /** True when anything besides the status filter narrows the list. */
 export function isInquiryListNarrowed(query: InquiryListQuery): boolean {
-  return Boolean(query.q || query.mine || query.due || query.unread || query.source || query.from || query.to);
+  return Boolean(query.q || query.mine || query.due || query.unread || query.meeting || query.source || query.from || query.to);
 }
 
 /** Whether an inquiry is on the list for this query, for the signed-in admin on this day. */
@@ -418,7 +438,7 @@ export function matchesInquiryListQuery(
   inquiry: StoredInquiry,
   query: InquiryListQuery,
   /** `unreadIds`: the inquiries the signed-in admin has not opened (the Unread filter is skipped without it). */
-  context: { userId: string; today: string; unreadIds?: ReadonlySet<string> },
+  context: { userId: string; today: string; unreadIds?: ReadonlySet<string>; nowMs?: number },
 ): boolean {
   const received = inquiry.createdAt.slice(0, 10);
   return (
@@ -426,6 +446,7 @@ export function matchesInquiryListQuery(
     (!query.mine || inquiry.assignedTo?.id === context.userId) &&
     (!query.due || isFollowUpDue(inquiry, context.today)) &&
     (!query.unread || !context.unreadIds || context.unreadIds.has(inquiry.id)) &&
+    (!query.meeting || hasUpcomingMeeting(inquiry, context.nowMs)) &&
     (!query.source || inquiry.source === query.source) &&
     (!query.from || received >= query.from) &&
     (!query.to || received <= query.to) &&
