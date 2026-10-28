@@ -9,7 +9,7 @@ interface Props {
   action: (state: TwoStepDisableState, formData: FormData) => Promise<TwoStepDisableState>;
   /** The person's username, for password managers (not submitted). */
   username: string;
-  /** Extra line under the button, e.g. that Master Admins must set it up again. */
+  /** Extra line under the button, e.g. a note about moving to a new phone. */
   note?: string;
 }
 

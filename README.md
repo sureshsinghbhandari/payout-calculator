@@ -118,11 +118,13 @@ Nobody's password is stored in the code or the README. People set their own:
 
 Admins (**My account**) and investors (Investor portal > **Sign-in security**) can add a
 code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password
-and similar) as a second step after their password. **Master Admins must use it:** without
-it they are asked to set it up right after signing in. Setting it up shows a QR code and 10
-one-time recovery codes; save them, because they are shown only once. Lost your phone?
-Sign in with a recovery code, or ask a Master Admin to reset two-step sign-in (Settings >
-Employees, or the investor's page). Password resets never skip the second step.
+and similar) as a second step after their password. It is currently **optional for every
+role, including Master Admins** (`needsTwoStepSetup` in `src/lib/server/auth.ts` is the
+one place that decides this, so making it required again later is a one-line change).
+Setting it up shows a QR code and 10 one-time recovery codes; save them, because they are
+shown only once. Lost your phone? Sign in with a recovery code, or ask a Master Admin to
+reset two-step sign-in (Settings > Employees, or the investor's page). Password resets
+never skip the second step for anyone who has it turned on.
 
 ### Managing users (Master Admin)
 

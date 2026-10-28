@@ -409,8 +409,8 @@ export const ROADMAP: RoadmapItem[] = [
     category: "security",
     priority: "next",
     status: "done",
-    description: "Optional authenticator-app codes for staff and investors, required for Master Admins.",
-    outcome: "Admins and investors can add authenticator-app codes with 10 recovery codes; Master Admins must set it up at their next sign-in. A Master Admin can reset it for someone who lost their phone.",
+    description: "Optional authenticator-app codes for staff and investors, for every role including Master Admins.",
+    outcome: "Admins and investors can add authenticator-app codes with 10 recovery codes. A Master Admin can reset it for someone who lost their phone. Currently optional for all roles; can be made required for Master Admins again with a one-line change.",
   },
   {
     id: "kyc",

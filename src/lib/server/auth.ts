@@ -113,9 +113,15 @@ export function needsNewPassword(user: AdminUser): boolean {
   return !user.passwordHash || user.mustChangePassword;
 }
 
-/** Master Admins must use two-step sign-in: true until this one has set it up. */
+/**
+ * Whether this admin is forced to set up two-step sign-in before using the
+ * admin area. Currently optional for everyone, including Master Admins, so
+ * this always returns false; kept as a named check so turning it back on
+ * for a role is a one-line change.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function needsTwoStepSetup(user: AdminUser): boolean {
-  return user.role === "master" && !hasTwoStep(user);
+  return false;
 }
 
 /** Whether this admin may use the admin area (no new password or two-step setup outstanding). */

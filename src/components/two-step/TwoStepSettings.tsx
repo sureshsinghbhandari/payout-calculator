@@ -20,7 +20,7 @@ interface Props {
   recoveryCodesLeft: number;
   /** The pending setup to scan (see lib/server/two-step.ts), or null. */
   setup: { secretText: string; qrPath: string; qrSize: number } | null;
-  /** Master Admins must use it. */
+  /** Whether turning it off warns that setup is required again right away (not currently used for any role). */
   required: boolean;
   actions: TwoStepActions;
   /** Where "Continue" goes after turning it on; without it the page reloads. */

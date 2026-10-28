@@ -334,10 +334,7 @@ export async function resetUserTwoStepAction(_prev: TwoStepResetState, formData:
     refresh();
     return {
       status: "ok",
-      message:
-        user.role === "master"
-          ? `Two-step sign-in reset for ${user.name}. They must set it up again with their new phone when they next sign in.`
-          : `Two-step sign-in reset for ${user.name}. They can sign in with their password only, and set it up again in My account.`,
+      message: `Two-step sign-in reset for ${user.name}. They can sign in with their password only, and set it up again in My account.`,
     };
   } catch (error) {
     return failure(error, "Two-step sign-in could not be reset.");

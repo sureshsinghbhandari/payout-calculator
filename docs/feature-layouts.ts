@@ -230,15 +230,14 @@ Investors
 
   "two-factor": `Sign-in, second step                     Setting it up (My account)
 -----------------------------------   --------------------------------
- Enter the 6-digit code from your     Two-step sign-in is off
+ Enter the 6-digit code from your     Two-step sign-in is off (optional)
  authenticator app                    [ Set up ]
    Code [ 123456 ]  [ Verify ]
    Lost your phone? Use a            1. Scan the QR code  [QR]
    recovery code                        or type the key  ABCD EFGH ...
                                      2. Enter a code [ ...... ] [ Turn on ]
- Master Admins who have not set       3. Save your 10 recovery codes
- it up are sent to the setup          [ Copy ] [ Download ]  (shown once)
- screen after signing in.`,
+ Optional for every role,             3. Save your 10 recovery codes
+ including Master Admins.             [ Copy ] [ Download ]  (shown once)`,
 
   "documents": `Admin > Investors > James Wilson > Documents      Portal > Your documents
 -----------------------------------------   ---------------------------

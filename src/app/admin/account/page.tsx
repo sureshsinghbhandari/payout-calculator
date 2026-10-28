@@ -6,7 +6,7 @@ import { ChangePasswordForm } from "@/components/admin/ChangePasswordForm";
 import { MyEmailSettings } from "@/components/admin/MyEmailSettings";
 import { TwoStepSettings } from "@/components/two-step/TwoStepSettings";
 import { can, hasTwoStep, ROLE_LABELS, toPublicAdmin, type AdminUser } from "@/lib/accounts";
-import { needsNewPassword, needsTwoStepSetup, requireAdminPage } from "@/lib/server/auth";
+import { needsNewPassword, requireAdminPage } from "@/lib/server/auth";
 import { isEmailEnabled } from "@/lib/server/email";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 import { pendingSetupDetails } from "@/lib/server/two-step";
@@ -82,27 +82,8 @@ async function AccountContent({ searchParams }: { searchParams: SearchParams }) 
   const user = await requireAdminPage(undefined, { allowAccountSetup: true });
   const params = await searchParams;
   const mustChange = needsNewPassword(user);
-  const mustSetUpTwoStep = !mustChange && needsTwoStepSetup(user);
-
-  // Master Admins without two-step sign-in set it up before anything else.
-  if (mustSetUpTwoStep) {
-    return (
-      <AdminFrame user={null}>
-        <AdminCard>
-          <h1 className="text-xl font-semibold text-slate-900">Set up two-step sign-in</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {user.name} ({user.username}), {ROLE_LABELS[user.role]}
-          </p>
-          <p className="mb-6 mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Master Admins must use two-step sign-in, because they can see and change everything. Set it up now to continue.
-            You need an authenticator app on your phone.
-          </p>
-          <TwoStepSection user={user} required params={params} />
-          <SignOutLink />
-        </AdminCard>
-      </AdminFrame>
-    );
-  }
+  // Two-step sign-in is currently optional for every role, including Master Admins
+  // (see needsTwoStepSetup); nobody is sent here to set it up before continuing.
 
   return (
     <AdminFrame user={mustChange ? null : toPublicAdmin(user)}>
@@ -127,11 +108,10 @@ async function AccountContent({ searchParams }: { searchParams: SearchParams }) 
           <AdminCard>
             <h2 className="text-lg font-semibold text-slate-900">Two-step sign-in</h2>
             <p className="mb-5 mt-1 text-sm text-slate-600">
-              {user.role === "master"
-                ? "Required for Master Admins: after your password, you enter a code from an authenticator app on your phone."
-                : "Optional: after your password, you enter a code from an authenticator app on your phone."}
+              Optional, for every role including Master Admins: after your password, you enter a code from an
+              authenticator app on your phone.
             </p>
-            <TwoStepSection user={user} required={user.role === "master"} params={params} />
+            <TwoStepSection user={user} required={false} params={params} />
           </AdminCard>
         )}
 

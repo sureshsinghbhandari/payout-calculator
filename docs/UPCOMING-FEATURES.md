@@ -982,24 +982,23 @@ Payout calendar
 
 **Status:** ✅ Done · **Priority:** Next · **Area:** Security and compliance
 
-Optional authenticator-app codes for staff and investors, required for Master Admins.
+Optional authenticator-app codes for staff and investors, for every role including Master Admins.
 
-**Outcome:** Admins and investors can add authenticator-app codes with 10 recovery codes; Master Admins must set it up at their next sign-in. A Master Admin can reset it for someone who lost their phone.
+**Outcome:** Admins and investors can add authenticator-app codes with 10 recovery codes. A Master Admin can reset it for someone who lost their phone. Currently optional for all roles; can be made required for Master Admins again with a one-line change.
 
 **Layout** (a sketch, not a screenshot):
 
 ```text
 Sign-in, second step                     Setting it up (My account)
 -----------------------------------   --------------------------------
- Enter the 6-digit code from your     Two-step sign-in is off
+ Enter the 6-digit code from your     Two-step sign-in is off (optional)
  authenticator app                    [ Set up ]
    Code [ 123456 ]  [ Verify ]
    Lost your phone? Use a            1. Scan the QR code  [QR]
    recovery code                        or type the key  ABCD EFGH ...
                                      2. Enter a code [ ...... ] [ Turn on ]
- Master Admins who have not set       3. Save your 10 recovery codes
- it up are sent to the setup          [ Copy ] [ Download ]  (shown once)
- screen after signing in.
+ Optional for every role,             3. Save your 10 recovery codes
+ including Master Admins.             [ Copy ] [ Download ]  (shown once)
 ```
 
 [Back to the table](#summary)

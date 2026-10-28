@@ -114,16 +114,9 @@ export function UserRow({ user, isSelf, nowMs, minPasswordLength }: Props) {
         <dd className="flex items-start gap-2 text-slate-800">
           <span
             aria-hidden="true"
-            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-              user.twoStepEnabled ? TONE_DOT.ok : user.role === "master" ? TONE_DOT.warn : TONE_DOT.muted
-            }`}
+            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${user.twoStepEnabled ? TONE_DOT.ok : TONE_DOT.muted}`}
           />
-          <span>
-            Two-step sign-in {user.twoStepEnabled ? "on" : "off"}
-            {!user.twoStepEnabled && user.role === "master" && (
-              <span className="block text-xs text-slate-500">Required for Master Admins: they are asked to set it up when they next sign in.</span>
-            )}
-          </span>
+          <span>Two-step sign-in {user.twoStepEnabled ? "on" : "off"} (optional)</span>
         </dd>
         <dt className="sr-only">Email</dt>
         <dd className="break-all text-slate-700">
