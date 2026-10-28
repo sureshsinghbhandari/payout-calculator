@@ -82,6 +82,15 @@ Interest rates are never shown to visitors or investors.
   the cent, and the final payout absorbs any rounding difference, so totals reconcile and
   the remaining principal ends at exactly $0.00.
 
+## Times
+
+Every time the app shows is **US Eastern Time**: EST in winter, EDT in summer, with the
+label switching by itself (`src/lib/time.ts`). Stored timestamps stay in UTC. "Today"
+(follow-ups, Due payouts, the payout calendar, the dashboard weeks) and the day an
+inquiry was received (the received-date filter) also use Eastern Time. The Excel exports
+of inquiries and of the audit log, and the audit export's date range, stay in UTC, and
+their column headings say so. The audit log is stored in one file per UTC month.
+
 ## Admin users and roles
 
 Admins sign in at `/admin` with a **username and password**.
@@ -192,7 +201,8 @@ Until the first save, the starting rates in `src/lib/config.ts`
   can be restored.
 - **Meetings booked in a call:** in a note, or in **Mark as contacted**, tick **A meeting was
   scheduled** and pick the date and time in your own time zone. The inquiry then shows the
-  meeting with its date, time and time zone (and the same moment in UTC), in green while it
+  meeting with its date and time in Eastern Time (and in the time zone it was entered in, if
+  that is different), in green while it
   is still to come and grey afterwards, and the note shows it in the activity. The
   Inquiries list has a **Meeting scheduled** filter. **Cancel meeting** (on the inquiry's
   page) removes it and adds a note about the cancellation. A newly booked meeting replaces
@@ -266,7 +276,7 @@ due in the next 30 and 90 days, and sign-in alerts. Sales Admins see inquiry fig
 ## Audit log
 
 Every action is recorded with who did it, what they did, the item it affected and the
-time (UTC): admin and investor sign-ins (including failed attempts), password changes,
+time (Eastern Time): admin and investor sign-ins (including failed attempts), password changes,
 inquiries received, status changes, deletes and restores, conversions, investor and user
 changes, and interest rate unlocks and changes (with the old and new rates). Master
 Admins see it under **Settings > Audit log** (`/admin/settings/audit`), by month and by

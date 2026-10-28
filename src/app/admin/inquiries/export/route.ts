@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { can } from "@/lib/accounts";
 import { adminActor } from "@/lib/audit";
-import { matchesInquiryListQuery, parseInquiryListQuery, todayUtc, type StoredInquiry } from "@/lib/inquiry";
+import { matchesInquiryListQuery, parseInquiryListQuery, todayEastern, type StoredInquiry } from "@/lib/inquiry";
 import { recordAudit } from "@/lib/server/audit-store";
 import { requireAdminPermission } from "@/lib/server/auth";
 import { listInquiries } from "@/lib/server/inquiry-store";
@@ -20,7 +20,7 @@ export async function GET(request: Request): Promise<Response> {
 
   const url = new URL(request.url);
   const query = parseInquiryListQuery(Object.fromEntries(url.searchParams));
-  const today = todayUtc();
+  const today = todayEastern();
   let rows: StoredInquiry[];
   try {
     rows = (await listInquiries()).inquiries.filter(

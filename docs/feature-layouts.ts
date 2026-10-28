@@ -98,7 +98,7 @@ export const LAYOUTS: Record<string, string> = {
  Meera Iyer  [NEW]
  +--------------------------------------------------------------+
  | Meeting scheduled: Thu, Nov 5, 2026, 2:00 PM EST             |
- |   (Nov 5, 2026, 7:00 PM UTC) · Set by Suresh Bhandari        |
+ |   (also Thu, Nov 5, 2026, 11:00 AM PST) · Set by Suresh      |
  |                                          [ Cancel meeting ]  |
  +--------------------------------------------------------------+   (green)
  (turns grey, "Meeting was scheduled", once the time has passed)
@@ -332,7 +332,7 @@ Investors
    Replies go to              team+<code>@gmail.com
  (amber box with anything still to set up)
 
- Gmail replies     Last checked Oct 27, 13:30 UTC   [ Check for replies ]
+ Gmail replies     Last checked Oct 27, 2026, 9:30 AM EDT   [ Check for replies ]
  Test              Send a test email to [ you@example.com ] [ Send ]
  Payout emails to investors   (see Payout notices)`,
 
@@ -350,7 +350,7 @@ Investors
   "payout-reminders": `Settings > Email > Payout emails to investors
 ------------------------------------------------------------------
  Remind investors [ 3 ] days before a payout   (0 = off)   [ Save ]
- Daily job        13:00 UTC · CRON_SECRET: Set
+ Daily job        about 8 to 9 AM Eastern Time · CRON_SECRET: Set
  Last run         Oct 27, 13:00 · daily · 4 reminders sent, 0 failed
  [ Run now ]
 

@@ -40,7 +40,7 @@ import { inquiryReference, isInquiryId } from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate } from "@/lib/format";
 import { hasTwoStep, type Investment, type Investor, type PayoutPayment } from "@/lib/accounts";
 import type { ProductSettings } from "@/lib/products";
-import { isMatured, latestPaidOn, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
+import { isMatured, latestPaidOn, renewalOf, scheduleOrNull, todayEastern } from "@/lib/investments";
 import { buildStatementData, type StatementResult } from "@/lib/statement";
 import { getInquiry, markInquiryConverted } from "@/lib/server/inquiry-store";
 import { hashPassword, validateNewPassword } from "@/lib/server/passwords";
@@ -470,7 +470,7 @@ export async function addInvestmentAction(prev: AddInvestmentState, formData: Fo
   if (renewedFromId) {
     if (!source) return { attempt, values, error: "The investment to renew could not be found. Reload the page." };
     const sourceSchedule = scheduleOrNull(source);
-    if (!sourceSchedule || !isMatured(sourceSchedule, todayUtc())) {
+    if (!sourceSchedule || !isMatured(sourceSchedule, todayEastern())) {
       return { attempt, values, error: "Only an investment whose term has ended can be renewed." };
     }
     if (renewalOf(source, investor.investments)) {
@@ -577,7 +577,7 @@ export async function recordPaymentAction(prev: PaymentState, formData: FormData
 
   const parsed = parsePaymentFields(values, {
     earliest: investment.investmentDate,
-    latest: latestPaidOn(todayUtc()),
+    latest: latestPaidOn(todayEastern()),
   });
   if (!parsed.ok) {
     return { attempt, status: "error", message: "Fix the highlighted fields.", fieldErrors: parsed.errors, values };
@@ -688,7 +688,7 @@ export async function adminStatementAction(investorId: string, investmentId: str
   const investment = investor?.investments.find((i) => i.id === investmentId);
   if (!investor || !investment) return { ok: false, error: "This investment could not be found. Reload the page." };
 
-  const data = buildStatementData(investor, investment, todayUtc(), { forAdmin: true });
+  const data = buildStatementData(investor, investment, todayEastern(), { forAdmin: true });
   if (!data) return { ok: false, error: "The payout schedule of this investment could not be calculated." };
   return { ok: true, data };
 }

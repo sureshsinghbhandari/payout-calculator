@@ -5,15 +5,16 @@ import type { Investor } from "./accounts";
 import { addDays, dayOfWeek } from "./dates";
 import type { InquiryStatus, StoredInquiry } from "./inquiry";
 import { calculatePayoutSchedule } from "./payout";
+import { easternDay } from "./time";
 
 export interface WeekCount {
-  /** Monday the week starts on (UTC), YYYY-MM-DD. */
+  /** Monday the week starts on (Eastern Time), YYYY-MM-DD. */
   weekStart: string;
   count: number;
 }
 
 /**
- * Inquiries received per week (Monday to Sunday, UTC) for the last `weeks`
+ * Inquiries received per week (Monday to Sunday, Eastern Time) for the last `weeks`
  * weeks, oldest first. The last week is the current one, so far. Deleted
  * inquiries are left out.
  */
@@ -23,7 +24,7 @@ export function inquiriesPerWeek(inquiries: StoredInquiry[], today: string, week
   for (let i = weeks - 1; i >= 0; i--) result.push({ weekStart: addDays(thisMonday, -7 * i), count: 0 });
   for (const inquiry of inquiries) {
     if (inquiry.status === "deleted") continue;
-    const day = inquiry.createdAt.slice(0, 10);
+    const day = easternDay(inquiry.createdAt);
     // The last week that starts on or before the inquiry's day.
     for (let i = result.length - 1; i >= 0; i--) {
       if (day >= result[i].weekStart) {

@@ -17,13 +17,5 @@ export function inputClass(invalid: boolean): string {
 
 export const labelClass = "block text-sm font-semibold text-slate-900";
 
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
-
-/** ISO timestamp as e.g. "Oct 28, 2026, 3:15 PM UTC". */
-export function formatTimestamp(iso: string): string {
-  return `${timestampFormatter.format(new Date(iso))} UTC`;
-}
+/** ISO timestamp as e.g. "Oct 28, 2026, 3:15 PM EDT" (Eastern Time). */
+export { formatTimestamp } from "@/lib/time";

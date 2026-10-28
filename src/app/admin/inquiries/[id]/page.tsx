@@ -13,7 +13,7 @@ import { NoteForm } from "@/components/admin/inquiry/NoteForm";
 import { InquiryCard } from "@/components/admin/InquiryCard";
 import { can, toPublicAdmin } from "@/lib/accounts";
 import { displayNameOf, replySubject, type EmailMessage } from "@/lib/email";
-import { inquiryReference, isInquiryId, todayUtc, type InquiryAssignee } from "@/lib/inquiry";
+import { inquiryReference, isInquiryId, todayEastern, type InquiryAssignee } from "@/lib/inquiry";
 import { inquiryTimeline, type TimelineEntry } from "@/lib/inquiry-log";
 import { listAdminUsers } from "@/lib/server/accounts-store";
 import { getInquiryActivity } from "@/lib/server/audit-store";
@@ -101,7 +101,7 @@ async function InquiryContent({ params }: { params: Params }) {
         <InquiryCard
           inquiry={inquiry}
           permissions={permissions}
-          today={todayUtc()}
+          today={todayEastern()}
           showDetailsLink={false}
           canCancelMeeting={canAddNotes}
         />

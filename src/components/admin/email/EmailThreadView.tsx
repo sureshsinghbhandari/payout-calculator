@@ -1,10 +1,5 @@
 import { EMAIL_DELIVERY_LABELS, newPartOfReply, type EmailMessage } from "@/lib/email";
-
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
+import { formatTimestamp } from "@/lib/time";
 
 const KIND_LABELS: Record<EmailMessage["kind"], string> = {
   acknowledgement: "Automatic acknowledgement",
@@ -34,7 +29,7 @@ export function EmailThreadView({ messages }: { messages: EmailMessage[] }) {
                 {KIND_LABELS[m.kind]}
                 {m.sentBy && <span className="font-normal normal-case tracking-normal"> · {m.sentBy.name}</span>}
               </p>
-              <p className="text-xs text-slate-500">{timestampFormatter.format(new Date(m.at))} UTC</p>
+              <p className="text-xs text-slate-500">{formatTimestamp(m.at)}</p>
             </div>
             <p className="mt-1 break-words text-sm font-semibold text-slate-900">{m.subject}</p>
             <p className="mt-0.5 break-all text-xs text-slate-500">

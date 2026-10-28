@@ -6,7 +6,7 @@ import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/componen
 import { errorNotice, inputClass, primaryButton, textLink } from "@/components/admin/investors/ui";
 import { toPublicAdmin, type Investor } from "@/lib/accounts";
 import { formatCents, formatDollars, formatIsoDate, formatIsoDateLong } from "@/lib/format";
-import { PAYOUT_STATUS_BADGES, PAYOUT_STATUS_LABELS, todayUtc } from "@/lib/investments";
+import { PAYOUT_STATUS_BADGES, PAYOUT_STATUS_LABELS, todayEastern } from "@/lib/investments";
 import {
   collectPayouts,
   groupPayouts,
@@ -52,7 +52,7 @@ function countText(count: number): string {
 async function PayoutsContent({ searchParams }: { searchParams: SearchParams }) {
   await connection();
   const admin = await requireAdminPage("payouts.manage");
-  const today = todayUtc();
+  const today = todayEastern();
   const range = parseCalendarRange(await searchParams, today);
 
   let investors: Investor[] | null = null;
@@ -125,7 +125,7 @@ async function PayoutsContent({ searchParams }: { searchParams: SearchParams }) 
           </button>
         </div>
         <p className="mt-3 text-xs text-slate-500">
-          Dates are in UTC. <Link href="/admin/payouts" className={textLink}>Reset to the next 90 days</Link>
+          Dates are in Eastern Time. <Link href="/admin/payouts" className={textLink}>Reset to the next 90 days</Link>
         </p>
       </form>
 

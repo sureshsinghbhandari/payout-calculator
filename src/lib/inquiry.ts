@@ -4,6 +4,7 @@
  */
 import { isValidIsoDate } from "./dates";
 import { isMeetingUpcoming, parseMeeting, type InquiryMeeting } from "./meeting";
+import { easternDay } from "./time";
 import type { ProductSettings } from "./products";
 import { parseQuoteInputs } from "./quote";
 import type { QuoteInputs } from "./scenarios";
@@ -97,10 +98,8 @@ export function isFollowUpDate(value: string): boolean {
   return isValidIsoDate(value) && value >= "2000-01-01" && value <= "2100-12-31";
 }
 
-/** Today as YYYY-MM-DD in UTC, the time zone the admin pages show times in. */
-export function todayUtc(now: Date = new Date()): string {
-  return now.toISOString().slice(0, 10);
-}
+/** Today as YYYY-MM-DD in Eastern Time, the time zone the app shows times in. */
+export { todayEastern } from "./time";
 
 /** An open inquiry (new or contacted) with a scheduled meeting that is still to come. */
 export function hasUpcomingMeeting(inquiry: StoredInquiry, nowMs: number = Date.now()): boolean {
@@ -377,7 +376,7 @@ export interface InquiryListQuery {
   /** Only open inquiries with a meeting still to come. */
   meeting: boolean;
   source: string;
-  /** Received on or after / on or before, YYYY-MM-DD (UTC). */
+  /** Received on or after / on or before, YYYY-MM-DD (Eastern Time). */
   from: string;
   to: string;
 }
@@ -440,7 +439,7 @@ export function matchesInquiryListQuery(
   /** `unreadIds`: the inquiries the signed-in admin has not opened (the Unread filter is skipped without it). */
   context: { userId: string; today: string; unreadIds?: ReadonlySet<string>; nowMs?: number },
 ): boolean {
-  const received = inquiry.createdAt.slice(0, 10);
+  const received = easternDay(inquiry.createdAt);
   return (
     matchesInquiryFilter(inquiry, query.status) &&
     (!query.mine || inquiry.assignedTo?.id === context.userId) &&

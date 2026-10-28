@@ -11,16 +11,7 @@ import {
 import { FREQUENCY_LABELS } from "@/lib/payout";
 import { RATE_FREQUENCIES } from "@/lib/rates";
 import type { StoredRates } from "@/lib/rates";
-
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
-
-function formatTimestamp(iso: string): string {
-  return `${timestampFormatter.format(new Date(iso))} UTC`;
-}
+import { formatTimestamp } from "@/lib/time";
 
 function formatRate(rate: number): string {
   return `${rate.toLocaleString("en-US", { maximumFractionDigits: 4 })}%`;

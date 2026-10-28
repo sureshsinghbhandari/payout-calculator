@@ -26,7 +26,7 @@ const MONTHS_LABEL: Record<number, string> = { 4: "3 months", 2: "6 months", 1: 
 
 interface Props {
   investment: Investment;
-  /** Today's date in UTC, YYYY-MM-DD. Unrecorded payouts on or before it are Due. */
+  /** Today's date in Eastern Time, YYYY-MM-DD. Unrecorded payouts on or before it are Due. */
   today: string;
 }
 
@@ -223,7 +223,7 @@ export function InvestmentOverview({ investment, today }: Props) {
         </div>
         <p className="text-xs leading-relaxed text-slate-500">
           A payout shows as Paid once our team has recorded the payment, with the date it was paid. Due means the
-          scheduled date (UTC) has arrived and the payment has not been recorded yet. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the interest
+          scheduled date (Eastern Time) has arrived and the payment has not been recorded yet. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the interest
           start date and are not moved for weekends.
         </p>
       </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ALERT_DAYS, detectSignInAlerts, NEW_CLIENT_LOOKBACK_DAYS, type SignInAlert } from "@/lib/sign-in-alerts";
 import { listAuditEventsBetween } from "@/lib/server/audit-store";
+import { DISPLAY_TIME_ZONE } from "@/lib/time";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -9,10 +10,10 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
-  timeZone: "UTC",
+  timeZone: DISPLAY_TIME_ZONE,
 });
 
-const clockFormatter = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
+const clockFormatter = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: DISPLAY_TIME_ZONE });
 
 /** Sign-in alerts of the last ALERT_DAYS days, newest first (null when the audit log could not be read). */
 async function loadAlerts(): Promise<SignInAlert[] | null> {
@@ -62,7 +63,7 @@ export async function SignInAlerts({ limit, showAuditLink }: { limit: number; sh
         <h2 id="sign-in-alerts-heading" className="text-base font-semibold text-slate-900">
           Sign-in alerts
         </h2>
-        <span className="text-xs text-slate-500">Last {ALERT_DAYS} days, times in UTC</span>
+        <span className="text-xs text-slate-500">Last {ALERT_DAYS} days, times in Eastern Time</span>
       </div>
       {alerts === null ? (
         <p role="alert" className="mt-3 text-sm font-medium text-red-700">

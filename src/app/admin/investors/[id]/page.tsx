@@ -23,7 +23,7 @@ import { can, toPublicAdmin, toPublicInvestor, type Investor } from "@/lib/accou
 import { toPublicDocument, type PublicDocument } from "@/lib/documents";
 import { formatDollars } from "@/lib/format";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
-import { todayUtc } from "@/lib/investments";
+import { todayEastern } from "@/lib/investments";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
 import { paymentConfirmationBlocker } from "@/lib/server/payout-notices";
 import { requireAdminPage } from "@/lib/server/auth";
@@ -111,7 +111,7 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
   // Only safe fields go to client components (no password or token hashes).
   const pub = toPublicInvestor(investor);
   const totalInvested = pub.investments.reduce((sum, i) => sum + i.principal, 0);
-  const today = todayUtc();
+  const today = todayEastern();
   const numberOf = (investmentId: string | null) => {
     const index = investmentId ? pub.investments.findIndex((i) => i.id === investmentId) : -1;
     return index === -1 ? null : index + 1;

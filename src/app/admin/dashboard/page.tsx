@@ -18,6 +18,7 @@ import type { StoredInquiry } from "@/lib/inquiry";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { INQUIRY_LIST_LIMIT, isInquiryStorageConfigured, listInquiries } from "@/lib/server/inquiry-store";
+import { todayEastern } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Dashboard | Admin | Investment Payout Calculator",
@@ -71,7 +72,7 @@ async function DashboardContent() {
   const user = await requireAdminPage("dashboard.view");
   const showMoney = can(user.role, "investors.manage");
   const showAlerts = can(user.role, "audit.view");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayEastern();
 
   const [inquiryData, investors] = await Promise.all([
     isInquiryStorageConfigured() ? loadInquiries() : null,
@@ -208,7 +209,7 @@ function WeeklyChart({ weeks }: { weeks: WeekCount[] }) {
       <figcaption>
         <span className="block text-base font-semibold text-slate-900">Inquiries per week</span>
         <span className="mt-0.5 block text-xs text-slate-500">
-          {total} in the last {weeks.length} weeks (Monday to Sunday, UTC). The last bar is this week so far.
+          {total} in the last {weeks.length} weeks (Monday to Sunday, Eastern Time). The last bar is this week so far.
         </span>
       </figcaption>
       <div aria-hidden="true" className="mt-4">

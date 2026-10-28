@@ -19,7 +19,7 @@ interface Props {
   /** Earliest and latest dates a payment may be recorded for, YYYY-MM-DD. */
   earliest: string;
   latest: string;
-  /** Today's date in UTC: the default paid date for payouts already due. */
+  /** Today's date in Eastern Time: the default paid date for payouts already due. */
   today: string;
   /** Why no payment confirmation can be emailed to the investor, or null when it can. */
   confirmationBlocker: string | null;

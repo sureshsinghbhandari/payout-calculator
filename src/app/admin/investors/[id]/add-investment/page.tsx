@@ -9,7 +9,7 @@ import { textLink } from "@/components/admin/investors/ui";
 import { toPublicAdmin, type Investment, type Investor } from "@/lib/accounts";
 import { DEFAULT_PAYOUT_TYPE } from "@/lib/config";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
-import { isMatured, maturityDate, renewalOf, scheduleOrNull, todayUtc } from "@/lib/investments";
+import { isMatured, maturityDate, renewalOf, scheduleOrNull, todayEastern } from "@/lib/investments";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import { isOfferedFrequency, type ProductSettings } from "@/lib/products";
 import type { RateTable } from "@/lib/rates";
@@ -59,7 +59,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
   const { id } = await params;
   const renewParam = (await searchParams).renew;
   const renewId = typeof renewParam === "string" && isInvestorIdLike(renewParam) ? renewParam : null;
-  const today = todayUtc();
+  const today = todayEastern();
 
   let investor: Investor | null = null;
   let rates: RateTable | null = null;

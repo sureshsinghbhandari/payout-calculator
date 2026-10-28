@@ -22,7 +22,7 @@ interface Props {
   investorId: string;
   investment: Investment;
   number: number;
-  /** Today's date in UTC, YYYY-MM-DD. */
+  /** Today's date in Eastern Time, YYYY-MM-DD. */
   today: string;
   /** Whether this admin may record payouts as paid. */
   canManagePayouts: boolean;
@@ -289,7 +289,7 @@ function ScheduleTable({
         </table>
       </div>
       <p className="text-xs text-slate-500">
-        Paid means a payment has been recorded. Due means the scheduled date (UTC) has arrived without a recorded
+        Paid means a payment has been recorded. Due means the scheduled date (Eastern Time) has arrived without a recorded
         payment. The investor sees the same statuses in the portal.
       </p>
     </div>

@@ -3,6 +3,8 @@
  * admin entered it in. Pure helpers shared by the forms, the pages and the
  * stored format.
  */
+import { DISPLAY_TIME_ZONE } from "./time";
+
 
 /** A scheduled meeting: an instant (ISO, UTC) and the IANA time zone it was entered in. */
 export interface Meeting {
@@ -67,27 +69,23 @@ export function isMeetingUpcoming(meeting: Meeting, nowMs: number = Date.now()):
 }
 
 /**
- * The meeting as text: the time in the zone it was entered in ("Wed, Nov 5,
- * 2026, 2:00 PM EST"), and the same instant in UTC when that is a different
- * time zone (the rest of the app shows UTC).
+ * The meeting as text in Eastern Time ("Wed, Nov 5, 2026, 2:00 PM EST"), like
+ * every time in the app, and, when it was entered in another time zone, the
+ * same moment in that zone too (`other`).
  */
-export function formatMeeting(meeting: Meeting): { local: string; utc: string | null } {
+export function formatMeeting(meeting: Meeting): { local: string; other: string | null } {
   const date = new Date(meeting.at);
-  const local = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: meeting.zone,
-    timeZoneName: "short",
-  }).format(date);
-  if (meeting.zone === "UTC") return { local, utc: null };
-  const utc = new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "UTC",
-  }).format(date);
-  return { local, utc: `${utc} UTC` };
+  const inZone = (timeZone: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone,
+      timeZoneName: "short",
+    }).format(date);
+  const local = inZone(DISPLAY_TIME_ZONE);
+  return { local, other: meeting.zone === DISPLAY_TIME_ZONE ? null : inZone(meeting.zone) };
 }

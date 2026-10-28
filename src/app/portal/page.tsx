@@ -12,7 +12,7 @@ import { TwoStepSignInForm } from "@/components/two-step/TwoStepSignInForm";
 import type { Investor } from "@/lib/accounts";
 import { toPublicDocument, type PublicDocument } from "@/lib/documents";
 import { formatIsoDateLong } from "@/lib/format";
-import { todayUtc } from "@/lib/investments";
+import { todayEastern } from "@/lib/investments";
 import { getCurrentInvestor, getPendingTwoStepInvestor } from "@/lib/server/auth";
 import { isDocumentStorageConfigured, listDocuments } from "@/lib/server/documents-store";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
@@ -79,7 +79,7 @@ async function InvestorContent({ searchParams }: { searchParams: SearchParams })
     <Dashboard
       investor={investor}
       documents={await loadDocuments(investor.id)}
-      today={todayUtc()}
+      today={todayEastern()}
       passwordChanged={params.changed === "1"}
     />
   );

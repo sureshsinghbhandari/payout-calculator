@@ -3,7 +3,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import type { AdminUser } from "../accounts";
 import { adminActor, SYSTEM_ACTOR } from "../audit";
 import { formatCents, formatIsoDate } from "../format";
-import { paymentFor, scheduleOrNull, todayUtc } from "../investments";
+import { paymentFor, scheduleOrNull, todayEastern } from "../investments";
 import {
   confirmationBlocker,
   confirmationTemplateValues,
@@ -86,7 +86,7 @@ export async function runPayoutReminders(
       if (run.reminderDays === 0) run.skipped = "payout reminders are switched off";
       else if (!send) run.skipped = "email is not set up yet";
       else {
-        const { due, optedOut, noEmail } = findDueReminders(await listInvestors(), todayUtc(), run.reminderDays);
+        const { due, optedOut, noEmail } = findDueReminders(await listInvestors(), todayEastern(), run.reminderDays);
         run.optedOut = optedOut;
         run.noEmail = noEmail;
         // Claim first: a reminder claimed by another run at the same moment is never sent twice.

@@ -48,8 +48,8 @@ export function MeetingFields() {
             className="mt-2 block w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/30"
           />
           <p id={`${id}-help`} className="mt-1.5 text-xs text-slate-500">
-            Enter it in your own time zone{pick.zone ? ` (${pick.zone})` : ""}. It shows on the inquiry with its time
-            zone, so other admins can see that a meeting is booked.
+            Enter it in your own time zone{pick.zone ? ` (${pick.zone})` : ""}. It shows on the inquiry in Eastern
+            Time (EST/EDT), so other admins can see that a meeting is booked and when.
           </p>
         </div>
       )}

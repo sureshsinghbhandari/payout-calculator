@@ -22,7 +22,7 @@ export const DEFAULT_REMINDER_DAYS = 3;
 export const MAX_REMINDER_DAYS = 30;
 
 /** When the daily job runs (vercel.json "crons"), for display. */
-export const REMINDER_SCHEDULE_TEXT = "every day at about 13:00 UTC";
+export const REMINDER_SCHEDULE_TEXT = "every day at about 8 to 9 AM Eastern Time (13:00 UTC)";
 
 /** Sent-log key, e.g. "ivt_1a2b3c4d5e6f:3:reminder". */
 export function noticeKey(investmentId: string, payoutNumber: number, kind: NoticeKind): string {

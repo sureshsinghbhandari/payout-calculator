@@ -12,6 +12,7 @@
 import { formatCents, formatDollars, formatIsoDateLong, formatYears } from "./format";
 import { inquiryReference, type StoredInquiry } from "./inquiry";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "./payout";
+import { formatTimestamp } from "./time";
 
 export type TemplateKey = "acknowledgement" | "alert" | "reset" | "payoutReminder" | "paymentConfirmation";
 
@@ -50,7 +51,7 @@ const PLACEHOLDER_HELP: Record<string, string> = {
   payoutTerm: "Payout term, e.g. Quarterly",
   payoutType: "Payout type",
   message: "Visitor's message",
-  received: "When the inquiry arrived (UTC)",
+  received: "When the inquiry arrived (Eastern Time)",
   link: "Link to open",
   username: "Username of the account",
   hours: "Hours the link stays valid",
@@ -335,8 +336,6 @@ export function firstNameOf(name: string): string {
   return name.trim().split(/\s+/)[0] || name;
 }
 
-const receivedFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
-
 /** Placeholder values for an inquiry. Never includes the interest rate. */
 export function inquiryTemplateValues(inquiry: StoredInquiry, team: string, link = ""): Record<string, string> {
   const { plan } = inquiry;
@@ -351,7 +350,7 @@ export function inquiryTemplateValues(inquiry: StoredInquiry, team: string, link
     payoutTerm: FREQUENCY_LABELS[plan.frequency],
     payoutType: PAYOUT_TYPE_LABELS[plan.payoutType],
     message: inquiry.message.trim() || "(no message)",
-    received: `${receivedFormatter.format(new Date(inquiry.createdAt))} UTC`,
+    received: formatTimestamp(inquiry.createdAt),
     link,
     team,
   };
@@ -384,7 +383,7 @@ export function sampleTemplateValues(team: string, hours: number, key?: Template
     payoutTerm: FREQUENCY_LABELS.quarterly,
     payoutType: PAYOUT_TYPE_LABELS["interest-only"],
     message: "Could you call me on weekday mornings?",
-    received: `${receivedFormatter.format(new Date(Date.UTC(2026, 9, 27, 14, 30)))} UTC`,
+    received: formatTimestamp(new Date(Date.UTC(2026, 9, 27, 14, 30)).toISOString()),
     link: "https://example.com/…",
     username: "jdoe",
     hours: String(hours),

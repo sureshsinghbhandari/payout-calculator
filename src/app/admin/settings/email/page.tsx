@@ -19,6 +19,7 @@ import {
   readPayoutNoticeSettings,
   type PayoutNoticeSettings,
 } from "@/lib/server/payout-notices-store";
+import { formatTimestamp } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Email | Admin | Investment Payout Calculator",
@@ -27,7 +28,6 @@ export const metadata: Metadata = {
 
 const WEBHOOK_EVENTS = ["email.received", "email.delivered", "email.bounced", "email.failed", "email.complained"];
 
-const timestampFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
 
 export default function EmailSettingsPage() {
   return (
@@ -166,7 +166,7 @@ async function EmailSettingsContent() {
                   <span className="text-slate-700">Last run</span>
                   <span className="text-right font-medium text-slate-900">
                     {notices.lastRun
-                      ? `${timestampFormatter.format(new Date(notices.lastRun.at))} UTC (${
+                      ? `${formatTimestamp(notices.lastRun.at)} (${
                           notices.lastRun.trigger === "manual" ? `Run now by ${notices.lastRun.by ?? "an admin"}` : "daily job"
                         })`
                       : "Not yet"}
@@ -207,7 +207,7 @@ async function EmailSettingsContent() {
             <p className="mt-3 text-sm text-slate-700">
               Last checked:{" "}
               <span className="font-medium text-slate-900">
-                {gmail?.checkedAt ? `${timestampFormatter.format(new Date(gmail.checkedAt))} UTC` : "Not yet"}
+                {gmail?.checkedAt ? formatTimestamp(gmail.checkedAt) : "Not yet"}
               </span>
             </p>
             {gmail?.error && (
@@ -276,7 +276,7 @@ async function EmailSettingsContent() {
                   <li key={e.id} className="rounded-xl border border-slate-200 p-4">
                     <p className="break-words text-sm font-semibold text-slate-900">{e.subject}</p>
                     <p className="mt-0.5 break-all text-xs text-slate-500">
-                      From {e.from} · To {e.to} · {timestampFormatter.format(new Date(e.at))} UTC
+                      From {e.from} · To {e.to} · {formatTimestamp(e.at)}
                     </p>
                     <p className="mt-2 line-clamp-6 whitespace-pre-wrap break-words text-sm text-slate-800">
                       {newPartOfReply(e.text)}

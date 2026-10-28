@@ -21,6 +21,7 @@ import {
   type PayoutType,
 } from "@/lib/payout";
 import { isOfferedAmount, isOfferedFrequency, isOfferedTerm, type ProductSettings } from "@/lib/products";
+import { formatTimestamp } from "@/lib/time";
 
 export const CONTACT_FIELDS = ["name", "email", "phone", "username"] as const;
 export const PLAN_FIELDS = ["principal", "investmentDate", "lockInYears", "frequency", "payoutType"] as const;
@@ -247,19 +248,8 @@ export const LOGIN_STATE_BADGES: Record<LoginStateKey, string> = {
   "not-set-up": "bg-slate-200 text-slate-700",
 };
 
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
+/** ISO timestamp as e.g. "Oct 25, 2026, 3:34 PM EDT" (Eastern Time). */
+export { formatTimestamp };
 
-/** ISO timestamp as e.g. "Oct 25, 2026, 3:34 PM UTC". */
-export function formatTimestamp(iso: string): string {
-  const ms = Date.parse(iso);
-  return Number.isNaN(ms) ? "" : `${timestampFormatter.format(new Date(ms))} UTC`;
-}
-
-/** The UTC calendar date (YYYY-MM-DD) of an ISO timestamp. */
-export function isoDay(iso: string): string {
-  return /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : "1970-01-01";
-}
+/** The calendar date (YYYY-MM-DD, Eastern Time) of an ISO timestamp. */
+export { easternDay as isoDay } from "@/lib/time";

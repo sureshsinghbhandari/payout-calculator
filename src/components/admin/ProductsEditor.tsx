@@ -15,16 +15,7 @@ import {
   type ProductField,
   type StoredProducts,
 } from "@/lib/products";
-
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
-
-function formatTimestamp(iso: string): string {
-  return `${timestampFormatter.format(new Date(iso))} UTC`;
-}
+import { formatTimestamp } from "@/lib/time";
 
 const TERM_CHOICES = Array.from(
   { length: PRODUCT_LIMITS.maxTerm - PRODUCT_LIMITS.minTerm + 1 },

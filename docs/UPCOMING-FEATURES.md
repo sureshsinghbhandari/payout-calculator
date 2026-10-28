@@ -165,7 +165,7 @@ Settings > Email
    Replies go to              team+<code>@gmail.com
  (amber box with anything still to set up)
 
- Gmail replies     Last checked Oct 27, 13:30 UTC   [ Check for replies ]
+ Gmail replies     Last checked Oct 27, 2026, 9:30 AM EDT   [ Check for replies ]
  Test              Send a test email to [ you@example.com ] [ Send ]
  Payout emails to investors   (see Payout notices)
 ```
@@ -313,7 +313,7 @@ Email investors a few days before each payout, and confirm when it has been paid
 Settings > Email > Payout emails to investors
 ------------------------------------------------------------------
  Remind investors [ 3 ] days before a payout   (0 = off)   [ Save ]
- Daily job        13:00 UTC · CRON_SECRET: Set
+ Daily job        about 8 to 9 AM Eastern Time · CRON_SECRET: Set
  Last run         Oct 27, 13:00 · daily · 4 reminders sent, 0 failed
  [ Run now ]
 
@@ -525,7 +525,7 @@ A full check against WCAG 2.2 AA with screen readers and keyboard-only use.
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
 
-When a meeting is booked during a call, the admin ticks "A meeting was scheduled" and picks the date and time (in their own time zone) on the note or in Mark as contacted. The inquiry then shows the meeting with its date, time and time zone (and UTC), green while it is still to come. The Inquiries list has a Meeting scheduled filter, and the meeting can be cancelled from the inquiry page.
+When a meeting is booked during a call, the admin ticks "A meeting was scheduled" and picks the date and time (in their own time zone) on the note or in Mark as contacted. The inquiry then shows the meeting with its date and time in Eastern Time, green while it is still to come. The Inquiries list has a Meeting scheduled filter, and the meeting can be cancelled from the inquiry page.
 
 **Outcome:** Everyone can see at a glance which inquiries have a meeting booked and when.
 
@@ -537,7 +537,7 @@ Admin > Inquiries > Ref DE300003
  Meera Iyer  [NEW]
  +--------------------------------------------------------------+
  | Meeting scheduled: Thu, Nov 5, 2026, 2:00 PM EST             |
- |   (Nov 5, 2026, 7:00 PM UTC) · Set by Suresh Bhandari        |
+ |   (also Thu, Nov 5, 2026, 11:00 AM PST) · Set by Suresh      |
  |                                          [ Cancel meeting ]  |
  +--------------------------------------------------------------+   (green)
  (turns grey, "Meeting was scheduled", once the time has passed)

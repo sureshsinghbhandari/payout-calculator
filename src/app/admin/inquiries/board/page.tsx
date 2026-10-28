@@ -13,11 +13,12 @@ import {
   isInquiryListNarrowed,
   matchesInquiryListQuery,
   parseInquiryListQuery,
-  todayUtc,
+  todayEastern,
   type StoredInquiry,
 } from "@/lib/inquiry";
 import { requireAdminPage } from "@/lib/server/auth";
 import { isInquiryStorageConfigured, listInquiries } from "@/lib/server/inquiry-store";
+import { easternDay } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Pipeline | Admin | Investment Payout Calculator",
@@ -58,7 +59,7 @@ async function PipelineContent({ searchParams }: { searchParams: SearchParams })
   await connection();
   const user = await requireAdminPage("inquiries.view");
   const query = { ...parseInquiryListQuery(await searchParams), status: "all" as const };
-  const today = todayUtc();
+  const today = todayEastern();
   const canChangeStatus = can(user.role, "inquiries.status");
   const canConvert = can(user.role, "inquiries.convert");
   const canSeeInvestors = can(user.role, "investors.manage");
@@ -136,7 +137,7 @@ async function PipelineContent({ searchParams }: { searchParams: SearchParams })
                             {inquiry.name}
                           </Link>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            {formatDollars(inquiry.plan.principal)} · Received {formatIsoDate(inquiry.createdAt.slice(0, 10))}
+                            {formatDollars(inquiry.plan.principal)} · Received {formatIsoDate(easternDay(inquiry.createdAt))}
                             {inquiry.source !== DEFAULT_LEAD_SOURCE && <> · {inquiry.source}</>}
                           </p>
                           <p className="mt-1 text-xs text-slate-700">

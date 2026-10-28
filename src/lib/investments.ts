@@ -25,10 +25,8 @@ export const PAYOUT_STATUS_BADGES: Record<PayoutStatus, string> = {
   upcoming: "bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200",
 };
 
-/** Today's date in UTC, YYYY-MM-DD. */
-export function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+/** Today's date in Eastern Time, YYYY-MM-DD. */
+export { todayEastern } from "./time";
 
 /** The payout schedule of a recorded investment (throws when it cannot be calculated). */
 export function investmentSchedule(investment: Investment): PayoutSchedule {

@@ -2,12 +2,7 @@ import { ROLE_LABELS } from "@/lib/accounts";
 import { AUDIT_CATEGORY_LABELS, type AuditActor } from "@/lib/audit";
 import { NOTE_KIND_LABELS, type TimelineEntry } from "@/lib/inquiry-log";
 import { formatMeeting, type Meeting } from "@/lib/meeting";
-
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
+import { formatTimestamp } from "@/lib/time";
 
 function actorText(actor: AuditActor): string {
   if (actor.kind === "admin") return actor.role ? `${actor.name} (${ROLE_LABELS[actor.role]})` : actor.name;
@@ -24,11 +19,11 @@ const NOTE_STYLES = {
 
 /** "Meeting scheduled for ..." under the note or call that booked it. */
 function MeetingLine({ meeting }: { meeting: Meeting }) {
-  const { local, utc } = formatMeeting(meeting);
+  const { local, other } = formatMeeting(meeting);
   return (
     <p className="mt-2 text-sm font-semibold text-emerald-800">
       Meeting scheduled for {local}
-      {utc && <span className="font-normal text-slate-600"> ({utc})</span>}
+      {other && <span className="font-normal text-slate-600"> (also {other})</span>}
     </p>
   );
 }
@@ -39,7 +34,7 @@ export function InquiryTimeline({ entries }: { entries: TimelineEntry[] }) {
   return (
     <ol className="space-y-2">
       {entries.map((entry) => {
-        const when = `${timestampFormatter.format(new Date(entry.at))} UTC`;
+        const when = formatTimestamp(entry.at);
         if (entry.kind === "note") {
           const { note } = entry;
           return (

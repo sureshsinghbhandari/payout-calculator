@@ -170,7 +170,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "When a meeting is booked during a call, the admin ticks \"A meeting was scheduled\" and picks the date and time (in their own time zone) on the note or in Mark as contacted. The inquiry then shows the meeting with its date, time and time zone (and UTC), green while it is still to come. The Inquiries list has a Meeting scheduled filter, and the meeting can be cancelled from the inquiry page.",
+      "When a meeting is booked during a call, the admin ticks \"A meeting was scheduled\" and picks the date and time (in their own time zone) on the note or in Mark as contacted. The inquiry then shows the meeting with its date and time in Eastern Time, green while it is still to come. The Inquiries list has a Meeting scheduled filter, and the meeting can be cancelled from the inquiry page.",
     outcome: "Everyone can see at a glance which inquiries have a meeting booked and when.",
   },
   {

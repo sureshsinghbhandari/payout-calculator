@@ -16,6 +16,7 @@ import {
 } from "@/lib/audit";
 import { requireAdminPage } from "@/lib/server/auth";
 import { listAuditEvents, listAuditMonths } from "@/lib/server/audit-store";
+import { DISPLAY_TIME_ZONE } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Audit log | Admin | Investment Payout Calculator",
@@ -32,7 +33,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
   second: "2-digit",
-  timeZone: "UTC",
+  timeZone: DISPLAY_TIME_ZONE,
 });
 
 const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -134,7 +135,7 @@ async function AuditContent({ searchParams }: { searchParams: SearchParams }) {
       <div className="mb-5">
         <h1 className="text-2xl font-semibold text-slate-900">Audit log</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Who did what, and when. Times are in UTC. Customer email responses will appear here once the Gmail
+          Who did what, and when. Times are in Eastern Time. Customer email responses will appear here once the Gmail
           integration is added. Sign-in alerts flag repeated failed sign-ins and admin sign-ins from a new device or
           network.
         </p>
@@ -229,7 +230,7 @@ async function AuditContent({ searchParams }: { searchParams: SearchParams }) {
             <table className="w-full min-w-[760px] border-collapse text-sm">
               <thead>
                 <tr className="border-y border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
-                  <th scope="col" className="px-5 py-3 font-semibold">When (UTC)</th>
+                  <th scope="col" className="px-5 py-3 font-semibold">When (Eastern Time)</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Who</th>
                   <th scope="col" className="px-4 py-3 font-semibold">What</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Item</th>

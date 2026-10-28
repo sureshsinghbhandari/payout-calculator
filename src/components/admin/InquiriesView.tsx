@@ -13,7 +13,7 @@ import {
   matchesInquiryListQuery,
   matchesInquirySearch,
   parseInquiryListQuery,
-  todayUtc,
+  todayEastern,
   type InquiryListQuery,
 } from "@/lib/inquiry";
 import { markAllReadAction } from "@/app/admin/notification-actions";
@@ -62,7 +62,7 @@ export async function InquiriesView({ view, searchParams }: { view: "active" | "
     purge: can(user.role, "inquiries.purge"),
   };
   const canExport = can(user.role, "inquiries.export");
-  const today = todayUtc();
+  const today = todayEastern();
   // The inquiries this admin has not opened yet (each admin has their own list).
   const unreadIds: ReadonlySet<string> = await unreadInquiryIds(user.id).then(
     (ids) => new Set(ids),

@@ -587,7 +587,7 @@ function writeStatementSheet(workbook: Workbook, data: StatementData) {
   ws.addRow([]);
   addParagraph(
     ws,
-    "Status: Paid means the payment has been recorded, with the date it was paid. Due means the scheduled date has arrived and the payment has not been recorded yet. Upcoming means the scheduled date is still ahead. Dates are in UTC.",
+    "Status: Paid means the payment has been recorded, with the date it was paid. Due means the scheduled date has arrived and the payment has not been recorded yet. Upcoming means the scheduled date is still ahead. Dates are calendar dates; the status uses today's date in Eastern Time.",
     SCHEDULE_HEADERS.length,
   );
   addParagraph(

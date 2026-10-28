@@ -3,19 +3,10 @@ import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears }
 import { followUpState, inquiryReference, type FollowUpState, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
 import { NOTE_KIND_LABELS } from "@/lib/inquiry-log";
 import { formatMeeting, isMeetingUpcoming } from "@/lib/meeting";
+import { formatTimestamp } from "@/lib/time";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import { InquiryActions } from "./InquiryActions";
 import { CancelMeetingButton } from "./inquiry/CancelMeetingButton";
-
-const timestampFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
-
-function formatTimestamp(iso: string): string {
-  return `${timestampFormatter.format(new Date(iso))} UTC`;
-}
 
 const STATUS_STYLES: Record<InquiryStatus, { label: string; badge: string; border: string }> = {
   new: { label: "New", badge: "bg-blue-900 text-white", border: "border-blue-300" },
@@ -50,7 +41,7 @@ export function InquiryCard({
 }: {
   inquiry: StoredInquiry;
   permissions: InquiryPermissions;
-  /** Today (YYYY-MM-DD, UTC), to highlight follow-ups that are due. */
+  /** Today (YYYY-MM-DD, Eastern Time), to highlight follow-ups that are due. */
   today: string;
   /** The signed-in admin has not opened this inquiry yet. */
   unread?: boolean;
@@ -167,7 +158,7 @@ export function InquiryCard({
           <p>
             <span className="font-semibold">{meetingUpcoming ? "Meeting scheduled:" : "Meeting was scheduled:"}</span>{" "}
             {meetingText.local}
-            {meetingText.utc && <span className="text-xs opacity-80"> ({meetingText.utc})</span>}
+            {meetingText.other && <span className="text-xs opacity-80"> (also {meetingText.other})</span>}
             <span className="block text-xs opacity-80">Set by {meeting.by}</span>
           </p>
           {canCancelMeeting && <CancelMeetingButton inquiryId={inquiry.id} />}

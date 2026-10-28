@@ -17,7 +17,7 @@ import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/server/
 import { recordAudit } from "@/lib/server/audit-store";
 import { investorActor, visitorActor } from "@/lib/audit";
 import { hasTwoStep } from "@/lib/accounts";
-import { todayUtc } from "@/lib/investments";
+import { todayEastern } from "@/lib/investments";
 import { buildStatementData, type StatementResult } from "@/lib/statement";
 
 /**
@@ -211,7 +211,7 @@ export async function investorStatementAction(investmentId: string): Promise<Sta
     typeof investmentId === "string" ? investor.investments.find((i) => i.id === investmentId) : undefined;
   if (!investment) return { ok: false, error: "This investment could not be found. Reload the page." };
 
-  const data = buildStatementData(investor, investment, todayUtc(), { forAdmin: false });
+  const data = buildStatementData(investor, investment, todayEastern(), { forAdmin: false });
   if (!data) return { ok: false, error: "The statement for this investment could not be created. Please contact us." };
   return { ok: true, data };
 }
