@@ -45,6 +45,9 @@ function formValues(formData: FormData): Record<string, string> {
     "email",
     "phone",
     "message",
+    "howFound",
+    "webinarDetails",
+    "referrerContact",
     "website",
     "principal",
     "lockInYears",
@@ -61,7 +64,15 @@ function formValues(formData: FormData): Record<string, string> {
 
 export async function submitInquiryAction(_prev: InquiryState, formData: FormData): Promise<InquiryState> {
   const raw = formValues(formData);
-  const values = { name: raw.name, email: raw.email, phone: raw.phone, message: raw.message };
+  const values = {
+    name: raw.name,
+    email: raw.email,
+    phone: raw.phone,
+    message: raw.message,
+    howFound: raw.howFound,
+    webinarDetails: raw.webinarDetails,
+    referrerContact: raw.referrerContact,
+  };
 
   let products: ProductSettings;
   try {
@@ -115,11 +126,12 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
     };
     await saveInquiry(inquiry);
     const via = inquiry.source === DEFAULT_LEAD_SOURCE ? "" : ` (source: ${inquiry.source})`;
+    const contactInfo = inquiry.email || inquiry.phone;
     recordAudit({
       actor: visitorActor(inquiry.name),
       category: "inquiry",
       action: "inquiry.received",
-      summary: `Inquiry ${reference} received from ${inquiry.name} (${inquiry.email}) for ${formatDollars(inquiry.plan.principal)}${via}`,
+      summary: `Inquiry ${reference} received from ${inquiry.name} (${contactInfo}) for ${formatDollars(inquiry.plan.principal)}${via}`,
       target: { type: "inquiry", id: inquiry.id, label: `${reference} (${inquiry.name})` },
     });
     // Each Master and Sales Admin gets the inquiry on their own unread list (the bell in the admin header).

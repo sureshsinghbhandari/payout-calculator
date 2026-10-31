@@ -54,13 +54,35 @@ export const LAYOUTS: Record<string, string> = {
 ------------------------------------------------------------------
  Your plan: $100,000 · 2 years · Yearly · Earnings Only
  Name     [                          ]
+ Email or phone number: share at least one
  Email    [                          ]
- Phone    [                          ]   (optional)
+ Phone    [                          ]
+ How did you find us?  [ Choose one                       v ]
  Message  [                          ]   (optional)
  [ Send inquiry ]
 
  After sending:  "Thank you. Your reference is A1B2C3D4.
                   We have also emailed you a confirmation."`,
+
+  "how-found-us": `Send inquiry (How did you find us? = Webinar or seminar)
+------------------------------------------------------------------
+ How did you find us?  [ Webinar or seminar               v ]
+ Which webinar?        [ e.g. the date, city or name...     ]
+
+Send inquiry (How did you find us? = Friend or family referral)
+------------------------------------------------------------------
+ How did you find us?  [ Friend or family referral         v ]
+ Referrer's email or phone number
+                        [ Their email address or phone...    ]
+
+Admin: Inquiries, and each inquiry's card
+------------------------------------------------------------------
+ Priya Sharma  [NEW]
+ priya@example.com   +1 (555) 010-1001
+ Found us: Webinar or seminar — Fixed-Term Investment Plans seminar, Oct 24
+ "Is the rate fixed for the whole term?..."
+
+ Export to Excel adds columns: How found, Referral details`,
 
   "inquiry-notifications": `Investment Payout Calculator: Admin        (bell) 3   (gear)  View calculator
 ------------------------------------------------------------------

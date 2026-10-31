@@ -1,6 +1,6 @@
 import "server-only";
 import * as ExcelJSModule from "exceljs";
-import { inquiryReference, type InquiryStatus, type StoredInquiry } from "../inquiry";
+import { HOW_FOUND_LABELS, inquiryReference, type InquiryStatus, type StoredInquiry } from "../inquiry";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "../payout";
 
 export { XLSX_MIME_TYPE } from "../excel";
@@ -51,6 +51,12 @@ export async function buildInquiriesWorkbook(
     { header: "Phone", width: 18, value: (i) => i.phone || null },
     { header: "Status", width: 12, value: (i) => STATUS_LABELS[i.status] },
     { header: "Source", width: 18, value: (i) => i.source },
+    { header: "How found", width: 20, value: (i) => HOW_FOUND_LABELS[i.howFound] },
+    {
+      header: "Referral details",
+      width: 28,
+      value: (i) => (i.howFound === "webinar" ? i.webinarDetails : i.howFound === "friend-family" ? i.referrerContact : null) || null,
+    },
     { header: "Assigned to", width: 20, value: (i) => i.assignedTo?.name ?? null },
     { header: "Follow-up", width: 14, value: (i) => (i.followUpDate ? excelDate(i.followUpDate) : null), numFmt: "mmm d, yyyy" },
     { header: "Amount", width: 14, value: (i) => i.plan.principal, numFmt: WHOLE_CURRENCY },

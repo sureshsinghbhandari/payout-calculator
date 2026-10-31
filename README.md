@@ -186,7 +186,15 @@ Until the first save, the starting rates in `src/lib/config.ts`
 ## Inquiries
 
 - After calculating, visitors can select **Send inquiry**. The form shows their plan and
-  asks for name, email, an optional phone number and an optional message.
+  asks for name, email, phone and an optional message. **Email and phone are each optional on
+  their own, but at least one is required.**
+- **How did you find us?** is required: Search or our website, Social media, Webinar or
+  seminar, Friend or family referral, Advertisement, or Other.
+  - **Webinar or seminar** also asks which one (required).
+  - **Friend or family referral** also asks for the referrer's email or phone number
+    (required, either one).
+  - This is the visitor's own answer, separate from the `?source=` link tracking under
+    [Lead sources](#assign-follow-up-sources-and-export) below; the two can differ.
 - Admins see them at `/admin/inquiries` (the admin home page), newest first. Statuses:
   New, Contacted, Converted, Deleted.
 - **Search** by name, email, phone number (any part of the digits) or reference, and

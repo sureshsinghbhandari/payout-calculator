@@ -19,6 +19,7 @@ import {
   inquiryReference,
   makeInquiryId,
   NOTE_PREVIEW_LENGTH,
+  type HowFound,
   type InquiryStatus,
   type StoredInquiry,
 } from "../src/lib/inquiry";
@@ -98,6 +99,10 @@ interface DemoInquiry {
   investor?: { username: string };
   /** Lead source; the website when not set. */
   source?: string;
+  /** How the visitor says they found us; "search-website" when not set. */
+  howFound?: HowFound;
+  webinarDetails?: string;
+  referrerContact?: string;
   notes: DemoNote[];
 }
 
@@ -106,18 +111,19 @@ const INQUIRIES: DemoInquiry[] = [
     n: 1, name: "Priya Sharma", email: "priya.sharma@example.com", phone: "+1 (555) 010-1001",
     message: "Is the rate fixed for the whole term? I would like to start next month.",
     daysAgo: 0, hour: 9, principal: 50_000, lockInYears: 3, frequency: "quarterly", payoutType: "interest-only",
-    investInDays: 30, status: "new", notes: [],
+    investInDays: 30, status: "new", howFound: "search-website", notes: [],
   },
   {
-    n: 2, name: "Daniel Brooks", email: "dbrooks@example.com", phone: "",
+    // Phone only, no email: demonstrates that one of the two is enough.
+    n: 2, name: "Daniel Brooks", email: "", phone: "+1 (555) 010-1002",
     message: "", daysAgo: 1, hour: 15, principal: 25_000, lockInYears: 2, frequency: "yearly",
-    payoutType: "interest-and-principal", investInDays: 14, status: "new", notes: [],
+    payoutType: "interest-and-principal", investInDays: 14, status: "new", howFound: "social-media", notes: [],
   },
   {
     n: 3, name: "Meera Iyer", email: "meera.iyer@example.com", phone: "+1 (555) 010-1003",
     message: "Please call me in the evening.",
     daysAgo: 2, hour: 11, principal: 100_000, lockInYears: 5, frequency: "half-yearly", payoutType: "interest-only",
-    investInDays: 45, status: "new",
+    investInDays: 45, status: "new", howFound: "advertisement",
     notes: [
       {
         daysAgo: 1, hour: 18, kind: "call", by: "suresh",
@@ -131,6 +137,7 @@ const INQUIRIES: DemoInquiry[] = [
     message: "Comparing a few options for my retirement savings.",
     daysAgo: 5, hour: 10, principal: 75_000, lockInYears: 3, frequency: "half-yearly",
     payoutType: "interest-and-principal", investInDays: 21, status: "contacted", contactedDaysAgo: 4,
+    howFound: "search-website",
     notes: [
       { daysAgo: 4, hour: 14, kind: "call", by: "suresh", text: "Spoke for 15 minutes. Wants half-yearly payouts; asked about early withdrawal." },
       { daysAgo: 2, hour: 16, kind: "meeting", by: "ashwin", text: "Met at the office with his wife. Will decide after talking to their accountant." },
@@ -141,6 +148,7 @@ const INQUIRIES: DemoInquiry[] = [
     n: 5, name: "Anita Desai", email: "anita.desai@example.com", phone: "+1 (555) 010-1005",
     message: "", daysAgo: 8, hour: 13, principal: 40_000, lockInYears: 1, frequency: "quarterly",
     payoutType: "interest-only", investInDays: 10, status: "contacted", contactedDaysAgo: 7,
+    howFound: "other",
     notes: [
       {
         daysAgo: 7, hour: 12, kind: "call", by: "suresh",
@@ -154,7 +162,7 @@ const INQUIRIES: DemoInquiry[] = [
     message: "Saw you at the seminar on Saturday.",
     daysAgo: 16, hour: 10, principal: 120_000, lockInYears: 5, frequency: "yearly", payoutType: "interest-only",
     investInDays: 7, status: "converted", contactedDaysAgo: 15, doneDaysAgo: 10, investor: { username: "jwilson" },
-    source: "seminar-2026-10",
+    source: "seminar-2026-10", howFound: "webinar", webinarDetails: "Fixed-Term Investment Plans seminar, Oct 24, 2026",
     notes: [
       { daysAgo: 15, hour: 11, kind: "call", by: "suresh", text: "Ready to invest. Booked a meeting to sign." },
       { daysAgo: 10, hour: 15, kind: "meeting", by: "ashwin", text: "Signed. Funds arrive this week." },
@@ -164,19 +172,19 @@ const INQUIRIES: DemoInquiry[] = [
     n: 7, name: "Kavita Rao", email: "kavita.rao@example.com", phone: "+1 (555) 010-1007",
     message: "", daysAgo: 20, hour: 17, principal: 60_000, lockInYears: 3, frequency: "quarterly",
     payoutType: "interest-and-principal", investInDays: 5, status: "converted", contactedDaysAgo: 19, doneDaysAgo: 13,
-    investor: { username: "krao" },
+    investor: { username: "krao" }, howFound: "friend-family", referrerContact: "susan.rao@example.com",
     notes: [{ daysAgo: 19, hour: 10, kind: "call", by: "suresh", text: "Asked for quarterly payouts with principal back each quarter." }],
   },
   {
     n: 8, name: "Mark Thompson", email: "mark.t@example.com", phone: "+1 (555) 010-1008",
     message: "", daysAgo: 11, hour: 9, principal: 30_000, lockInYears: 2, frequency: "quarterly", payoutType: "interest-only",
-    investInDays: 20, status: "deleted", doneDaysAgo: 9, statusBeforeDelete: "new",
+    investInDays: 20, status: "deleted", doneDaysAgo: 9, statusBeforeDelete: "new", howFound: "search-website",
     notes: [{ daysAgo: 10, hour: 10, kind: "note", by: "suresh", text: "Sent twice by mistake; the same person as another inquiry." }],
   },
   {
     n: 9, name: "Test User", email: "test@example.com", phone: "",
     message: "test", daysAgo: 6, hour: 22, principal: 1_000, lockInYears: 1, frequency: "yearly", payoutType: "interest-only",
-    investInDays: 3, status: "deleted", doneDaysAgo: 6, statusBeforeDelete: "new", notes: [],
+    investInDays: 3, status: "deleted", doneDaysAgo: 6, statusBeforeDelete: "new", howFound: "other", notes: [],
   },
 ];
 
@@ -364,6 +372,9 @@ async function addDemo(): Promise<void> {
       phone: demo.phone,
       message: demo.message,
       source: demo.source ?? DEFAULT_LEAD_SOURCE,
+      howFound: demo.howFound ?? "search-website",
+      webinarDetails: demo.webinarDetails ?? "",
+      referrerContact: demo.referrerContact ?? "",
       plan: {
         ...quote,
         startDate: selected.startDate,

@@ -176,7 +176,12 @@ async function InquiryContent({ params }: { params: Params }) {
             <h2 id="reply-heading" className="mb-4 text-lg font-semibold text-slate-900">
               Email the customer
             </h2>
-            {status.sending ? (
+            {!inquiry.email ? (
+              <p className="text-sm text-slate-700">
+                This inquiry has no email address, only a phone number ({inquiry.phone}), so messages cannot be sent
+                from here.
+              </p>
+            ) : status.sending ? (
               <ReplyForm inquiryId={inquiry.id} to={inquiry.email} subject={replySubject(inquiry.id)} draft={draft} />
             ) : (
               <p className="text-sm text-slate-700">

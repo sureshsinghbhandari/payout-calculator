@@ -190,8 +190,18 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "Visitors send an inquiry with their plan, name, email, phone and a message. Spam protection: a hidden honeypot field and at most 5 inquiries per client per hour.",
+      "Visitors send an inquiry with their plan, name, a message, and either an email or a phone number (at least one is required). Spam protection: a hidden honeypot field and at most 5 inquiries per client per hour.",
     outcome: "Admins see every inquiry on the Inquiries page (the admin home), newest first.",
+  },
+  {
+    id: "how-found-us",
+    title: "How did you find us?",
+    category: "sales",
+    priority: "now",
+    status: "done",
+    description:
+      "The inquiry form asks how the visitor found us (search or website, social media, webinar or seminar, friend or family referral, advertisement, or other). Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.",
+    outcome: "Admins see where each inquiry really came from, by the visitor's own account, on the inquiry card and in the Excel export, alongside the separate ?source= link tracking.",
   },
   {
     id: "inquiry-statuses",

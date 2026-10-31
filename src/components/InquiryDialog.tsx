@@ -1,8 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useActionState, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { submitInquiryAction, type InquiryState } from "@/app/inquiry-actions";
-import { DEFAULT_LEAD_SOURCE, INQUIRY_LIMITS, leadSourceFromSearch, type InquiryField } from "@/lib/inquiry";
+import {
+  DEFAULT_LEAD_SOURCE,
+  HOW_FOUND_OPTIONS,
+  INQUIRY_LIMITS,
+  leadSourceFromSearch,
+  type InquiryField,
+} from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate, formatYears } from "@/lib/format";
 import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 import type { PublicSchedule } from "@/lib/scenarios";
@@ -31,6 +37,9 @@ function InquiryForm({ plan, onCancel }: FormProps) {
   const source = useLeadSource();
   const baseId = useId();
   const { inputs, totals } = plan;
+  // Drives which conditional fields show; the form stays mounted across a failed submit, so this
+  // reflects the visitor's own choice throughout, not just the first render.
+  const [howFound, setHowFound] = useState("");
 
   if (state.status === "sent") {
     return (
@@ -134,20 +143,79 @@ function InquiryForm({ plan, onCancel }: FormProps) {
           />
           {errorText("name")}
         </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm font-semibold text-slate-900">Email or phone number</p>
+          <p className="text-xs text-slate-500">Share at least one so we can reach you.</p>
+        </div>
         <div>
           <label htmlFor={`${baseId}-email`} className="text-sm font-semibold text-slate-900">
             Email
           </label>
-          <input {...field("email")} type="email" autoComplete="email" maxLength={INQUIRY_LIMITS.email} required />
+          <input {...field("email")} type="email" autoComplete="email" maxLength={INQUIRY_LIMITS.email} />
           {errorText("email")}
         </div>
         <div>
           <label htmlFor={`${baseId}-phone`} className="text-sm font-semibold text-slate-900">
-            Phone <span className="font-normal text-slate-500">(optional)</span>
+            Phone
           </label>
           <input {...field("phone")} type="tel" autoComplete="tel" maxLength={INQUIRY_LIMITS.phone} />
           {errorText("phone")}
         </div>
+        <div className="sm:col-span-2">
+          <label htmlFor={`${baseId}-howFound`} className="text-sm font-semibold text-slate-900">
+            How did you find us?
+          </label>
+          <select
+            id={`${baseId}-howFound`}
+            name="howFound"
+            required
+            value={howFound}
+            onChange={(e) => setHowFound(e.target.value)}
+            aria-invalid={state.fieldErrors?.howFound ? true : undefined}
+            aria-describedby={state.fieldErrors?.howFound ? `${baseId}-howFound-error` : undefined}
+            className={`${inputClass} ${state.fieldErrors?.howFound ? errorClass : okClass}`}
+          >
+            <option value="" disabled>
+              Choose one
+            </option>
+            {HOW_FOUND_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {errorText("howFound")}
+        </div>
+        {howFound === "webinar" && (
+          <div className="sm:col-span-2">
+            <label htmlFor={`${baseId}-webinarDetails`} className="text-sm font-semibold text-slate-900">
+              Which webinar?
+            </label>
+            <input
+              {...field("webinarDetails")}
+              type="text"
+              required
+              maxLength={INQUIRY_LIMITS.webinarDetails}
+              placeholder="e.g. the date, city or name of the webinar"
+            />
+            {errorText("webinarDetails")}
+          </div>
+        )}
+        {howFound === "friend-family" && (
+          <div className="sm:col-span-2">
+            <label htmlFor={`${baseId}-referrerContact`} className="text-sm font-semibold text-slate-900">
+              Referrer&apos;s email or phone number
+            </label>
+            <input
+              {...field("referrerContact")}
+              type="text"
+              required
+              maxLength={INQUIRY_LIMITS.email}
+              placeholder="Their email address or phone number"
+            />
+            {errorText("referrerContact")}
+          </div>
+        )}
         <div className="sm:col-span-2">
           <label htmlFor={`${baseId}-message`} className="text-sm font-semibold text-slate-900">
             Message <span className="font-normal text-slate-500">(optional)</span>

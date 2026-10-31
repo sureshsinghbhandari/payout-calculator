@@ -306,6 +306,7 @@ export async function sendInquiryEmail(input: {
   const from = senderOf(env);
   if (!from) return { ok: false, error: "Email is not set up." };
   const { inquiry } = input;
+  if (!inquiry.email) return { ok: false, error: "This inquiry has no email address, only a phone number." };
   const subject = input.subject ?? (input.kind === "acknowledgement" ? acknowledgementSubject(inquiry.id) : replySubject(inquiry.id));
   const result = await deliver(env, from, {
     to: inquiry.email,
@@ -345,6 +346,8 @@ export async function sendAcknowledgement(inquiry: StoredInquiry): Promise<void>
   const env = readEnv();
   const from = senderOf(env);
   if (!from) return;
+  // A phone-only inquiry has nothing to acknowledge by email.
+  if (!inquiry.email) return;
   const ref = inquiryReference(inquiry.id);
   const target = { type: "inquiry" as const, id: inquiry.id, label: `${ref} (${inquiry.name})` };
   try {

@@ -15,18 +15,45 @@ export const INQUIRY_LIMITS = {
   email: 254,
   phone: 25,
   message: 1000,
+  webinarDetails: 120,
 } as const;
 
-export type InquiryField = "name" | "email" | "phone" | "message";
+export type InquiryField = "name" | "email" | "phone" | "message" | "howFound" | "webinarDetails" | "referrerContact";
 export type InquiryStatus = "new" | "contacted" | "converted" | "deleted";
 /** Statuses an admin can set directly with Mark as new / Mark as contacted. */
 export type ActiveInquiryStatus = "new" | "contacted";
+
+/** How a visitor says they found us. */
+export type HowFound = "search-website" | "social-media" | "webinar" | "friend-family" | "advertisement" | "other";
+
+export const HOW_FOUND_OPTIONS: ReadonlyArray<{ value: HowFound; label: string }> = [
+  { value: "search-website", label: "Search or our website" },
+  { value: "social-media", label: "Social media" },
+  { value: "webinar", label: "Webinar or seminar" },
+  { value: "friend-family", label: "Friend or family referral" },
+  { value: "advertisement", label: "Advertisement" },
+  { value: "other", label: "Other" },
+];
+
+export const HOW_FOUND_LABELS: Record<HowFound, string> = Object.fromEntries(
+  HOW_FOUND_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<HowFound, string>;
+
+export function isHowFound(value: unknown): value is HowFound {
+  return typeof value === "string" && HOW_FOUND_OPTIONS.some((o) => o.value === value);
+}
 
 export interface InquiryContact {
   name: string;
   email: string;
   phone: string;
   message: string;
+  /** How the visitor says they found us. */
+  howFound: HowFound;
+  /** Which webinar, when howFound is "webinar"; empty otherwise. */
+  webinarDetails: string;
+  /** The referrer's email or phone number, when howFound is "friend-family"; empty otherwise. */
+  referrerContact: string;
 }
 
 /** Snapshot of the plan the visitor was looking at, calculated on the server. */
@@ -172,22 +199,52 @@ export function parseInquiryForm(raw: Record<string, unknown>, products?: Produc
   else if (name.length > INQUIRY_LIMITS.name) errors.name = `Use at most ${INQUIRY_LIMITS.name} characters.`;
   else if (CONTROL_CHARS.test(name)) errors.name = "Enter a valid name.";
 
-  if (email === "") errors.email = "Enter your email address.";
-  else if (email.length > INQUIRY_LIMITS.email || !EMAIL_PATTERN.test(email)) {
+  // Email and phone are each optional on their own, but at least one is required.
+  if (email !== "" && (email.length > INQUIRY_LIMITS.email || !EMAIL_PATTERN.test(email))) {
     errors.email = "Enter a valid email address, like name@example.com.";
   }
-
   if (phone !== "") {
     const digits = phone.replace(/\D/g, "").length;
     if (phone.length > INQUIRY_LIMITS.phone || !PHONE_PATTERN.test(phone) || digits < 7 || digits > 15) {
       errors.phone = "Enter a valid phone number, or leave it empty.";
     }
   }
+  if (email === "" && phone === "") {
+    const needOne = "Enter your email address or phone number.";
+    errors.email = needOne;
+    errors.phone = needOne;
+  }
 
   if (message.length > INQUIRY_LIMITS.message) {
     errors.message = `Use at most ${INQUIRY_LIMITS.message} characters.`;
   } else if (CONTROL_CHARS.test(message)) {
     errors.message = "Remove unusual characters from the message.";
+  }
+
+  const howFoundRaw = text(raw.howFound);
+  const howFound = isHowFound(howFoundRaw) ? howFoundRaw : null;
+  if (!howFound) errors.howFound = "Choose how you found us.";
+
+  const webinarDetails = text(raw.webinarDetails);
+  if (howFound === "webinar") {
+    if (webinarDetails === "") errors.webinarDetails = "Tell us which webinar.";
+    else if (webinarDetails.length > INQUIRY_LIMITS.webinarDetails) {
+      errors.webinarDetails = `Use at most ${INQUIRY_LIMITS.webinarDetails} characters.`;
+    } else if (CONTROL_CHARS.test(webinarDetails)) errors.webinarDetails = "Enter valid webinar details.";
+  }
+
+  const referrerContact = text(raw.referrerContact);
+  if (howFound === "friend-family") {
+    if (referrerContact === "") {
+      errors.referrerContact = "Enter the referrer's email or phone number.";
+    } else {
+      const referrerDigits = referrerContact.replace(/\D/g, "").length;
+      const looksEmail = EMAIL_PATTERN.test(referrerContact);
+      const looksPhone = PHONE_PATTERN.test(referrerContact) && referrerDigits >= 7 && referrerDigits <= 15;
+      if (referrerContact.length > INQUIRY_LIMITS.email || (!looksEmail && !looksPhone)) {
+        errors.referrerContact = "Enter a valid email address or phone number.";
+      }
+    }
   }
 
   const plan = parseQuoteInputs({
@@ -201,10 +258,18 @@ export function parseInquiryForm(raw: Record<string, unknown>, products?: Produc
     errors.plan = "The plan details are missing or no longer offered. Calculate your payout again, then send the inquiry.";
   }
 
-  if (Object.keys(errors).length > 0 || !plan.ok) return { ok: false, errors };
+  if (Object.keys(errors).length > 0 || !plan.ok || !howFound) return { ok: false, errors };
   return {
     ok: true,
-    contact: { name, email, phone, message },
+    contact: {
+      name,
+      email,
+      phone,
+      message,
+      howFound,
+      webinarDetails: howFound === "webinar" ? webinarDetails : "",
+      referrerContact: howFound === "friend-family" ? referrerContact : "",
+    },
     plan: plan.value,
     source: parseLeadSource(raw.source),
     isSpam: text(raw.website) !== "",
@@ -240,8 +305,9 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   const id = str(d.id);
   const createdAt = str(d.createdAt);
   const name = str(d.name);
+  // Empty is valid (a phone-only inquiry); only a missing or non-string value is not.
   const email = str(d.email);
-  if (!id || !isInquiryId(id) || !createdAt || !name || !email) throw new Error("Invalid inquiry.");
+  if (!id || !isInquiryId(id) || !createdAt || !name || email === null) throw new Error("Invalid inquiry.");
   const frequency = str(plan.frequency) as PayoutFrequency | null;
   const payoutType = str(plan.payoutType) as PayoutType | null;
   const values = {
@@ -295,6 +361,9 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   const meetingBase = parseMeeting(d.meeting);
   const meetingBy = str(((d.meeting ?? null) as Record<string, unknown> | null)?.by);
   const meeting: InquiryMeeting | undefined = meetingBase && meetingBy ? { ...meetingBase, by: meetingBy } : undefined;
+  const howFoundRaw = str(d.howFound);
+  // Inquiries sent before this was asked default to "other".
+  const howFound: HowFound = howFoundRaw && isHowFound(howFoundRaw) ? howFoundRaw : "other";
   return {
     id,
     createdAt,
@@ -305,6 +374,9 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     email,
     phone: str(d.phone) ?? "",
     message: str(d.message) ?? "",
+    howFound,
+    webinarDetails: str(d.webinarDetails) ?? "",
+    referrerContact: str(d.referrerContact) ?? "",
     plan: {
       principal: values.principal!,
       lockInYears: values.lockInYears!,

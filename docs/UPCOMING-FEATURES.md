@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**30 done · 7 in progress · 14 pending** · 21 [waiting on you](#waiting-on-you)
+**31 done · 7 in progress · 14 pending** · 21 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -40,33 +40,34 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 22 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
 | 23 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
 | 24 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 27 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 28 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 29 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 30 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 31 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 32 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 33 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 34 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 35 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 36 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 37 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 39 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 40 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 41 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 42 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 43 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 44 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 45 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 46 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 47 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
-| 48 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
-| 49 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
-| 50 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
-| 51 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
+| 25 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 27 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 28 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 29 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 30 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 31 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 32 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 33 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 34 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 35 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 36 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 37 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 39 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 40 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 44 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 45 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 46 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 47 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 48 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 49 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 50 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
+| 51 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
+| 52 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
 
 <a id="waiting-on-you"></a>
 
@@ -594,7 +595,7 @@ Investment Payout Calculator: Admin        (bell) 3   (gear)  View calculator
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
 
-Visitors send an inquiry with their plan, name, email, phone and a message. Spam protection: a hidden honeypot field and at most 5 inquiries per client per hour.
+Visitors send an inquiry with their plan, name, a message, and either an email or a phone number (at least one is required). Spam protection: a hidden honeypot field and at most 5 inquiries per client per hour.
 
 **Outcome:** Admins see every inquiry on the Inquiries page (the admin home), newest first.
 
@@ -605,13 +606,51 @@ Send inquiry                                                  [x]
 ------------------------------------------------------------------
  Your plan: $100,000 · 2 years · Yearly · Earnings Only
  Name     [                          ]
+ Email or phone number: share at least one
  Email    [                          ]
- Phone    [                          ]   (optional)
+ Phone    [                          ]
+ How did you find us?  [ Choose one                       v ]
  Message  [                          ]   (optional)
  [ Send inquiry ]
 
  After sending:  "Thank you. Your reference is A1B2C3D4.
                   We have also emailed you a confirmation."
+```
+
+[Back to the table](#summary)
+
+<a id="how-found-us"></a>
+
+### How did you find us?
+
+**Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
+
+The inquiry form asks how the visitor found us (search or website, social media, webinar or seminar, friend or family referral, advertisement, or other). Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.
+
+**Outcome:** Admins see where each inquiry really came from, by the visitor's own account, on the inquiry card and in the Excel export, alongside the separate ?source= link tracking.
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+Send inquiry (How did you find us? = Webinar or seminar)
+------------------------------------------------------------------
+ How did you find us?  [ Webinar or seminar               v ]
+ Which webinar?        [ e.g. the date, city or name...     ]
+
+Send inquiry (How did you find us? = Friend or family referral)
+------------------------------------------------------------------
+ How did you find us?  [ Friend or family referral         v ]
+ Referrer's email or phone number
+                        [ Their email address or phone...    ]
+
+Admin: Inquiries, and each inquiry's card
+------------------------------------------------------------------
+ Priya Sharma  [NEW]
+ priya@example.com   +1 (555) 010-1001
+ Found us: Webinar or seminar — Fixed-Term Investment Plans seminar, Oct 24
+ "Is the rate fixed for the whole term?..."
+
+ Export to Excel adds columns: How found, Referral details
 ```
 
 [Back to the table](#summary)

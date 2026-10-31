@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { formatCents, formatDollars, formatIsoDate, formatPercent, formatYears } from "@/lib/format";
-import { followUpState, inquiryReference, type FollowUpState, type InquiryStatus, type StoredInquiry } from "@/lib/inquiry";
+import {
+  followUpState,
+  HOW_FOUND_LABELS,
+  inquiryReference,
+  type FollowUpState,
+  type InquiryStatus,
+  type StoredInquiry,
+} from "@/lib/inquiry";
 import { NOTE_KIND_LABELS } from "@/lib/inquiry-log";
 import { formatMeeting, isMeetingUpcoming } from "@/lib/meeting";
 import { formatTimestamp } from "@/lib/time";
@@ -166,9 +173,11 @@ export function InquiryCard({
       )}
 
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-        <a href={`mailto:${inquiry.email}`} className="font-medium text-blue-800 underline underline-offset-2 hover:text-blue-950">
-          {inquiry.email}
-        </a>
+        {inquiry.email && (
+          <a href={`mailto:${inquiry.email}`} className="font-medium text-blue-800 underline underline-offset-2 hover:text-blue-950">
+            {inquiry.email}
+          </a>
+        )}
         {inquiry.phone && (
           <a
             href={`tel:${inquiry.phone.replace(/[^\d+]/g, "")}`}
@@ -178,6 +187,12 @@ export function InquiryCard({
           </a>
         )}
       </div>
+
+      <p className="mt-2 text-xs text-slate-600">
+        Found us: <span className="font-medium text-slate-800">{HOW_FOUND_LABELS[inquiry.howFound]}</span>
+        {inquiry.howFound === "webinar" && inquiry.webinarDetails && <> — {inquiry.webinarDetails}</>}
+        {inquiry.howFound === "friend-family" && inquiry.referrerContact && <> — referred by {inquiry.referrerContact}</>}
+      </p>
 
       {inquiry.message && (
         <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-800">{inquiry.message}</p>
