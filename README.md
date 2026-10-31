@@ -188,8 +188,11 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - After calculating, visitors can select **Send inquiry**. The form shows their plan and
   asks for name, email, phone and an optional message. **Email and phone are each optional on
   their own, but at least one is required.**
-- **How did you find us?** is required: Search or our website, Social media, Webinar or
-  seminar, Friend or family referral, Advertisement, or Other.
+- **How did you find us?** is required. All six options show (Search or our website, Social
+  media, Webinar or seminar, Friend or family referral, Advertisement, Other), but only
+  **Webinar or seminar** and **Friend or family referral** can currently be chosen; the
+  rest are greyed out until those channels are tracked
+  (`SELECTABLE_HOW_FOUND` in `src/lib/inquiry.ts`).
   - **Webinar or seminar** also asks which one (required).
   - **Friend or family referral** also asks for the referrer's email or phone number
     (required, either one).

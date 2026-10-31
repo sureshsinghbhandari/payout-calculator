@@ -625,13 +625,25 @@ Send inquiry                                                  [x]
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
 
-The inquiry form asks how the visitor found us (search or website, social media, webinar or seminar, friend or family referral, advertisement, or other). Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.
+The inquiry form asks how the visitor found us. All six options show (search or website, social media, webinar or seminar, friend or family referral, advertisement, other), but only webinar and friend/family referral can currently be chosen; the rest are greyed out until those channels are tracked. Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.
 
 **Outcome:** Admins see where each inquiry really came from, by the visitor's own account, on the inquiry card and in the Excel export, alongside the separate ?source= link tracking.
 
 **Layout** (a sketch, not a screenshot):
 
 ```text
+Send inquiry: How did you find us? dropdown, opened
+------------------------------------------------------------------
+   Choose one
+   Search or our website        (greyed out, not selectable)
+   Social media                 (greyed out, not selectable)
+   Webinar or seminar
+   Friend or family referral
+   Advertisement                (greyed out, not selectable)
+   Other                        (greyed out, not selectable)
+ Only Webinar or seminar and Friend or family referral can be chosen
+ right now.
+
 Send inquiry (How did you find us? = Webinar or seminar)
 ------------------------------------------------------------------
  How did you find us?  [ Webinar or seminar               v ]

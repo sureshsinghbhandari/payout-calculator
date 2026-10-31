@@ -7,6 +7,7 @@ import {
   HOW_FOUND_OPTIONS,
   INQUIRY_LIMITS,
   leadSourceFromSearch,
+  SELECTABLE_HOW_FOUND,
   type InquiryField,
 } from "@/lib/inquiry";
 import { formatCents, formatDollars, formatIsoDate, formatYears } from "@/lib/format";
@@ -179,11 +180,14 @@ function InquiryForm({ plan, onCancel }: FormProps) {
               Choose one
             </option>
             {HOW_FOUND_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
+              <option key={o.value} value={o.value} disabled={!SELECTABLE_HOW_FOUND.has(o.value)}>
                 {o.label}
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-slate-500">
+            Only Webinar or seminar and Friend or family referral can be chosen right now.
+          </p>
           {errorText("howFound")}
         </div>
         {howFound === "webinar" && (

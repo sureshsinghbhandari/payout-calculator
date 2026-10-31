@@ -200,7 +200,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "The inquiry form asks how the visitor found us (search or website, social media, webinar or seminar, friend or family referral, advertisement, or other). Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.",
+      "The inquiry form asks how the visitor found us. All six options show (search or website, social media, webinar or seminar, friend or family referral, advertisement, other), but only webinar and friend/family referral can currently be chosen; the rest are greyed out until those channels are tracked. Choosing a webinar asks which one; choosing a referral asks for the referrer's email or phone number. Both are required when they apply.",
     outcome: "Admins see where each inquiry really came from, by the visitor's own account, on the inquiry card and in the Excel export, alongside the separate ?source= link tracking.",
   },
   {

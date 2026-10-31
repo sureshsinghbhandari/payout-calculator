@@ -64,7 +64,19 @@ export const LAYOUTS: Record<string, string> = {
  After sending:  "Thank you. Your reference is A1B2C3D4.
                   We have also emailed you a confirmation."`,
 
-  "how-found-us": `Send inquiry (How did you find us? = Webinar or seminar)
+  "how-found-us": `Send inquiry: How did you find us? dropdown, opened
+------------------------------------------------------------------
+   Choose one
+   Search or our website        (greyed out, not selectable)
+   Social media                 (greyed out, not selectable)
+   Webinar or seminar
+   Friend or family referral
+   Advertisement                (greyed out, not selectable)
+   Other                        (greyed out, not selectable)
+ Only Webinar or seminar and Friend or family referral can be chosen
+ right now.
+
+Send inquiry (How did you find us? = Webinar or seminar)
 ------------------------------------------------------------------
  How did you find us?  [ Webinar or seminar               v ]
  Which webinar?        [ e.g. the date, city or name...     ]

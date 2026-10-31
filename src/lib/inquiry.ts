@@ -43,6 +43,18 @@ export function isHowFound(value: unknown): value is HowFound {
   return typeof value === "string" && HOW_FOUND_OPTIONS.some((o) => o.value === value);
 }
 
+/**
+ * Which "how did you find us" options a visitor can currently choose. The
+ * others still show in the list (greyed out) so the choices read naturally,
+ * but are not selectable yet and are rejected if submitted anyway. Expand
+ * this set as more channels start being tracked.
+ */
+export const SELECTABLE_HOW_FOUND: ReadonlySet<HowFound> = new Set(["webinar", "friend-family"]);
+
+export function isSelectableHowFound(value: unknown): value is HowFound {
+  return isHowFound(value) && SELECTABLE_HOW_FOUND.has(value);
+}
+
 export interface InquiryContact {
   name: string;
   email: string;
@@ -222,7 +234,8 @@ export function parseInquiryForm(raw: Record<string, unknown>, products?: Produc
   }
 
   const howFoundRaw = text(raw.howFound);
-  const howFound = isHowFound(howFoundRaw) ? howFoundRaw : null;
+  // Only the currently selectable options may be submitted, even though the form lists them all.
+  const howFound = isSelectableHowFound(howFoundRaw) ? howFoundRaw : null;
   if (!howFound) errors.howFound = "Choose how you found us.";
 
   const webinarDetails = text(raw.webinarDetails);
