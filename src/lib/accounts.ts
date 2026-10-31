@@ -33,6 +33,7 @@ export type Permission =
   | "email.manage"
   | "audit.view"
   | "roadmap.view"
+  | "trading.view"
   // TEMPORARY: permanent deletion of inquiries, to be removed before go-live.
   | "inquiries.purge";
 
@@ -56,6 +57,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "email.manage",
     "audit.view",
     "roadmap.view",
+    "trading.view",
     "inquiries.purge",
   ],
   // Sales admins only work with inquiries: view them, add notes, email the customer, mark them contacted,

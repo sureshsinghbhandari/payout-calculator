@@ -224,6 +224,28 @@ Investors
    seminar-2026-10           4         1         25%     [ View inquiries ]
      link  https://<site>/inquiries?source=seminar-2026-10  [ Copy ] [QR]`,
 
+  "trading-dashboard": `Settings > Trading dashboard
+------------------------------------------------------------------
+ [ Simulator ] [ Strategies (US) ] [ Strategies (India) ] ...   (tabs)
+
+ Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+
+ NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
+ $12,340     $410        $3,120       58.2%            1.46
+
+ ROI    MAX DRAWDOWN   CAPITAL   EXPECTANCY   BEST DAY   TRADES  ...
+
+ Strategies
+   Rank  Strategy      Net P&L   ROI    Win rate  Profit factor  ...
+   1     Cooper         $4,820   9.6%   61%       1.8            ...
+   2     Warren         $3,110   7.1%   55%       1.5            ...
+
+ Not set up yet:
+   "Add TRADING_API_URL and TRADING_API_TOKEN in Vercel. ..."
+ Unreachable:
+   "Could not reach the trading app. It may be turned off,
+    asleep, or the tunnel may be down."`,
+
   "dashboard": `Dashboard
 ------------------------------------------------------------------
  Inquiries per week (last 8 weeks)

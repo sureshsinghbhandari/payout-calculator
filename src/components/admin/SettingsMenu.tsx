@@ -49,6 +49,7 @@ export function SettingsMenu({ user }: { user: PublicAdmin }) {
     { href: "/admin/settings/email-templates", label: "Email templates", permission: "email.manage" as const },
     { href: "/admin/settings/audit", label: "Audit log", permission: "audit.view" as const },
     { href: "/admin/settings/upcoming", label: "Upcoming features", permission: "roadmap.view" as const },
+    { href: "/admin/trading", label: "Trading dashboard", permission: "trading.view" as const },
     { href: "/admin/account", label: "My account", permission: null },
   ];
 

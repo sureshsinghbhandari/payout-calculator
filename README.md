@@ -302,6 +302,22 @@ the first time an inquiry's page is opened.
   username within 15 minutes, and admin sign-ins from a device or network not used in the
   previous 30 days. Only a short coded fingerprint is kept, never the IP address.
 
+## Trading dashboard (Master Admin, optional)
+
+**Settings > Trading dashboard** (`/admin/trading`) is a read-only view of a separate
+trading app (`tradiersuinew`) that you run on your own machine. It shows that app's
+end-of-day KPI tiles and ranked strategy figures for the tab you pick — the same numbers
+as its own Excel export, fetched live over its data API (see that app's
+`docs/eod-excel.md`). This app only ever reads from it: no order is placed, nothing there
+is changed, and nothing of this app's own data (inquiries, investors, rates) is sent to it.
+
+Needs `TRADING_API_URL` and `TRADING_API_TOKEN` set here (see
+[Environment variables](#environment-variables)), and on the other app: its own
+`EOD_EXCEL_API_TOKEN` set to the same value, and its ngrok tunnel running. Without both
+set here, the page explains what is missing instead of guessing. Because it depends on
+your own machine and tunnel being on, the page also shows a plain message (not a crash)
+when that app cannot be reached, or when the token is rejected.
+
 ## Upcoming features
 
 **Settings > Upcoming features** (`/admin/settings/upcoming`, Master Admin) lists planned
@@ -441,6 +457,8 @@ have no password, so they cannot sign in to the portal.
 | `EMAIL_FROM` | Resend: sender, e.g. `Acme Investments <inquiries@mail.acme.com>`. |
 | `EMAIL_REPLY_DOMAIN` | Resend: domain that receives replies, e.g. `reply.acme.com`. |
 | `RESEND_WEBHOOK_SECRET` | Resend: signing secret (`whsec_...`) of the webhook. Secret. |
+| `TRADING_API_URL` | Optional: base address of the separate trading app for the Trading dashboard (no trailing slash), e.g. its ngrok tunnel. |
+| `TRADING_API_TOKEN` | Optional: bearer token for that app's data API, matching its `EOD_EXCEL_API_TOKEN`. Secret. |
 
 Set a value with `npx vercel env add NAME production --sensitive` (you type the value),
 then redeploy with `npx vercel deploy --prod`.

@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**31 done · 7 in progress · 14 pending** · 21 [waiting on you](#waiting-on-you)
+**31 done · 8 in progress · 14 pending** · 22 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -23,51 +23,52 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 5 | [Email templates](#email-templates) | 🔄 In progress | Next | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the wording. |
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Next | Investor portal | Email set up (Gmail settings in Vercel) before reset links can be sent. |
 | 7 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 8 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
-| 9 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
-| 10 | [Privacy notice and data requests](#privacy) | ⏳ Pending | Next | Security and compliance | The privacy notice wording, ideally checked by a lawyer. |
-| 11 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance | Your go-ahead to add and run tests. |
-| 12 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience | The domain (see Company domain) and access to its DNS settings. |
-| 13 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
-| 14 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
-| 15 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations | Confirm Monthly should be offered, and the monthly rate. |
-| 16 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Later | Payouts and operations | Which country's public holidays to skip (for example US federal holidays). |
-| 17 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
-| 18 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 19 | [Visitor analytics](#web-analytics) | ⏳ Pending | Later | Reports and insights | Turn on Web Analytics in the Vercel project. |
-| 20 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
-| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
-| 22 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
-| 23 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
-| 24 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 27 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 28 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 29 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 30 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 31 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 32 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 33 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 34 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 35 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 36 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 37 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 39 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 40 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 44 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 45 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 46 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 47 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 48 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
-| 49 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
-| 50 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
-| 51 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
-| 52 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
+| 8 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 9 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 10 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
+| 11 | [Privacy notice and data requests](#privacy) | ⏳ Pending | Next | Security and compliance | The privacy notice wording, ideally checked by a lawyer. |
+| 12 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance | Your go-ahead to add and run tests. |
+| 13 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience | The domain (see Company domain) and access to its DNS settings. |
+| 14 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
+| 15 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
+| 16 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations | Confirm Monthly should be offered, and the monthly rate. |
+| 17 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Later | Payouts and operations | Which country's public holidays to skip (for example US federal holidays). |
+| 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
+| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 20 | [Visitor analytics](#web-analytics) | ⏳ Pending | Later | Reports and insights | Turn on Web Analytics in the Vercel project. |
+| 21 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
+| 22 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
+| 23 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
+| 24 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
+| 25 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
+| 27 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 28 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 29 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 30 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 31 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 32 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 33 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 34 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 35 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 36 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 37 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 39 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 40 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 41 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 42 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 43 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 44 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 45 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 46 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 47 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 48 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 49 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 50 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 51 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
+| 52 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
+| 53 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
 
 <a id="waiting-on-you"></a>
 
@@ -85,20 +86,21 @@ Everything else in the list can be built without your help.
 | 5 | [Email templates](#email-templates) | 🔄 In progress | Email set up (Gmail settings in Vercel), and approval of the wording. |
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Email set up (Gmail settings in Vercel) before reset links can be sent. |
 | 7 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 8 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
-| 9 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
-| 10 | [Privacy notice and data requests](#privacy) | ⏳ Pending | The privacy notice wording, ideally checked by a lawyer. |
-| 11 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Your go-ahead to add and run tests. |
-| 12 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
-| 13 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
-| 14 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
-| 15 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
-| 16 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Which country's public holidays to skip (for example US federal holidays). |
-| 17 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
-| 18 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 19 | [Visitor analytics](#web-analytics) | ⏳ Pending | Turn on Web Analytics in the Vercel project. |
-| 20 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
-| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
+| 8 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 9 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 10 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
+| 11 | [Privacy notice and data requests](#privacy) | ⏳ Pending | The privacy notice wording, ideally checked by a lawyer. |
+| 12 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Your go-ahead to add and run tests. |
+| 13 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
+| 14 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
+| 15 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
+| 16 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
+| 17 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Which country's public holidays to skip (for example US federal holidays). |
+| 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
+| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 20 | [Visitor analytics](#web-analytics) | ⏳ Pending | Turn on Web Analytics in the Vercel project. |
+| 21 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
+| 22 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
 
 <a id="app-map"></a>
 
@@ -320,6 +322,46 @@ Settings > Email > Payout emails to investors
 
  Portal:  Payout emails [ On / Off ]   (investor can opt out)
  Record payout dialog:  [x] Email the investor a payment confirmation
+```
+
+[Back to the table](#summary)
+
+<a id="trading-dashboard"></a>
+
+### Trading dashboard
+
+**Status:** 🔄 In progress · **Priority:** Later · **Area:** Reports and insights
+
+A read-only page showing end-of-day KPI tiles and ranked strategy figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API. Nothing is written there; only what that app already computes for its own Excel export is shown.
+
+**Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running.
+
+**Outcome:** Settings > Trading dashboard (Master Admin): pick a tab, see its KPI tiles and strategy table, always current, no Excel file to open.
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+Settings > Trading dashboard
+------------------------------------------------------------------
+ [ Simulator ] [ Strategies (US) ] [ Strategies (India) ] ...   (tabs)
+
+ Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+
+ NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
+ $12,340     $410        $3,120       58.2%            1.46
+
+ ROI    MAX DRAWDOWN   CAPITAL   EXPECTANCY   BEST DAY   TRADES  ...
+
+ Strategies
+   Rank  Strategy      Net P&L   ROI    Win rate  Profit factor  ...
+   1     Cooper         $4,820   9.6%   61%       1.8            ...
+   2     Warren         $3,110   7.1%   55%       1.5            ...
+
+ Not set up yet:
+   "Add TRADING_API_URL and TRADING_API_TOKEN in Vercel. ..."
+ Unreachable:
+   "Could not reach the trading app. It may be turned off,
+    asleep, or the tunnel may be down."
 ```
 
 [Back to the table](#summary)
