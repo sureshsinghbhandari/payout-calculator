@@ -8,7 +8,7 @@ import { isRatesUnlocked, RATES_UNLOCK_SECONDS, requireAdminPage } from "@/lib/s
 import { isRateStorageConfigured, readStoredRatesForAdmin, type StoredRates } from "@/lib/server/rates-store";
 
 export const metadata: Metadata = {
-  title: "Interest rates | Admin | Investment Payout Calculator",
+  title: "Earnings rates | Admin | Investment Payout Calculator",
   robots: { index: false, follow: false },
 };
 
@@ -40,11 +40,11 @@ async function RatesContent({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <AdminFrame user={toPublicAdmin(user)}>
-      <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Settings" }, { label: "Interest rates" }]} />
+      <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Settings" }, { label: "Earnings rates" }]} />
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Interest rates</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Earnings rates</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Annual simple-interest rate for each payout term. Visitors never see these rates.
+          Annual simple earnings rate for each payout term. Visitors never see these rates.
         </p>
       </div>
 

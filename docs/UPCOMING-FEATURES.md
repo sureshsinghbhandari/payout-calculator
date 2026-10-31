@@ -45,7 +45,7 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 27 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
 | 28 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
 | 29 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 30 | [Interest rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 30 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
 | 31 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
 | 32 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
 | 33 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
@@ -128,7 +128,7 @@ Staff, all under /admin (gear menu at the top right)
     Change requests ......... /admin/investors/requests
   Payout calendar ........... /admin/payouts
   Settings (gear menu)
-    Interest rates           Amounts and terms     Lead sources
+    Earnings rates           Amounts and terms     Lead sources
     Employees                Email                 Email templates
     Audit log                Upcoming features     My account
 ```
@@ -603,7 +603,7 @@ Visitors send an inquiry with their plan, name, email, phone and a message. Spam
 ```text
 Send inquiry                                                  [x]
 ------------------------------------------------------------------
- Your plan: $100,000 · 2 years · Yearly · Interest Only
+ Your plan: $100,000 · 2 years · Yearly · Earnings Only
  Name     [                          ]
  Email    [                          ]
  Phone    [                          ]   (optional)
@@ -654,7 +654,7 @@ Inquiries                       Pipeline board   Deleted inquiries (2)
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Sales and inquiries
 
-A contacted inquiry becomes an investor with one click: the form is pre-filled from the inquiry and the interest rate is fixed at that moment.
+A contacted inquiry becomes an investor with one click: the form is pre-filled from the inquiry and the earnings rate is fixed at that moment.
 
 [Back to the table](#summary)
 
@@ -664,7 +664,7 @@ A contacted inquiry becomes an investor with one click: the form is pre-filled f
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Investor portal
 
-Investors sign in at /portal and see each investment: amounts, dates, totals, the next payout and the full payout schedule. The interest rate is never shown.
+Investors sign in at /portal and see each investment: amounts, dates, totals, the next payout and the full payout schedule. The earnings rate is never shown.
 
 **Layout** (a sketch, not a screenshot):
 
@@ -673,8 +673,8 @@ Hello, James Wilson                [ Your details ] [ Change password ]
                                    [ Sign-in security ]
 ------------------------------------------------------------------
  Investment 1                                  [ Download statement ]
-   Amount $120,000 · Term locked 5 years · Yearly · Interest Only
-   Planned date | Interest starts | Total interest | Total payout
+   Amount $120,000 · Term locked 5 years · Yearly · Earnings Only
+   Planned date | Earnings start | Total earnings | Total payout
    Next payout: Nov 3, 2027 · $12,000.00
 
    #   Payout date    Payout        Status
@@ -684,7 +684,7 @@ Hello, James Wilson                [ Your details ] [ Change password ]
  Your documents
    Agreement 2026-10-10 (PDF)                       [ Download ]
  Payout emails      [ On ]
- (the interest rate is never shown)
+ (the earnings rate is never shown)
 ```
 
 [Back to the table](#summary)
@@ -705,7 +705,7 @@ A Master Admin gives each investor a temporary password or a one-time setup link
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Payouts and operations
 
-Payout schedule for a fixed-term investment (simple interest, Interest Only or Interest and Principal), comparisons with other payout terms and types, and an Excel download.
+Payout schedule for a fixed-term investment (simple earnings, Earnings Only or Earnings and Principal), comparisons with other payout terms and types, and an Excel download.
 
 **Layout** (a sketch, not a screenshot):
 
@@ -716,26 +716,26 @@ Investment Payout Calculator                    [ Investor login ]
  Planned investment date  [ 2026-11-02          ]
  Term locked              [ 2 years           v ]
  Payout term              [ Yearly            v ]
- Payout type              (o) Interest Only  ( ) Interest and Principal
+ Payout type              (o) Earnings Only  ( ) Earnings and Principal
 
  [ Calculate Payout ]  [ Reset ]
 ------------------------------------------------------------------
  Your payout schedule                         [ Download Excel ]
-  #   Payout date    Interest     Principal    Payout      Left
+  #   Payout date    Earnings     Principal    Payout      Left
   1   2027-11-03     $10,000.00   $0.00        $10,000.00  $100,000
   2   2028-11-03     $10,000.00   $100,000.00  $110,000.00 $0
   Totals             $20,000.00   $100,000.00  $120,000.00
 ------------------------------------------------------------------
  Compare: longer payout terms, and the other payout type
  [ Send inquiry ]                       Disclaimer text
- (No interest rate is shown anywhere on this page.)
+ (No earnings rate is shown anywhere on this page.)
 ```
 
 [Back to the table](#summary)
 
 <a id="rates-management"></a>
 
-### Interest rates managed by Master Admins
+### Earnings rates managed by Master Admins
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Payouts and operations
 
@@ -744,7 +744,7 @@ One rate per payout term, never sent to visitors or investors. Editing needs the
 **Layout** (a sketch, not a screenshot):
 
 ```text
-Settings > Interest rates
+Settings > Earnings rates
 ------------------------------------------------------------------
  Quarterly     ****        Rates are locked.
  Half-Yearly   ****        [ Unlock to edit ]  (needs your own password)
@@ -762,7 +762,7 @@ Settings > Interest rates
 
 **Status:** ✅ Done · **Priority:** Now · **Area:** Security and compliance
 
-Named employees with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see interest rates.
+Named employees with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see earnings rates.
 
 **Layout** (a sketch, not a screenshot):
 
@@ -972,7 +972,7 @@ Mark each scheduled payout as paid (date, amount, reference), so the portal show
 ```text
 Admin > Investors > James Wilson
 ------------------------------------------------------------------
- Investment 1 · $120,000 · 5 years · Yearly · Interest Only
+ Investment 1 · $120,000 · 5 years · Yearly · Earnings Only
    #   Scheduled      Amount        Status
    1   2027-11-03     $12,000.00    Paid Nov 3 · TRX-1234  [ Edit payment ]
    2   2028-11-03     $12,000.00    Due                    [ Mark as paid ]

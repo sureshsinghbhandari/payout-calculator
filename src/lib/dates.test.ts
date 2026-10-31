@@ -59,8 +59,8 @@ describe("validateInvestmentDate", () => {
 });
 
 describe("schedule dates", () => {
-  it("starts interest the next business day and counts payouts from there", () => {
-    // Invested Friday Oct 23, 2026 -> interest starts Monday Oct 26, 2026.
+  it("starts earnings the next business day and counts payouts from there", () => {
+    // Invested Friday Oct 23, 2026 -> earnings start Monday Oct 26, 2026.
     const s = calculatePayoutSchedule({
       principal: 100_000,
       annualRatePercent: 10,
@@ -75,14 +75,14 @@ describe("schedule dates", () => {
   });
 
   it("does not move payout dates that land on a weekend", () => {
-    // Interest starts Friday Dec 25, 2026; the second payout, Dec 25, 2027, is a Saturday.
+    // Earnings start Friday Dec 25, 2026; the second payout, Dec 25, 2027, is a Saturday.
     const s = calculatePayoutSchedule({
       principal: 25_000,
       annualRatePercent: 8,
       lockInYears: 1,
       payoutType: "interest-only",
       frequency: "half-yearly",
-      investmentDate: "2026-12-24", // Thursday -> interest starts Friday Dec 25, 2026
+      investmentDate: "2026-12-24", // Thursday -> earnings start Friday Dec 25, 2026
     });
     expect(s.startDate).toBe("2026-12-25");
     expect(s.rows.map((r) => r.payoutDate)).toEqual(["2027-06-25", "2027-12-25"]);

@@ -142,13 +142,13 @@ export async function convertInquiryAction(prev: ConvertState, formData: FormDat
       return {
         attempt,
         values,
-        error: `The current ${FREQUENCY_LABELS[plan.value.frequency]} rate is not valid. Check Interest rates in Settings.`,
+        error: `The current ${FREQUENCY_LABELS[plan.value.frequency]} rate is not valid. Check Earnings rates in Settings.`,
       };
     }
     annualRatePercent = rate.value;
   } catch (error) {
     console.error("Reading rates for conversion failed", error);
-    return { attempt, values, error: "The current interest rates could not be loaded. Please try again." };
+    return { attempt, values, error: "The current earnings rates could not be loaded. Please try again." };
   }
 
   let investorId: string;
@@ -486,13 +486,13 @@ export async function addInvestmentAction(prev: AddInvestmentState, formData: Fo
       return {
         attempt,
         values,
-        error: `The current ${FREQUENCY_LABELS[plan.value.frequency]} rate is not valid. Check Interest rates in Settings.`,
+        error: `The current ${FREQUENCY_LABELS[plan.value.frequency]} rate is not valid. Check Earnings rates in Settings.`,
       };
     }
     annualRatePercent = rate.value;
   } catch (error) {
     console.error("Reading rates for a new investment failed", error);
-    return { attempt, values, error: "The current interest rates could not be loaded. Please try again." };
+    return { attempt, values, error: "The current earnings rates could not be loaded. Please try again." };
   }
 
   try {

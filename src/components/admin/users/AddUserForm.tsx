@@ -7,7 +7,7 @@ import { inputClass, labelClass, primaryButton } from "./ui";
 
 const ROLE_OPTIONS: { role: AdminRole; description: string }[] = [
   { role: "sales", description: "Views inquiries and marks them contacted." },
-  { role: "master", description: "Everything: inquiries, investors, interest rates and employees." },
+  { role: "master", description: "Everything: inquiries, investors, earnings rates and employees." },
 ];
 
 export function AddUserForm({ storageConfigured }: { storageConfigured: boolean }) {

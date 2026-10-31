@@ -76,7 +76,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
     } catch (error) {
       console.error("Loading investor for a new investment failed", error);
       message =
-        "The investor, the current interest rates or the amounts and terms on offer could not be loaded. Reload the page to try again.";
+        "The investor, the current earnings rates or the amounts and terms on offer could not be loaded. Reload the page to try again.";
     }
   }
 
@@ -97,7 +97,7 @@ async function AddInvestmentContent({ params, searchParams }: { params: Params; 
         <h1 className="mb-6 text-2xl font-semibold text-slate-900">{title}</h1>
         <AdminCard>
           <p role="alert" className="text-sm font-medium text-slate-800">
-            {message ?? "The current interest rates could not be loaded. Reload the page to try again."}
+            {message ?? "The current earnings rates could not be loaded. Reload the page to try again."}
           </p>
           <Link
             href={investor ? `/admin/investors/${encodeURIComponent(investor.id)}` : "/admin/investors"}

@@ -10,7 +10,7 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Investment Payout Calculator",
   description:
-    "Estimate the payout schedule for a fixed-term investment: choose an amount, planned investment date, term, payout term and payout type to see interest and principal by payout date.",
+    "Estimate the payout schedule for a fixed-term investment: choose an amount, planned investment date, term, payout term and payout type to see earnings and principal by payout date.",
 };
 
 export const viewport: Viewport = {

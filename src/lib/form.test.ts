@@ -3,7 +3,7 @@ import { DEFAULT_RATE_BY_FREQUENCY } from "./config";
 import { effectiveInvestmentDate, initialFormState } from "./form";
 
 describe("form defaults", () => {
-  it("start at $100,000, 2 years, Yearly, Interest Only, investing today", () => {
+  it("start at $100,000, 2 years, Yearly, Earnings Only, investing today", () => {
     expect(initialFormState()).toEqual({
       principal: 100_000,
       lockInYears: 2,
@@ -13,7 +13,7 @@ describe("form defaults", () => {
     });
   });
 
-  it("have no interest rate field", () => {
+  it("have no earnings rate field", () => {
     expect(Object.keys(initialFormState())).not.toContain("rateText");
   });
 

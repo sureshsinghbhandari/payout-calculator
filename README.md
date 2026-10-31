@@ -6,7 +6,7 @@ payout term and a payout type. They get a payout-by-payout table with totals,
 comparisons with other scenarios, an Excel download, and can send an inquiry.
 
 Behind it is an admin area with named users and roles (Master Admin, Sales Admin) for
-managing inquiries, investors and the interest rates, and an investor portal where
+managing inquiries, investors and the earnings rates, and an investor portal where
 investors sign in to see their investments.
 
 | Who | Address |
@@ -18,14 +18,14 @@ investors sign in to see their investments.
 The site root (`/`) intentionally shows a friendly "page not found" (404). The old
 `/investor` address redirects to `/portal`.
 
-Interest rates are never shown to visitors or investors.
+Earnings rates are never shown to visitors or investors.
 
 ## Tech stack
 
 - Next.js (App Router, Cache Components) with TypeScript
 - Tailwind CSS
 - Server Actions for the calculation and the admin page
-- Vercel Blob (private store) for the interest rates
+- Vercel Blob (private store) for the earnings rates
 - ExcelJS for the Excel download, loaded only when the button is clicked
 - Vitest for tests
 - Vercel for hosting
@@ -53,11 +53,11 @@ Interest rates are never shown to visitors or investors.
 
 - **Labels:** Investment amount (a list), Planned investment date, Term locked (1 or 2 years),
   Payout term (Quarterly, Half-Yearly or Yearly) and Payout type.
-- **Defaults:** $100,000, 2 years, Yearly payouts, Interest Only, invested today. Reset
+- **Defaults:** $100,000, 2 years, Yearly payouts, Earnings Only, invested today. Reset
   returns to these.
-- **Planned investment date:** interest starts on the next business day after the
+- **Planned investment date:** earnings start on the next business day after the
   planned investment date. Business days are Monday to Friday; public holidays are not taken into account.
-  Payouts then fall every 3, 6 or 12 months, counted from the interest start date, and
+  Payouts then fall every 3, 6 or 12 months, counted from the earnings start date, and
   are not moved if they land on a weekend.
 - **Rates:** each payout term has its own annual rate. The browser never receives
   the rates. When a visitor clicks Calculate Payout, the server reads the current rates,
@@ -71,13 +71,13 @@ Interest rates are never shown to visitors or investors.
 
 ## Calculation rules
 
-- Simple interest only. Interest is never compounded.
+- Simple earnings only. Earnings are never compounded.
 - Periods per year: Quarterly 4, Half-Yearly 2, Yearly 1.
 - Total payouts = term in years x payouts per year.
-- **Interest Only:** every payout is one period of interest on the original principal.
-  The final payout adds the full principal. Total interest = principal x rate x years.
-- **Interest and Principal:** principal is returned in equal installments. Each payout's
-  interest = outstanding principal before that payout x rate / periods per year.
+- **Earnings Only:** every payout is one period of earnings on the original principal.
+  The final payout adds the full principal. Total earnings = principal x rate x years.
+- **Earnings and Principal:** principal is returned in equal installments. Each payout's
+  earnings = outstanding principal before that payout x rate / periods per year.
 - Money is calculated in whole cents with integer math. Values are rounded half-up to
   the cent, and the final payout absorbs any rounding difference, so totals reconcile and
   the remaining principal ends at exactly $0.00.
@@ -97,8 +97,8 @@ Admins sign in at `/admin` with a **username and password**.
 
 | Role | Can do |
 | --- | --- |
-| **Master Admin** | Everything: inquiries (view, add notes, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Interest rates, Employees, Email settings. |
-| **Sales Admin** | Inquiries only: view them, add notes, email the customer, and mark them contacted or new. They do not see interest rates. |
+| **Master Admin** | Everything: inquiries (view, add notes, email the customer, mark contacted, delete and restore, convert to investor), Deleted inquiries, Investors, Earnings rates, Employees, Email settings. |
+| **Sales Admin** | Inquiries only: view them, add notes, email the customer, and mark them contacted or new. They do not see earnings rates. |
 
 Starting users (created automatically the first time the admin area is used):
 
@@ -145,7 +145,7 @@ There must always be at least one active Master Admin.
 
 1. When an inquiry is **Contacted**, a Master Admin selects **Convert to investor**.
 2. The form is pre-filled from the inquiry (name, email, phone and the plan) and can be
-   adjusted. The interest rate for the chosen payout term is fixed at that moment.
+   adjusted. The earnings rate for the chosen payout term is fixed at that moment.
 3. The investor is created with a username, and the inquiry is marked **Converted**.
 4. On the investor's page (**Settings > Investors**), the Master Admin gives the investor
    a **temporary password** (the investor must change it at first sign-in) or a
@@ -155,9 +155,9 @@ There must always be at least one active Master Admin.
 ### Investor portal
 
 Investors sign in at `/portal` (the calculator page also has an **Investor login** button) with their username and password and see each
-investment: amount, planned investment date, interest start date, term locked, payout
+investment: amount, planned investment date, earnings start date, term locked, payout
 term and type, totals, the next payout, and the full payout schedule with each payout
-marked Paid or Upcoming by its scheduled date. The interest rate is not shown.
+marked Paid or Upcoming by its scheduled date. The earnings rate is not shown.
 
 ## Amounts and terms (Master Admin)
 
@@ -169,9 +169,9 @@ inquiries, the convert and add-investment forms and the comparisons; existing in
 and inquiries keep their original values. The last 20 saves are kept, and every save is in
 the audit log. Rates stay one per payout term, whatever the length of the term.
 
-## Managing interest rates (Master Admin)
+## Managing earnings rates (Master Admin)
 
-1. Sign in at `/admin`, open **Settings (gear) > Interest rates**
+1. Sign in at `/admin`, open **Settings (gear) > Earnings rates**
    (`/admin/settings/rates`).
 2. The rates are shown locked. Select **Unlock to edit** and enter **your own password**.
 3. Change the Quarterly, Half-Yearly and Yearly rates (0% to 100%, up to 4 decimal
@@ -278,7 +278,7 @@ due in the next 30 and 90 days, and sign-in alerts. Sales Admins see inquiry fig
 Every action is recorded with who did it, what they did, the item it affected and the
 time (Eastern Time): admin and investor sign-ins (including failed attempts), password changes,
 inquiries received, status changes, deletes and restores, conversions, investor and user
-changes, and interest rate unlocks and changes (with the old and new rates). Master
+changes, and earnings rate unlocks and changes (with the old and new rates). Master
 Admins see it under **Settings > Audit log** (`/admin/settings/audit`), by month and by
 category. Emails sent and customer replies are recorded too. Events are
 stored as one private file per month in Vercel Blob. Events about an inquiry are also
@@ -315,7 +315,7 @@ Switching is only a settings change and a redeploy; inquiry emails already store
 they are.
 
 - **Acknowledgement:** when an inquiry arrives, the visitor gets a thank-you email with
-  their reference number and the plan they asked about (no interest rate). It is sent
+  their reference number and the plan they asked about (no earnings rate). It is sent
   after the response, so the visitor never waits.
 - **Staff replies:** on an inquiry's page (`/admin/inquiries/<id>`, the **Emails** button),
   Master and Sales Admins can email the customer. Sending marks a new inquiry as contacted.
@@ -338,7 +338,7 @@ they are.
 These need email to be set up (Settings > Email); until then the pages say so.
 
 - **New inquiry alerts:** admins add an email address (Settings > Employees, or My account for
-  yourself) and switch on "Email me when a new inquiry arrives". The interest rate is never
+  yourself) and switch on "Email me when a new inquiry arrives". The earnings rate is never
   included.
 - **Forgot password:** "Forgot password?" on the admin and investor sign-in pages emails a
   one-time link (valid 72 hours) to an active account with an email address. The page
@@ -383,7 +383,7 @@ removed before go-live.
 
 `docs/Investment-Plans-Seminar.pptx` and `.pdf`: a 6-slide deck for investor
 seminars. It covers how it works, one slide each for Quarterly, Half-Yearly and Yearly
-payouts (what $25,000, $50,000 and $100,000 pay over 1 and 2 years, Interest Only), and a
+payouts (what $25,000, $50,000 and $100,000 pay over 1 and 2 years, Earnings Only), and a
 closing slide with the inquiry address, a QR code and the disclaimer. Speaker notes are
 included. Figures use the production rates at the time it was made (8%, 9%, 10%); the
 rates themselves are not shown.
@@ -395,7 +395,7 @@ PowerPoint: `powershell -File docs/export-pdf.ps1 -Pptx <pptx> -Pdf <pdf> -Image
 ## Data storage
 
 Everything is stored as private JSON files in the Vercel Blob store
-`payout-calculator-rates`: interest rates, inquiries (one file each), admin users,
+`payout-calculator-rates`: earnings rates, inquiries (one file each), admin users,
 investors, emails, inquiry notes and activity, unread-inquiry notifications, and the audit log. Production, preview deployments and local
 development use separate folders, so testing never touches live data.
 
@@ -478,7 +478,7 @@ npm run build       # Production build
 `src/lib/config.ts` holds the starting rates, the investment amount options, the default
 amount, term, payout term and payout type, the accepted planned-investment-date
 range, and `INTEREST_START_BUSINESS_DAYS` (how many business days after the investment
-date interest starts). After a change, run the checks above and redeploy.
+date earnings start). After a change, run the checks above and redeploy.
 
 ## Deploying updates
 

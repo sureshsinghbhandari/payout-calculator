@@ -14,7 +14,7 @@ export type { ProductSettings, StoredProducts } from "../products";
 
 /**
  * The amounts, terms and payout terms on offer are stored as one private JSON
- * file in Vercel Blob, next to the interest rates.
+ * file in Vercel Blob, next to the earnings rates.
  */
 // Production deployments share one file. Preview deployments and local
 // development get their own file, so testing never changes what is offered live.

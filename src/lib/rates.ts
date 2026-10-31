@@ -1,5 +1,5 @@
 /**
- * The table of annual interest rates (percent) by payout frequency.
+ * The table of annual earnings rates (percent) by payout frequency.
  * Rates are managed by an admin and are never shown to visitors.
  */
 import { DEFAULT_RATE_BY_FREQUENCY } from "./config";
@@ -26,7 +26,7 @@ export function validateRateTable(raw: Partial<Record<PayoutFrequency, unknown>>
     const result =
       typeof input === "string" || typeof input === "number"
         ? validateRate(input)
-        : ({ ok: false, error: "Enter an annual interest rate." } as const);
+        : ({ ok: false, error: "Enter an annual earnings rate." } as const);
     if (result.ok) value[frequency] = result.value;
     else errors[frequency] = `${FREQUENCY_LABELS[frequency]}: ${result.error}`;
   }
@@ -55,7 +55,7 @@ export function defaultStoredRates(): StoredRates {
 export function parseStoredRates(text: string): StoredRates {
   const data = JSON.parse(text) as { rates?: unknown; savedAt?: unknown; history?: unknown };
   const rates = validateRateTable((data?.rates ?? {}) as Record<string, unknown>);
-  if (!rates.ok) throw new Error("Stored interest rates are invalid.");
+  if (!rates.ok) throw new Error("Stored earnings rates are invalid.");
   const history = Array.isArray(data.history)
     ? data.history.flatMap((entry: { rates?: unknown; savedAt?: unknown } | null) => {
         if (!entry || typeof entry.savedAt !== "string") return [];

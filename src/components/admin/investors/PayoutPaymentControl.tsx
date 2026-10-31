@@ -157,7 +157,7 @@ export function PayoutPaymentControl(props: Props) {
                 />
                 <label htmlFor={notifyId} className="text-sm text-slate-800">
                   <span className="font-semibold">Email the investor a payment confirmation</span>
-                  <span className="block text-slate-600">With the amount, date paid and reference. Never the interest rate.</span>
+                  <span className="block text-slate-600">With the amount, date paid and reference. Never the earnings rate.</span>
                 </label>
               </div>
             )}

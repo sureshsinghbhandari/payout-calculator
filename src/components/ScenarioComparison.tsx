@@ -38,7 +38,7 @@ function LongerPeriods({ scenarios }: { scenarios: PublicScenarioSet }) {
         <h3 className="text-base font-semibold text-slate-900">Longer payout terms</h3>
         <p className="mt-1 text-sm text-slate-600">
           Same payout type ({PAYOUT_TYPE_LABELS[inputs.payoutType]}), paid less often. Each payout
-          term has its own interest rate.
+          term has its own earnings rate.
         </p>
       </div>
       {longerFrequencies.length === 0 ? (
@@ -72,7 +72,7 @@ function LongerPeriods({ scenarios }: { scenarios: PublicScenarioSet }) {
                   Final payout
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Total interest
+                  Total earnings
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
                   Total paid
@@ -134,7 +134,7 @@ function principalReturnText(schedule: PublicSchedule): string {
 function PayoutTypeCard({ schedule, isSelected }: { schedule: PublicSchedule; isSelected: boolean }) {
   const m = scheduleMetrics(schedule);
   const items = [
-    { label: "Total interest", value: formatCents(m.totalInterestCents) },
+    { label: "Total earnings", value: formatCents(m.totalInterestCents) },
     { label: "Total amount paid", value: formatCents(m.totalPaidCents), strong: true },
     { label: "First payout", value: formatCents(m.firstPayoutCents) },
     { label: "Final payout", value: formatCents(m.finalPayoutCents) },
@@ -173,20 +173,20 @@ function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
 
   let insight: string;
   if (extraInterest > 0) {
-    insight = `Interest Only pays ${formatCents(extraInterest)} more interest over ${formatYears(
+    insight = `Earnings Only pays ${formatCents(extraInterest)} more earnings over ${formatYears(
       inputs.lockInYears,
-    ).toLowerCase()}, because the full principal stays invested until maturity. Interest and Principal returns your principal sooner, so its payouts shrink as the balance falls.`;
+    ).toLowerCase()}, because the full principal stays invested until maturity. Earnings and Principal returns your principal sooner, so its payouts shrink as the balance falls.`;
   } else if (selected.rows.length === 1) {
     insight = "With a single payout, both payout types pay the same amount on the same date.";
   } else {
-    insight = "Both payout types pay the same total interest here, so the difference is only in when the principal comes back.";
+    insight = "Both payout types pay the same total earnings here, so the difference is only in when the principal comes back.";
   }
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-base font-semibold text-slate-900">Interest Only vs Interest and Principal</h3>
+      <h3 className="text-base font-semibold text-slate-900">Earnings Only vs Earnings and Principal</h3>
       <p className="mt-1 text-sm text-slate-600">
-        Same payout term ({FREQUENCY_LABELS[inputs.frequency]}) and interest rate.
+        Same payout term ({FREQUENCY_LABELS[inputs.frequency]}) and earnings rate.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <PayoutTypeCard schedule={interestOnly} isSelected={interestOnly === selected} />
@@ -218,7 +218,7 @@ function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
         >
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <caption className="sr-only">
-              Each payout under Interest Only and Interest and Principal, in US dollars
+              Each payout under Earnings Only and Earnings and Principal, in US dollars
             </caption>
             <thead>
               <tr className="bg-slate-50 text-xs uppercase tracking-wide text-slate-600">
@@ -229,10 +229,10 @@ function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
                   Payout Date
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Interest Only
+                  Earnings Only
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Interest and Principal
+                  Earnings and Principal
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
                   Difference
@@ -271,7 +271,7 @@ function PayoutTypes({ scenarios }: { scenarios: PublicScenarioSet }) {
           </table>
         </div>
         <p className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
-          Difference is the Interest and Principal payout minus the Interest Only payout.
+          Difference is the Earnings and Principal payout minus the Earnings Only payout.
         </p>
       </details>
     </div>

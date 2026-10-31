@@ -62,14 +62,14 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
   const details = [
     { label: "Original investment", value: formatDollars(inputs.principal) },
     { label: "Planned investment date", value: formatIsoDate(inputs.investmentDate) },
-    { label: "Interest starts", value: formatIsoDate(schedule.startDate) },
+    { label: "Earnings start", value: formatIsoDate(schedule.startDate) },
     { label: "Term locked", value: formatYears(inputs.lockInYears) },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[inputs.payoutType] },
     { label: "Payout term", value: FREQUENCY_LABELS[inputs.frequency] },
   ];
 
   const headline = [
-    { label: "Total interest payable", value: formatCents(totals.interestCents) },
+    { label: "Total earnings payable", value: formatCents(totals.interestCents) },
     { label: "Total principal returned", value: formatCents(totals.principalCents) },
     { label: "Total amount paid", value: formatCents(totals.payoutCents), primary: true },
   ];
@@ -87,7 +87,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
             Your payout schedule
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            {rows.length} {rows.length === 1 ? "payout" : "payouts"}. Interest starts{" "}
+            {rows.length} {rows.length === 1 ? "payout" : "payouts"}. Earnings start{" "}
             {formatIsoDateLong(startDate)}.
           </p>
         </div>
@@ -193,7 +193,7 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
                     Opening Principal
                   </th>
                   <th scope="col" className="px-4 py-3 text-right font-semibold">
-                    Interest Amount
+                    Earnings Amount
                   </th>
                   <th scope="col" className="px-4 py-3 text-right font-semibold">
                     Principal Repayment
@@ -262,15 +262,15 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
       <div className="space-y-3 text-sm text-slate-600">
         <p>
           <span className="font-semibold text-slate-700">How dates are set:</span> your planned investment date is{" "}
-          {formatIsoDateLong(inputs.investmentDate)}. Interest starts {START_DELAY} after that,{" "}
+          {formatIsoDateLong(inputs.investmentDate)}. Earnings start {START_DELAY} after that,{" "}
           {formatIsoDateLong(startDate)}, counting Monday to Friday as business days (public holidays
           are not taken into account). Payouts then fall every {MONTHS_LABEL[periodsPerYear]}, counted
-          from the interest start date. When that day does not exist in a month, the payout falls on
+          from the earnings start date. When that day does not exist in a month, the payout falls on
           the last day of that month. Payout dates are not moved for weekends.
         </p>
         <p>
           <span className="font-semibold text-slate-700">How amounts are calculated:</span> simple
-          interest, never compounded. Interest for each period is the annual rate for the chosen payout
+          earnings, never compounded. Earnings for each period are the annual rate for the chosen payout
           period times the principal outstanding before that payout, divided by {periodsPerYear}. Amounts are rounded to the cent,
           and the final payout absorbs any rounding difference so the totals reconcile.
         </p>

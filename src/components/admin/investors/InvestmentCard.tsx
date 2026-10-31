@@ -58,12 +58,12 @@ export function InvestmentCard({
   const details = [
     { label: "Investment amount", value: formatDollars(investment.principal) },
     { label: "Planned investment date", value: formatIsoDate(investment.investmentDate) },
-    { label: "Interest starts", value: schedule ? formatIsoDate(schedule.startDate) : "–" },
+    { label: "Earnings start", value: schedule ? formatIsoDate(schedule.startDate) : "–" },
     { label: "Term locked", value: formatYears(investment.lockInYears) },
     { label: "Payout term", value: FREQUENCY_LABELS[investment.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[investment.payoutType] },
     { label: "Annual rate", value: formatPercent(investment.annualRatePercent) },
-    { label: "Total interest", value: schedule ? formatCents(schedule.totals.interestCents) : "–" },
+    { label: "Total earnings", value: schedule ? formatCents(schedule.totals.interestCents) : "–" },
     { label: "Total amount paid", value: schedule ? formatCents(schedule.totals.payoutCents) : "–" },
     { label: matured ? "Matured" : "Maturity date", value: schedule ? formatIsoDate(maturityDate(schedule)) : "–" },
     { label: "Payouts paid", value: schedule ? `${paidCount} of ${rows.length}` : "–" },
@@ -208,7 +208,7 @@ function ScheduleTable({
                 Opening Principal
               </th>
               <th scope="col" className="px-4 py-3 text-right font-semibold">
-                Interest Amount
+                Earnings Amount
               </th>
               <th scope="col" className="px-4 py-3 text-right font-semibold">
                 Principal Repayment

@@ -57,11 +57,11 @@ export async function buildInquiriesWorkbook(
     { header: "Term (years)", width: 12, value: (i) => i.plan.lockInYears },
     { header: "Payout term", width: 14, value: (i) => FREQUENCY_LABELS[i.plan.frequency] },
     { header: "Payout type", width: 22, value: (i) => PAYOUT_TYPE_LABELS[i.plan.payoutType] },
-    // Sales Admins do not see interest rates.
+    // Sales Admins do not see earnings rates.
     ...(options.includeRates
       ? [{ header: "Rate (%)", width: 10, value: (i: StoredInquiry) => i.plan.annualRatePercent, numFmt: "0.00##" }]
       : []),
-    { header: "Total interest", width: 16, value: (i) => i.plan.totalInterestCents / 100, numFmt: CURRENCY },
+    { header: "Total earnings", width: 16, value: (i) => i.plan.totalInterestCents / 100, numFmt: CURRENCY },
     { header: "Total paid", width: 16, value: (i) => i.plan.totalPaidCents / 100, numFmt: CURRENCY },
   ];
 

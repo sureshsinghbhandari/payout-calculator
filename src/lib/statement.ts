@@ -1,7 +1,7 @@
 /**
  * Investment statements: the data behind the "Download statement" Excel file.
  *
- * The data is built on the server (the schedule needs the interest rate) and
+ * The data is built on the server (the schedule needs the earnings rate) and
  * sent to the browser, which turns it into an .xlsx file. The investor's
  * version never contains the rate or who recorded a payment; only the admin
  * version does.

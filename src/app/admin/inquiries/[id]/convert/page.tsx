@@ -104,7 +104,7 @@ async function ConvertContent({ params }: { params: Params }) {
           <p role="alert" className="text-sm font-medium text-slate-800">
             {message ??
               blocked?.text ??
-              "The current interest rates or the amounts and terms on offer could not be loaded. Reload the page to try again."}
+              "The current earnings rates or the amounts and terms on offer could not be loaded. Reload the page to try again."}
           </p>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {blocked?.investorId && (
@@ -142,7 +142,7 @@ async function ConvertContent({ params }: { params: Params }) {
     { label: "Payout term", value: FREQUENCY_LABELS[plan.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[plan.payoutType] },
     { label: "Rate at the time", value: formatPercent(plan.annualRatePercent) },
-    { label: "Total interest", value: formatCents(plan.totalInterestCents) },
+    { label: "Total earnings", value: formatCents(plan.totalInterestCents) },
     { label: "Total amount paid", value: formatCents(plan.totalPaidCents) },
   ];
 

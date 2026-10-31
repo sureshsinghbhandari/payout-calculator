@@ -62,9 +62,9 @@ describe("validateRateTable", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.errors).toEqual({
-        quarterly: "Quarterly: Enter an annual interest rate.",
-        "half-yearly": "Half-Yearly: Interest rate must be between 0% and 100%.",
-        yearly: "Yearly: Enter an annual interest rate.",
+        quarterly: "Quarterly: Enter an annual earnings rate.",
+        "half-yearly": "Half-Yearly: Earnings rate must be between 0% and 100%.",
+        yearly: "Yearly: Enter an annual earnings rate.",
       });
     }
   });
@@ -163,7 +163,7 @@ describe("disclaimer", () => {
       "This calculator is not a guarantee of investment performance or a substitute for professional financial advice.",
     );
     expect(DISCLAIMER).toContain(
-      "Interest is assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account.",
+      "Earnings are assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account.",
     );
   });
 });

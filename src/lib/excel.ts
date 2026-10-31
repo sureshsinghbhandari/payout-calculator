@@ -55,8 +55,8 @@ export const SELECTION_SHEET_NAME = "Your Selection";
 export const COMPARISON_SHEET_NAME = "Comparison";
 
 const PAYOUT_TYPE_SHEET_NAMES: Record<PayoutType, string> = {
-  "interest-only": "Interest Only",
-  "interest-and-principal": "Interest & Principal",
+  "interest-only": "Earnings Only",
+  "interest-and-principal": "Earnings & Principal",
 };
 
 export interface ScheduleSheetSpec {
@@ -202,14 +202,14 @@ function addParagraph(ws: Worksheet, text: string, columns: number, bold?: strin
 
 function datesNote(schedule: PublicSchedule): string {
   const months = 12 / schedule.periodsPerYear;
-  return `Payout dates: interest starts ${interestStartDelayText()} after the planned investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the interest start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
+  return `Payout dates: earnings start ${interestStartDelayText()} after the planned investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the earnings start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
 }
 
 const SCHEDULE_HEADERS = [
   "Payout No.",
   "Payout Date",
   "Opening Principal",
-  "Interest Amount",
+  "Earnings Amount",
   "Principal Repayment",
   "Total Payout",
   "Remaining Principal",
@@ -241,8 +241,8 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   addDetail(ws, "Payout type", PAYOUT_TYPE_LABELS[inputs.payoutType]);
   addDetail(ws, "Payout term", FREQUENCY_LABELS[inputs.frequency]);
   addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
-  addDetail(ws, "Interest start date", isoToExcelDate(schedule.startDate), DATE);
-  addDetail(ws, "Total interest payable", dollars(totals.interestCents), CURRENCY);
+  addDetail(ws, "Earnings start date", isoToExcelDate(schedule.startDate), DATE);
+  addDetail(ws, "Total earnings payable", dollars(totals.interestCents), CURRENCY);
   addDetail(ws, "Total principal returned", dollars(totals.principalCents), CURRENCY);
   addDetail(ws, "Total amount paid", dollars(totals.payoutCents), CURRENCY).font = { bold: true };
   ws.addRow([]);
@@ -286,13 +286,13 @@ function writeScheduleSheet(workbook: Workbook, spec: ScheduleSheetSpec) {
   addParagraph(ws, datesNote(schedule), columns);
   addParagraph(
     ws,
-    "Amounts: simple interest, never compounded. Interest for each period is the annual rate for the payout term times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
+    "Amounts: simple earnings, never compounded. Earnings for each period are the annual rate for the payout term times the principal outstanding before that payout, divided by the number of payouts per year. Amounts are rounded to the cent, and the final payout absorbs any rounding difference.",
     columns,
   );
   addParagraph(ws, DISCLAIMER, columns, "Disclaimer:");
 }
 
-export const PAIR_DIFFERENCE_HEADER = "Interest and Principal minus Interest Only";
+export const PAIR_DIFFERENCE_HEADER = "Earnings and Principal minus Earnings Only";
 
 const COMPARISON_HEADERS = [
   "Scenario",
@@ -301,7 +301,7 @@ const COMPARISON_HEADERS = [
   "Number of Payouts",
   "First Payout",
   "Final Payout",
-  "Total Interest",
+  "Total Earnings",
   "Total Paid",
   "Difference vs Your Selection",
 ];
@@ -359,7 +359,7 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   addDetail(ws, "Original investment", inputs.principal, CURRENCY);
   addDetail(ws, "Term locked", formatYears(inputs.lockInYears));
   addDetail(ws, "Planned investment date", isoToExcelDate(inputs.investmentDate), DATE);
-  addDetail(ws, "Interest start date", isoToExcelDate(selected.startDate), DATE);
+  addDetail(ws, "Earnings start date", isoToExcelDate(selected.startDate), DATE);
   addDetail(ws, "Your selection", `${selectedFrequency}, ${selectedType}`);
   ws.addRow([]);
 
@@ -367,7 +367,7 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   styleSectionHeading(ws.addRow(["Longer payout terms"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout type (${selectedType}), paid less often. Each payout term has its own interest rate.`,
+      `Same payout type (${selectedType}), paid less often. Each payout term has its own earnings rate.`,
     ]),
   );
   if (set.longerFrequencies.length === 0) {
@@ -386,10 +386,10 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   ws.addRow([]);
 
   // Section 2: payout types.
-  styleSectionHeading(ws.addRow(["Interest Only vs Interest and Principal"]));
+  styleSectionHeading(ws.addRow(["Earnings Only vs Earnings and Principal"]));
   styleSubtitle(
     ws.addRow([
-      `Same payout term (${selectedFrequency}) and interest rate.`,
+      `Same payout term (${selectedFrequency}) and earnings rate.`,
     ]),
   );
   styleHeader(ws.addRow(COMPARISON_HEADERS), columns);
@@ -405,13 +405,13 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   // Section 3: payout-by-payout for the two payout types.
   const interestOnly = byType[0];
   const amortizing = byType[1];
-  styleSectionHeading(ws.addRow(["Payout by payout: Interest Only vs Interest and Principal"]));
+  styleSectionHeading(ws.addRow(["Payout by payout: Earnings Only vs Earnings and Principal"]));
   styleSubtitle(ws.addRow([`${selectedFrequency} payouts.`]));
   const pairHeader = ws.addRow([
     "Payout No.",
     "Payout Date",
-    "Interest Only Payout",
-    "Interest and Principal Payout",
+    "Earnings Only Payout",
+    "Earnings and Principal Payout",
     PAIR_DIFFERENCE_HEADER,
   ]);
   styleHeader(pairHeader, 5);
@@ -445,7 +445,7 @@ function writeComparisonSheet(workbook: Workbook, set: PublicScenarioSet) {
   setFormat(pairTotals.getCell(5), SIGNED_CURRENCY);
   addParagraph(
     ws,
-    "In this table, the last column is the Interest and Principal payout minus the Interest Only payout, whichever one you selected. Negative means Interest and Principal pays less on that date.",
+    "In this table, the last column is the Earnings and Principal payout minus the Earnings Only payout, whichever one you selected. Negative means Earnings and Principal pays less on that date.",
     columns,
   );
   ws.addRow([]);
@@ -525,7 +525,7 @@ function writeStatementSheet(workbook: Workbook, data: StatementData) {
   addDetail(ws, "Investor", data.investorName);
   addDetail(ws, "Investment amount", data.principal, CURRENCY);
   addDetail(ws, "Planned investment date", isoToExcelDate(data.investmentDate), DATE);
-  addDetail(ws, "Interest start date", isoToExcelDate(data.startDate), DATE);
+  addDetail(ws, "Earnings start date", isoToExcelDate(data.startDate), DATE);
   addDetail(ws, "Maturity date", isoToExcelDate(data.maturityDate), DATE);
   addDetail(ws, "Term locked", formatYears(data.lockInYears));
   addDetail(ws, "Payout term", FREQUENCY_LABELS[data.frequency]);
@@ -533,7 +533,7 @@ function writeStatementSheet(workbook: Workbook, data: StatementData) {
   if (data.forAdmin && data.annualRatePercent !== undefined) {
     addDetail(ws, "Annual rate (admins only)", formatPercent(data.annualRatePercent));
   }
-  addDetail(ws, "Total interest payable", dollars(data.totals.interestCents), CURRENCY);
+  addDetail(ws, "Total earnings payable", dollars(data.totals.interestCents), CURRENCY);
   addDetail(ws, "Total amount scheduled", dollars(data.totals.payoutCents), CURRENCY);
   addDetail(ws, "Payouts paid", `${paidCount} of ${data.rows.length}`);
   addDetail(ws, "Total paid so far", dollars(data.paidCents), CURRENCY).font = { bold: true };
@@ -592,7 +592,7 @@ function writeStatementSheet(workbook: Workbook, data: StatementData) {
   );
   addParagraph(
     ws,
-    "Amounts: simple interest, never compounded. Amounts are rounded to the cent, and the final payout absorbs any rounding difference. Payout dates are not moved for weekends.",
+    "Amounts: simple earnings, never compounded. Amounts are rounded to the cent, and the final payout absorbs any rounding difference. Payout dates are not moved for weekends.",
     SCHEDULE_HEADERS.length,
   );
   addParagraph(ws, DISCLAIMER, SCHEDULE_HEADERS.length, "Disclaimer:");

@@ -44,7 +44,7 @@ export function InvestorFrame({ signedIn, children }: { signedIn: boolean; child
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-6 text-xs leading-relaxed text-slate-500 sm:px-6">
           Payout schedules are calculated from the investment details our team recorded for you, using simple
-          interest. Questions about an investment or a payment? Contact our team.
+          earnings. Questions about an investment or a payment? Contact our team.
         </div>
       </footer>
     </div>

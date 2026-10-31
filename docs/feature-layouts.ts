@@ -25,7 +25,7 @@ Staff, all under /admin (gear menu at the top right)
     Change requests ......... /admin/investors/requests
   Payout calendar ........... /admin/payouts
   Settings (gear menu)
-    Interest rates           Amounts and terms     Lead sources
+    Earnings rates           Amounts and terms     Lead sources
     Employees                Email                 Email templates
     Audit log                Upcoming features     My account`;
 
@@ -36,23 +36,23 @@ export const LAYOUTS: Record<string, string> = {
  Planned investment date  [ 2026-11-02          ]
  Term locked              [ 2 years           v ]
  Payout term              [ Yearly            v ]
- Payout type              (o) Interest Only  ( ) Interest and Principal
+ Payout type              (o) Earnings Only  ( ) Earnings and Principal
 
  [ Calculate Payout ]  [ Reset ]
 ------------------------------------------------------------------
  Your payout schedule                         [ Download Excel ]
-  #   Payout date    Interest     Principal    Payout      Left
+  #   Payout date    Earnings     Principal    Payout      Left
   1   2027-11-03     $10,000.00   $0.00        $10,000.00  $100,000
   2   2028-11-03     $10,000.00   $100,000.00  $110,000.00 $0
   Totals             $20,000.00   $100,000.00  $120,000.00
 ------------------------------------------------------------------
  Compare: longer payout terms, and the other payout type
  [ Send inquiry ]                       Disclaimer text
- (No interest rate is shown anywhere on this page.)`,
+ (No earnings rate is shown anywhere on this page.)`,
 
   "visitor-inquiries": `Send inquiry                                                  [x]
 ------------------------------------------------------------------
- Your plan: $100,000 · 2 years · Yearly · Interest Only
+ Your plan: $100,000 · 2 years · Yearly · Earnings Only
  Name     [                          ]
  Email    [                          ]
  Phone    [                          ]   (optional)
@@ -211,8 +211,8 @@ Investors
                                    [ Sign-in security ]
 ------------------------------------------------------------------
  Investment 1                                  [ Download statement ]
-   Amount $120,000 · Term locked 5 years · Yearly · Interest Only
-   Planned date | Interest starts | Total interest | Total payout
+   Amount $120,000 · Term locked 5 years · Yearly · Earnings Only
+   Planned date | Earnings start | Total earnings | Total payout
    Next payout: Nov 3, 2027 · $12,000.00
 
    #   Payout date    Payout        Status
@@ -222,11 +222,11 @@ Investors
  Your documents
    Agreement 2026-10-10 (PDF)                       [ Download ]
  Payout emails      [ On ]
- (the interest rate is never shown)`,
+ (the earnings rate is never shown)`,
 
   "record-payments": `Admin > Investors > James Wilson
 ------------------------------------------------------------------
- Investment 1 · $120,000 · 5 years · Yearly · Interest Only
+ Investment 1 · $120,000 · 5 years · Yearly · Earnings Only
    #   Scheduled      Amount        Status
    1   2027-11-03     $12,000.00    Paid Nov 3 · TRX-1234  [ Edit payment ]
    2   2028-11-03     $12,000.00    Due                    [ Mark as paid ]
@@ -296,7 +296,7 @@ Investors
  [ Save ]       Last saved Oct 27, 2026 by Ashwin Patel
  Change history (last 20 saves)`,
 
-  "rates-management": `Settings > Interest rates
+  "rates-management": `Settings > Earnings rates
 ------------------------------------------------------------------
  Quarterly     ****        Rates are locked.
  Half-Yearly   ****        [ Unlock to edit ]  (needs your own password)

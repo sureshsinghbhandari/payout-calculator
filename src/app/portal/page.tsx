@@ -33,7 +33,7 @@ const headerButton =
 /**
  * Investor portal: sign-in (with the two-step code when it is on), required
  * password change, and the dashboard with each investment's payout schedule
- * and the investor's documents. Interest rates are never shown here.
+ * and the investor's documents. Earnings rates are never shown here.
  */
 export default function InvestorPage({ searchParams }: { searchParams: SearchParams }) {
   return (

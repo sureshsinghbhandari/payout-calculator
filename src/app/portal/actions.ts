@@ -194,7 +194,7 @@ export async function investorChangePasswordAction(
 
 /**
  * Statement data for one of the signed-in investor's own investments (bound
- * to the investment id on the portal page). Never includes the interest rate.
+ * to the investment id on the portal page). Never includes the earnings rate.
  */
 export async function investorStatementAction(investmentId: string): Promise<StatementResult> {
   let investor;

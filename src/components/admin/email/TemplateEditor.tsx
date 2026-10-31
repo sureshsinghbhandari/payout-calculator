@@ -72,7 +72,7 @@ export function TemplateEditor({ templateKey, current, saved, sample, storageCon
           ))}
         </ul>
         {templateKey !== "reset" && (
-          <p className="mt-2 text-xs text-slate-600">The interest rate is never available here and is never sent.</p>
+          <p className="mt-2 text-xs text-slate-600">The earnings rate is never available here and is never sent.</p>
         )}
       </details>
 

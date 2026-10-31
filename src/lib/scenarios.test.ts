@@ -96,7 +96,7 @@ describe("buildScenarios", () => {
 });
 
 describe("toPublicScenarioSet", () => {
-  it("removes every trace of the interest rate", () => {
+  it("removes every trace of the earnings rate", () => {
     const set = toPublicScenarioSet(scenariosFor({ frequency: "quarterly" }, { quarterly: 7.1234, "half-yearly": 9, yearly: 10 }));
     const json = JSON.stringify(set);
     expect(json).not.toContain("annualRatePercent");

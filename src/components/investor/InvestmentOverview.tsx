@@ -15,7 +15,7 @@ import { FREQUENCY_LABELS, PAYOUT_TYPE_LABELS } from "@/lib/payout";
 /**
  * One investment in the investor portal: summary and full payout schedule.
  *
- * Server-only on purpose: the investment carries its interest rate, which is
+ * Server-only on purpose: the investment carries its earnings rate, which is
  * used for the calculation but must never reach the investor's browser. Only
  * the rendered amounts and dates are sent; never pass the investment or the
  * schedule (whose inputs include the rate) to a client component. The
@@ -59,7 +59,7 @@ export function InvestmentOverview({ investment, today }: Props) {
   const details = [
     { label: "Investment amount", value: formatDollars(investment.principal) },
     { label: "Planned investment date", value: formatIsoDate(investment.investmentDate) },
-    { label: "Interest starts", value: formatIsoDate(startDate) },
+    { label: "Earnings start", value: formatIsoDate(startDate) },
     { label: "Term locked", value: formatYears(investment.lockInYears) },
     { label: "Payout term", value: FREQUENCY_LABELS[investment.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[investment.payoutType] },
@@ -76,7 +76,7 @@ export function InvestmentOverview({ investment, today }: Props) {
           </h2>
           <p className="mt-1 text-sm text-slate-600">
             {rows.length} {rows.length === 1 ? "payout" : "payouts"}, {paidCount} paid
-            {dueCount > 0 && <>, {dueCount} due</>}. Interest starts {formatIsoDateLong(startDate)}.
+            {dueCount > 0 && <>, {dueCount} due</>}. Earnings start {formatIsoDateLong(startDate)}.
           </p>
         </div>
         <StatementButton
@@ -104,7 +104,7 @@ export function InvestmentOverview({ investment, today }: Props) {
             )}
           </div>
           <div className="bg-white p-5">
-            <p className="text-sm text-slate-600">Total interest</p>
+            <p className="text-sm text-slate-600">Total earnings</p>
             <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
               {formatCents(totals.interestCents)}
             </p>
@@ -115,7 +115,7 @@ export function InvestmentOverview({ investment, today }: Props) {
             <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-white">
               {formatCents(totals.payoutCents)}
             </p>
-            <p className="mt-0.5 text-sm text-blue-100">Interest and principal over the full term</p>
+            <p className="mt-0.5 text-sm text-blue-100">Earnings and principal over the full term</p>
           </div>
         </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-200 p-5 sm:grid-cols-3">
@@ -154,7 +154,7 @@ export function InvestmentOverview({ investment, today }: Props) {
                     Opening Principal
                   </th>
                   <th scope="col" className="px-4 py-3 text-right font-semibold">
-                    Interest Amount
+                    Earnings Amount
                   </th>
                   <th scope="col" className="px-4 py-3 text-right font-semibold">
                     Principal Repayment
@@ -223,7 +223,7 @@ export function InvestmentOverview({ investment, today }: Props) {
         </div>
         <p className="text-xs leading-relaxed text-slate-500">
           A payout shows as Paid once our team has recorded the payment, with the date it was paid. Due means the
-          scheduled date (Eastern Time) has arrived and the payment has not been recorded yet. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the interest
+          scheduled date (Eastern Time) has arrived and the payment has not been recorded yet. Payouts fall every {MONTHS_LABEL[periodsPerYear] ?? "period"} from the earnings
           start date and are not moved for weekends.
         </p>
       </div>

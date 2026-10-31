@@ -11,7 +11,7 @@ import {
 } from "./payout";
 import { formatCents, formatSignedCents } from "./format";
 
-// Invested Wednesday Jan 14, 2026, so interest starts Thursday Jan 15, 2026.
+// Invested Wednesday Jan 14, 2026, so earnings start Thursday Jan 15, 2026.
 const INVESTED = "2026-01-14";
 
 function run(overrides: Partial<PayoutInputs>): PayoutSchedule {
@@ -52,7 +52,7 @@ function expectReconciled(schedule: PayoutSchedule) {
 }
 
 describe("required scenarios", () => {
-  it("$25,000 at 10%, 1 year, quarterly, Interest Only", () => {
+  it("$25,000 at 10%, 1 year, quarterly, Earnings Only", () => {
     const s = run({ principal: 25_000, lockInYears: 1, frequency: "quarterly", payoutType: "interest-only" });
     expect(s.rows).toHaveLength(4);
     for (const row of s.rows) expect(row.interestCents).toBe(62_500);
@@ -66,7 +66,7 @@ describe("required scenarios", () => {
     expectReconciled(s);
   });
 
-  it("$50,000 at 10%, 2 years, half-yearly, Interest Only", () => {
+  it("$50,000 at 10%, 2 years, half-yearly, Earnings Only", () => {
     const s = run({ principal: 50_000, lockInYears: 2, frequency: "half-yearly", payoutType: "interest-only" });
     expect(s.rows).toHaveLength(4);
     for (const row of s.rows) expect(row.interestCents).toBe(250_000);
@@ -75,7 +75,7 @@ describe("required scenarios", () => {
     expectReconciled(s);
   });
 
-  it("$75,000 at 10%, 1 year, yearly, Interest and Principal", () => {
+  it("$75,000 at 10%, 1 year, yearly, Earnings and Principal", () => {
     const s = run({ principal: 75_000, lockInYears: 1, frequency: "yearly", payoutType: "interest-and-principal" });
     expect(s.rows).toHaveLength(1);
     expect(s.rows[0]).toMatchObject({
@@ -89,7 +89,7 @@ describe("required scenarios", () => {
     expectReconciled(s);
   });
 
-  it("$100,000 at 0%, 2 years, quarterly, Interest and Principal", () => {
+  it("$100,000 at 0%, 2 years, quarterly, Earnings and Principal", () => {
     const s = run({
       principal: 100_000,
       annualRatePercent: 0,
@@ -110,8 +110,8 @@ describe("required scenarios", () => {
   });
 });
 
-describe("Interest and Principal", () => {
-  it("charges interest only on outstanding principal, so interest decreases", () => {
+describe("Earnings and Principal", () => {
+  it("charges earnings only on outstanding principal, so earnings decreases", () => {
     const s = run({ principal: 50_000, payoutType: "interest-and-principal", frequency: "quarterly" });
     expect(s.rows.map((r) => r.principalRepaymentCents)).toEqual([1_250_000, 1_250_000, 1_250_000, 1_250_000]);
     expect(s.rows.map((r) => r.interestCents)).toEqual([125_000, 93_750, 62_500, 31_250]);
@@ -144,10 +144,10 @@ describe("Interest and Principal", () => {
   });
 });
 
-describe("Interest Only", () => {
-  it("total interest equals principal x rate x years, with the final installment absorbing rounding", () => {
+describe("Earnings Only", () => {
+  it("total earnings equals principal x rate x years, with the final installment absorbing rounding", () => {
     // 2,500,000 cents x 7.3333% / 4 = 45,833.125 -> 45,833 per quarter.
-    // Total = 2,500,000 x 7.3333% x 2 = 366,665 exactly, so the final interest is 45,834.
+    // Total = 2,500,000 x 7.3333% x 2 = 366,665 exactly, so the final earnings are 45,834.
     const s = run({ principal: 25_000, annualRatePercent: 7.3333, lockInYears: 2 });
     expect(s.rows.slice(0, 7).every((r) => r.interestCents === 45_833)).toBe(true);
     expect(s.rows[7].interestCents).toBe(45_834);
@@ -196,7 +196,7 @@ describe("every frequency and payout type", () => {
   }
 });
 
-describe("zero interest", () => {
+describe("zero earnings", () => {
   it("returns exactly the principal for both payout types", () => {
     for (const payoutType of ["interest-only", "interest-and-principal"] as const) {
       const s = run({ principal: 25_000, annualRatePercent: 0, payoutType, lockInYears: 2 });
@@ -212,12 +212,12 @@ describe("rounding", () => {
     [25_000, 0.0001],
     [25_000, 0.0004],
     [50_000, 0.0002],
-  ])("never pays negative interest: $%d at %d%%, 2 years, quarterly, Interest Only", (principal, rate) => {
+  ])("never pays negative earnings: $%d at %d%%, 2 years, quarterly, Earnings Only", (principal, rate) => {
     // e.g. $100,000 at 0.0001%: 2.5 cents a quarter, 20 cents in total.
     const s = run({ principal, annualRatePercent: rate, lockInYears: 2, frequency: "quarterly" });
-    const interest = s.rows.map((r) => r.interestCents);
-    expect(Math.min(...interest)).toBeGreaterThanOrEqual(0);
-    expect(interest.at(-1)!).toBeGreaterThanOrEqual(interest[0]);
+    const earnings = s.rows.map((r) => r.interestCents);
+    expect(Math.min(...earnings)).toBeGreaterThanOrEqual(0);
+    expect(earnings.at(-1)!).toBeGreaterThanOrEqual(earnings[0]);
     expect(s.totals.interestCents).toBe(Math.round((principal * 100 * rate * 2) / 100));
     expectReconciled(s);
   });
@@ -267,15 +267,15 @@ describe("validateRate", () => {
   });
 
   it.each([
-    ["", "Enter an annual interest rate."],
-    ["   ", "Enter an annual interest rate."],
-    ["abc", "Interest rate must be a number, for example 10 or 7.5."],
-    ["10%", "Interest rate must be a number, for example 10 or 7.5."],
-    ["1e2", "Interest rate must be a number, for example 10 or 7.5."],
-    ["-1", "Interest rate must be between 0% and 100%."],
-    ["-0.5", "Interest rate must be between 0% and 100%."],
-    ["100.01", "Interest rate must be between 0% and 100%."],
-    ["250", "Interest rate must be between 0% and 100%."],
+    ["", "Enter an annual earnings rate."],
+    ["   ", "Enter an annual earnings rate."],
+    ["abc", "Earnings rate must be a number, for example 10 or 7.5."],
+    ["10%", "Earnings rate must be a number, for example 10 or 7.5."],
+    ["1e2", "Earnings rate must be a number, for example 10 or 7.5."],
+    ["-1", "Earnings rate must be between 0% and 100%."],
+    ["-0.5", "Earnings rate must be between 0% and 100%."],
+    ["100.01", "Earnings rate must be between 0% and 100%."],
+    ["250", "Earnings rate must be between 0% and 100%."],
     ["10.12345", "Use at most 4 decimal places."],
   ])("rejects %j", (input, error) => {
     expect(validateRate(input)).toEqual({ ok: false, error });
@@ -322,7 +322,7 @@ describe("payout dates", () => {
   });
 
   it("clamps to month end without drifting", () => {
-    // Invested Tuesday Dec 30, 2025, so interest starts Wednesday Dec 31, 2025.
+    // Invested Tuesday Dec 30, 2025, so earnings start Wednesday Dec 31, 2025.
     const s = run({ investmentDate: "2025-12-30" });
     expect(s.startDate).toBe("2025-12-31");
     expect(s.rows.map((r) => r.payoutDate)).toEqual([

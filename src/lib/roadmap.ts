@@ -209,7 +209,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "A contacted inquiry becomes an investor with one click: the form is pre-filled from the inquiry and the interest rate is fixed at that moment.",
+      "A contacted inquiry becomes an investor with one click: the form is pre-filled from the inquiry and the earnings rate is fixed at that moment.",
   },
   {
     id: "assign-inquiries",
@@ -267,7 +267,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "Investors sign in at /portal and see each investment: amounts, dates, totals, the next payout and the full payout schedule. The interest rate is never shown.",
+      "Investors sign in at /portal and see each investment: amounts, dates, totals, the next payout and the full payout schedule. The earnings rate is never shown.",
   },
   {
     id: "investor-logins",
@@ -335,11 +335,11 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "Payout schedule for a fixed-term investment (simple interest, Interest Only or Interest and Principal), comparisons with other payout terms and types, and an Excel download.",
+      "Payout schedule for a fixed-term investment (simple earnings, Earnings Only or Earnings and Principal), comparisons with other payout terms and types, and an Excel download.",
   },
   {
     id: "rates-management",
-    title: "Interest rates managed by Master Admins",
+    title: "Earnings rates managed by Master Admins",
     category: "operations",
     priority: "now",
     status: "done",
@@ -402,7 +402,7 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "now",
     status: "done",
     description:
-      "Named employees with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see interest rates.",
+      "Named employees with Master Admin and Sales Admin roles, temporary passwords and setup links, and a sign-in rate limit. Sales Admins never see earnings rates.",
   },
   {
     id: "audit-log",

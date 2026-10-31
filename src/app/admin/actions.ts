@@ -232,7 +232,7 @@ export async function saveMyAlertsAction(_prev: AlertsState, formData: FormData)
   return { status: "saved", message: on ? "New inquiry alerts are on." : "New inquiry alerts are off." };
 }
 
-// ---------- interest rates (Master Admin) ----------
+// ---------- earnings rates (Master Admin) ----------
 
 export interface UnlockState {
   error?: string;
@@ -243,7 +243,7 @@ const RATES_PAGE = "/admin/settings/rates";
 /** Re-checks the signed-in admin's own password before rates can be edited. */
 export async function unlockRatesAction(_prev: UnlockState, formData: FormData): Promise<UnlockState> {
   const user = await requireAdminPermission("rates.manage");
-  if (!user) return { error: "You do not have access to interest rates, or your session has ended." };
+  if (!user) return { error: "You do not have access to earnings rates, or your session has ended." };
 
   const { client, error } = await throttled();
   if (error) return { error };
@@ -254,8 +254,8 @@ export async function unlockRatesAction(_prev: UnlockState, formData: FormData):
       actor: adminActor(user),
       category: "rates",
       action: "rates.unlock_failed",
-      summary: "Failed to unlock interest rates (wrong password)",
-      target: { type: "rates", label: "Interest rates" },
+      summary: "Failed to unlock earnings rates (wrong password)",
+      target: { type: "rates", label: "Earnings rates" },
     });
     await failedAttempt(client);
     return { error: "Incorrect password." };
@@ -266,8 +266,8 @@ export async function unlockRatesAction(_prev: UnlockState, formData: FormData):
     actor: adminActor(user),
     category: "rates",
     action: "rates.unlocked",
-    summary: "Unlocked interest rates for editing",
-    target: { type: "rates", label: "Interest rates" },
+    summary: "Unlocked earnings rates for editing",
+    target: { type: "rates", label: "Earnings rates" },
   });
   redirect(RATES_PAGE);
 }
@@ -287,7 +287,7 @@ export interface SaveRatesState {
 
 export async function saveRatesAction(_prev: SaveRatesState, formData: FormData): Promise<SaveRatesState> {
   const user = await requireAdminPermission("rates.manage");
-  if (!user) return { status: "error", message: "You do not have access to interest rates, or your session has ended." };
+  if (!user) return { status: "error", message: "You do not have access to earnings rates, or your session has ended." };
   if (!(await isRatesUnlocked(user))) {
     return { status: "error", message: "Editing is locked. Unlock the rates with your password, then save again." };
   }
@@ -322,7 +322,7 @@ export async function saveRatesAction(_prev: SaveRatesState, formData: FormData)
     category: "rates",
     action: "rates.saved",
     summary: describeRateChange(before, result.value),
-    target: { type: "rates", label: "Interest rates" },
+    target: { type: "rates", label: "Earnings rates" },
   });
 
   // New quotes use the new rates immediately. Editing locks again after a save.
@@ -337,8 +337,8 @@ function describeRateChange(before: RateTable | null, after: RateTable): string 
     if (before[f] === after[f]) return [];
     return [`${FREQUENCY_LABELS[f]} ${formatPercent(before[f])} to ${formatPercent(after[f])}`];
   });
-  if (parts.length === 0) return "Saved interest rates (no changes)";
-  return `Changed interest rates: ${parts.join(", ")}`;
+  if (parts.length === 0) return "Saved earnings rates (no changes)";
+  return `Changed earnings rates: ${parts.join(", ")}`;
 }
 
 // ---------- inquiries ----------

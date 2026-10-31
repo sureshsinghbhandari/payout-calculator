@@ -381,7 +381,7 @@ export async function sendAcknowledgement(inquiry: StoredInquiry): Promise<void>
 /**
  * Emails each active admin who has an email address and new inquiry alerts on
  * (My account). `origin` is the site address for the link, e.g.
- * "https://example.com". The interest rate is never included. Records one
+ * "https://example.com". The earnings rate is never included. Records one
  * audit event for the batch. Never throws; does nothing when email is not set up.
  */
 export async function sendInquiryAlerts(inquiry: StoredInquiry, origin: string): Promise<void> {

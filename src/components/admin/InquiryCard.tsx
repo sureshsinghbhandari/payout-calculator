@@ -64,9 +64,9 @@ export function InquiryCard({
     { label: "Term locked", value: formatYears(plan.lockInYears) },
     { label: "Payout term", value: FREQUENCY_LABELS[plan.frequency] },
     { label: "Payout type", value: PAYOUT_TYPE_LABELS[plan.payoutType] },
-    // Sales Admins do not see interest rates.
+    // Sales Admins do not see earnings rates.
     ...(permissions.investors ? [{ label: "Rate at the time", value: formatPercent(plan.annualRatePercent) }] : []),
-    { label: "Total interest", value: formatCents(plan.totalInterestCents) },
+    { label: "Total earnings", value: formatCents(plan.totalInterestCents) },
     { label: "Total amount paid", value: formatCents(plan.totalPaidCents) },
   ];
 

@@ -25,7 +25,7 @@ function scenariosFor(overrides: Partial<QuoteInputs>, rates: RateTable = RATES)
         lockInYears: 1,
         payoutType: "interest-only",
         frequency: "quarterly",
-        investmentDate: "2026-01-14", // Wednesday -> interest starts Thursday Jan 15, 2026
+        investmentDate: "2026-01-14", // Wednesday -> earnings start Thursday Jan 15, 2026
         ...overrides,
       },
       rates,
@@ -81,7 +81,7 @@ describe("planScheduleSheets", () => {
       "Your Selection",
       "Half-Yearly Payout",
       "Yearly Payout",
-      "Interest & Principal",
+      "Earnings & Principal",
     ]);
   });
 
@@ -89,13 +89,13 @@ describe("planScheduleSheets", () => {
     expect(planScheduleSheets(scenariosFor({ frequency: "half-yearly" })).map((s) => s.name)).toEqual([
       "Your Selection",
       "Yearly Payout",
-      "Interest & Principal",
+      "Earnings & Principal",
     ]);
   });
 
   it("Yearly: selection and other payout type only", () => {
     const set = scenariosFor({ frequency: "yearly", payoutType: "interest-and-principal" });
-    expect(planScheduleSheets(set).map((s) => s.name)).toEqual(["Your Selection", "Interest Only"]);
+    expect(planScheduleSheets(set).map((s) => s.name)).toEqual(["Your Selection", "Earnings Only"]);
   });
 
   it("produces valid Excel sheet names", () => {
@@ -124,7 +124,7 @@ describe("Excel workbook", () => {
       "Your Selection",
       "Half-Yearly Payout",
       "Yearly Payout",
-      "Interest & Principal",
+      "Earnings & Principal",
       "Comparison",
     ]);
   });
@@ -134,7 +134,7 @@ describe("Excel workbook", () => {
     expect(workbook.worksheets.map((ws) => ws.name)).toEqual([
       "Your Selection",
       "Yearly Payout",
-      "Interest & Principal",
+      "Earnings & Principal",
       "Comparison",
     ]);
   });
@@ -143,7 +143,7 @@ describe("Excel workbook", () => {
     const { workbook } = await roundTrip({ frequency: "yearly" });
     expect(workbook.worksheets.map((ws) => ws.name)).toEqual([
       "Your Selection",
-      "Interest & Principal",
+      "Earnings & Principal",
       "Comparison",
     ]);
     expect(sheetText(workbook.getWorksheet(COMPARISON_SHEET_NAME)!)).toContain(
@@ -151,7 +151,7 @@ describe("Excel workbook", () => {
     );
   });
 
-  it("never reveals an interest rate", async () => {
+  it("never reveals an earnings rate", async () => {
     const rates: RateTable = { quarterly: 7.1234, "half-yearly": 8.4321, yearly: 9.5678 };
     for (const frequency of ["quarterly", "half-yearly", "yearly"] as const) {
       const { workbook } = await roundTrip({ frequency, principal: 100_000, lockInYears: 2 }, rates);
@@ -169,7 +169,7 @@ describe("Excel workbook", () => {
         }
       });
       const text = workbook.worksheets.map(sheetText).join("\n");
-      expect(text).not.toMatch(/Annual (interest )?rate\b(?! for)/i);
+      expect(text).not.toMatch(/Annual (earnings )?rate\b(?! for)/i);
     }
   });
 
@@ -179,10 +179,10 @@ describe("Excel workbook", () => {
 
     expect(detail(ws, "Original investment")).toBe(25_000);
     expect(isoOf(detail(ws, "Planned investment date"))).toBe("2026-01-14");
-    expect(isoOf(detail(ws, "Interest start date"))).toBe("2026-01-15");
-    expect(detail(ws, "Payout type")).toBe("Interest Only");
+    expect(isoOf(detail(ws, "Earnings start date"))).toBe("2026-01-15");
+    expect(detail(ws, "Payout type")).toBe("Earnings Only");
     expect(detail(ws, "Payout term")).toBe("Quarterly");
-    expect(detail(ws, "Total interest payable")).toBe(2_000);
+    expect(detail(ws, "Total earnings payable")).toBe(2_000);
     expect(detail(ws, "Total amount paid")).toBe(27_000);
 
     const header = findRow(ws, "Payout No.");
@@ -190,7 +190,7 @@ describe("Excel workbook", () => {
       "Payout No.",
       "Payout Date",
       "Opening Principal",
-      "Interest Amount",
+      "Earnings Amount",
       "Principal Repayment",
       "Total Payout",
       "Remaining Principal",
@@ -218,9 +218,9 @@ describe("Excel workbook", () => {
     const { workbook } = await roundTrip({});
     const half = workbook.getWorksheet("Half-Yearly Payout")!;
     expect(detail(half, "Payout term")).toBe("Half-Yearly");
-    expect(detail(half, "Payout type")).toBe("Interest Only");
+    expect(detail(half, "Payout type")).toBe("Earnings Only");
     // $25,000 x 9% / 2 = $1,125 per half-year.
-    expect(detail(half, "Total interest payable")).toBe(2_250);
+    expect(detail(half, "Total earnings payable")).toBe(2_250);
     const header = findRow(half, "Payout No.");
     expect(rowValues(half, header + 1).slice(2)).toEqual([25_000, 1_125, 0, 1_125, 25_000]);
     expect(rowValues(half, header + 2).slice(2)).toEqual([25_000, 1_125, 25_000, 26_125, 0]);
@@ -231,8 +231,8 @@ describe("Excel workbook", () => {
 
   it("writes the other payout type at the selected frequency", async () => {
     const { workbook } = await roundTrip({});
-    const ws = workbook.getWorksheet("Interest & Principal")!;
-    expect(detail(ws, "Payout type")).toBe("Interest and Principal");
+    const ws = workbook.getWorksheet("Earnings & Principal")!;
+    expect(detail(ws, "Payout type")).toBe("Earnings and Principal");
     const header = findRow(ws, "Payout No.");
     expect([1, 2, 3, 4].map((i) => ws.getRow(header + i).getCell(4).value)).toEqual([500, 375, 250, 125]);
     expect(ws.getRow(header + 4).getCell(7).value).toBe(0);
@@ -242,8 +242,8 @@ describe("Excel workbook", () => {
     const { workbook } = await roundTrip({});
     const ws = workbook.getWorksheet(COMPARISON_SHEET_NAME)!;
     expect(isoOf(detail(ws, "Planned investment date"))).toBe("2026-01-14");
-    expect(isoOf(detail(ws, "Interest start date"))).toBe("2026-01-15");
-    expect(detail(ws, "Your selection")).toBe("Quarterly, Interest Only");
+    expect(isoOf(detail(ws, "Earnings start date"))).toBe("2026-01-15");
+    expect(detail(ws, "Your selection")).toBe("Quarterly, Earnings Only");
 
     const longerHeader = findRow(ws, "Scenario");
     expect(rowValues(ws, longerHeader)).toEqual([
@@ -253,28 +253,28 @@ describe("Excel workbook", () => {
       "Number of Payouts",
       "First Payout",
       "Final Payout",
-      "Total Interest",
+      "Total Earnings",
       "Total Paid",
       "Difference vs Your Selection",
     ]);
     expect(rowValues(ws, longerHeader + 1)).toEqual([
-      "Your selection", "Quarterly", "Interest Only", 4, 500, 25_500, 2_000, 27_000, 0,
+      "Your selection", "Quarterly", "Earnings Only", 4, 500, 25_500, 2_000, 27_000, 0,
     ]);
     expect(rowValues(ws, longerHeader + 2)).toEqual([
-      "Half-Yearly payout", "Half-Yearly", "Interest Only", 2, 1_125, 26_125, 2_250, 27_250, 250,
+      "Half-Yearly payout", "Half-Yearly", "Earnings Only", 2, 1_125, 26_125, 2_250, 27_250, 250,
     ]);
     expect(rowValues(ws, longerHeader + 3)).toEqual([
-      "Yearly payout", "Yearly", "Interest Only", 1, 27_500, 27_500, 2_500, 27_500, 500,
+      "Yearly payout", "Yearly", "Earnings Only", 1, 27_500, 27_500, 2_500, 27_500, 500,
     ]);
 
     const typeHeader = findRow(ws, "Scenario", longerHeader);
-    expect(rowValues(ws, typeHeader + 1).slice(0, 3)).toEqual(["Your selection", "Quarterly", "Interest Only"]);
+    expect(rowValues(ws, typeHeader + 1).slice(0, 3)).toEqual(["Your selection", "Quarterly", "Earnings Only"]);
     expect(rowValues(ws, typeHeader + 2)).toEqual([
-      "Other payout type", "Quarterly", "Interest and Principal", 4, 6_750, 6_375, 1_250, 26_250, -750,
+      "Other payout type", "Quarterly", "Earnings and Principal", 4, 6_750, 6_375, 1_250, 26_250, -750,
     ]);
 
     const pairHeader = findRow(ws, "Payout No.");
-    expect(rowValues(ws, pairHeader)[4]).toBe("Interest and Principal minus Interest Only");
+    expect(rowValues(ws, pairHeader)[4]).toBe("Earnings and Principal minus Earnings Only");
     expect(rowValues(ws, pairHeader + 1).slice(2)).toEqual([500, 6_750, 6_250]);
     expect(rowValues(ws, pairHeader + 4).slice(2)).toEqual([25_500, 6_375, -19_125]);
     expect(rowValues(ws, pairHeader + 5)[0]).toBe("Total");
@@ -305,16 +305,16 @@ describe("Excel workbook", () => {
     expect(paragraphHeight("x".repeat(520), 156)).toBe(64);
   });
 
-  it("lists Interest Only first in the payout type comparison even when it is not selected", async () => {
+  it("lists Earnings Only first in the payout type comparison even when it is not selected", async () => {
     const { workbook } = await roundTrip({ payoutType: "interest-and-principal" });
     const ws = workbook.getWorksheet(COMPARISON_SHEET_NAME)!;
     const typeHeader = findRow(ws, "Scenario", findRow(ws, "Scenario"));
-    expect(rowValues(ws, typeHeader + 1).slice(0, 3)).toEqual(["Other payout type", "Quarterly", "Interest Only"]);
+    expect(rowValues(ws, typeHeader + 1).slice(0, 3)).toEqual(["Other payout type", "Quarterly", "Earnings Only"]);
     expect(rowValues(ws, typeHeader + 1)[8]).toBe(750);
     expect(rowValues(ws, typeHeader + 2).slice(0, 3)).toEqual([
       "Your selection",
       "Quarterly",
-      "Interest and Principal",
+      "Earnings and Principal",
     ]);
     const pairHeader = findRow(ws, "Payout No.");
     expect(rowValues(ws, findRow(ws, "Total", pairHeader))[4]).toBe(-750);

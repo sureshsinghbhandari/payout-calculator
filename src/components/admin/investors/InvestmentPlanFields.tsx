@@ -143,8 +143,8 @@ function PlanPreview({ plan, rates, submitLabel }: { plan: PlanDraft; rates: Rat
     : null;
   const items = schedule
     ? [
-        { label: "Interest starts", value: formatIsoDateLong(schedule.startDate) },
-        { label: "Total interest", value: formatCents(schedule.totals.interestCents) },
+        { label: "Earnings start", value: formatIsoDateLong(schedule.startDate) },
+        { label: "Total earnings", value: formatCents(schedule.totals.interestCents) },
         { label: "Total amount paid", value: formatCents(schedule.totals.payoutCents) },
       ]
     : [];

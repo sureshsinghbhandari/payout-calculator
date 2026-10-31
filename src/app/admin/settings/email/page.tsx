@@ -130,7 +130,7 @@ async function EmailSettingsContent() {
           <p className="mt-1 text-sm text-slate-600">
             Investors with an email address get a reminder before each scheduled payout, and a confirmation when a
             Master Admin marks a payout as paid (an option in the Mark as paid dialog). Investors can switch these emails
-            off in the portal. They never include the interest rate. The wording is on{" "}
+            off in the portal. They never include the earnings rate. The wording is on{" "}
             <Link href="/admin/settings/email-templates" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950">
               Email templates
             </Link>

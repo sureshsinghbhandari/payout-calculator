@@ -5,7 +5,7 @@
  * Placeholders such as {name} are filled in when an email is sent.
  * Pure functions so they can be unit tested.
  *
- * There is deliberately no placeholder for the interest rate, and percentages
+ * There is deliberately no placeholder for the earnings rate, and percentages
  * are refused in every template except the password reset: visitors, investors
  * and Sales Admins never see rates.
  */
@@ -298,8 +298,8 @@ export function validateTemplate(key: TemplateKey, raw: { subject: string; body:
   }
 
   if (key !== "reset") {
-    if (!errors.subject && PERCENTAGE.test(subject)) errors.subject = "Remove the percentage: interest rates are never sent in this email.";
-    if (!errors.body && PERCENTAGE.test(body)) errors.body = "Remove the percentage: interest rates are never sent in this email.";
+    if (!errors.subject && PERCENTAGE.test(subject)) errors.subject = "Remove the percentage: earnings rates are never sent in this email.";
+    if (!errors.body && PERCENTAGE.test(body)) errors.body = "Remove the percentage: earnings rates are never sent in this email.";
   }
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, value: { subject, body } };
@@ -336,7 +336,7 @@ export function firstNameOf(name: string): string {
   return name.trim().split(/\s+/)[0] || name;
 }
 
-/** Placeholder values for an inquiry. Never includes the interest rate. */
+/** Placeholder values for an inquiry. Never includes the earnings rate. */
 export function inquiryTemplateValues(inquiry: StoredInquiry, team: string, link = ""): Record<string, string> {
   const { plan } = inquiry;
   return {

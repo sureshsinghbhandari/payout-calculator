@@ -28,8 +28,8 @@ import type { PublicScenarioSet } from "@/lib/scenarios";
 import { PayoutResults } from "./PayoutResults";
 
 const PAYOUT_TYPE_HINTS: Record<PayoutType, string> = {
-  "interest-only": "Interest each period. Full principal returned at maturity.",
-  "interest-and-principal": "Equal principal installments plus interest on the remaining balance.",
+  "interest-only": "Earnings each period. Full principal returned at maturity.",
+  "interest-and-principal": "Equal principal installments plus earnings on the remaining balance.",
 };
 
 const PAYOUT_TYPES = Object.keys(PAYOUT_TYPE_LABELS) as PayoutType[];
@@ -235,8 +235,8 @@ export function PayoutCalculator({ products }: { products: ProductSettings }) {
               ) : (
                 <p id={ids.dateHint} className="mt-1.5 text-xs leading-5 text-slate-500">
                   {startDate
-                    ? `Interest starts ${formatIsoDateLong(startDate)}, ${START_DELAY} after this date.`
-                    : `Interest starts ${START_DELAY} after this date.`}
+                    ? `Earnings start ${formatIsoDateLong(startDate)}, ${START_DELAY} after this date.`
+                    : `Earnings start ${START_DELAY} after this date.`}
                 </p>
               )}
             </div>
@@ -317,7 +317,7 @@ export function PayoutCalculator({ products }: { products: ProductSettings }) {
 
         <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600 sm:max-w-md">
-            Interest starts {START_DELAY} after your planned investment date, counting Monday to Friday as
+            Earnings start {START_DELAY} after your planned investment date, counting Monday to Friday as
             business days. The first payout falls one period after that.
           </p>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">

@@ -36,8 +36,8 @@ export default function Home() {
           </h1>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
             See how a fixed-term investment pays out over time. Pick an amount, planned investment date,
-            term and payout term to get a payout-by-payout breakdown of interest and
-            principal, based on simple interest.
+            term and payout term to get a payout-by-payout breakdown of earnings and
+            principal, based on simple earnings.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ import {
 export type { StoredRates } from "../rates";
 
 /**
- * Interest rates are stored as one private JSON file in Vercel Blob.
+ * Earnings rates are stored as one private JSON file in Vercel Blob.
  * Private blobs need the server's token to read, so visitors cannot fetch them.
  */
 // Production deployments share one rates file. Preview deployments and local
@@ -50,7 +50,7 @@ async function readRaw(): Promise<RawRead> {
   try {
     return { stored: parseStoredRates(text), etag: writableEtag(result.blob.etag), invalid: false };
   } catch (error) {
-    console.error("Stored interest rates could not be parsed", error);
+    console.error("Stored earnings rates could not be parsed", error);
     return { stored: null, etag: writableEtag(result.blob.etag), invalid: true };
   }
 }
@@ -61,7 +61,7 @@ async function readRaw(): Promise<RawRead> {
  */
 export async function readStoredRates(): Promise<StoredRates> {
   const raw = await readRaw();
-  if (raw.invalid) throw new Error("Stored interest rates are invalid.");
+  if (raw.invalid) throw new Error("Stored earnings rates are invalid.");
   return raw.stored ?? defaultStoredRates();
 }
 

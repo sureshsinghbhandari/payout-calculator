@@ -18,7 +18,7 @@ const RATES = { quarterly: 8, "half-yearly": 9, yearly: 10 };
 const AMOUNTS = [25000, 50000, 100000];
 
 const DISCLAIMER =
-  "This calculator provides illustrative estimates based on the selected assumptions. Interest is assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account. Actual returns, payment timing, taxes, fees, and principal repayment may differ. This calculator is not a guarantee of investment performance or a substitute for professional financial advice.";
+  "This calculator provides illustrative estimates based on the selected assumptions. Earnings are assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account. Actual returns, payment timing, taxes, fees, and principal repayment may differ. This calculator is not a guarantee of investment performance or a substitute for professional financial advice.";
 
 const THEME = {
   name: "Payout Plans",
@@ -50,7 +50,7 @@ const PLANS = [
     title: "Quarterly payouts",
     perYear: 4,
     every: "every 3 months",
-    lead: "Interest every 3 months, 4 payouts a year, your full amount back at the end of the term",
+    lead: "Earnings every 3 months, 4 payouts a year, your full amount back at the end of the term",
     payoutLabel: "Every quarter you receive",
   },
   {
@@ -58,7 +58,7 @@ const PLANS = [
     title: "Half-yearly payouts",
     perYear: 2,
     every: "every 6 months",
-    lead: "Interest every 6 months, 2 payouts a year, your full amount back at the end of the term",
+    lead: "Earnings every 6 months, 2 payouts a year, your full amount back at the end of the term",
     payoutLabel: "Every 6 months you receive",
   },
   {
@@ -66,7 +66,7 @@ const PLANS = [
     title: "Yearly payouts",
     perYear: 1,
     every: "once a year",
-    lead: "Interest once a year, 1 payout a year, your full amount back at the end of the term",
+    lead: "Earnings once a year, 1 payout a year, your full amount back at the end of the term",
     payoutLabel: "Every year you receive",
   },
 ];
@@ -74,7 +74,7 @@ const PLANS = [
 const plural = (n) => `${n} payout${n === 1 ? "" : "s"}`;
 
 function planNumbers(plan, principal, years) {
-  // Simple interest, Interest Only: same payout each period, principal returned at maturity.
+  // Simple earnings, Earnings Only: same payout each period, principal returned at maturity.
   const rate = RATES[plan.key] / 100;
   const perPayout = Math.round(((principal * rate) / plan.perYear) * 100) / 100;
   const payouts = plan.perYear * years;
@@ -180,7 +180,7 @@ async function main() {
     { head: "Choose your amount", body: "$25,000, $50,000, $75,000 or $100,000" },
     { head: "Lock it in", body: "For a term of 1 or 2 years" },
     { head: "Pick your payout term", body: "Quarterly, half-yearly or yearly" },
-    { head: "Get paid", body: "Interest every period, your full amount back at the end" },
+    { head: "Get paid", body: "Earnings every period, your full amount back at the end" },
   ];
   steps.forEach((st, i) => {
     const x = 0.5 + i * 2.3;
@@ -200,12 +200,12 @@ async function main() {
   });
   s.addText([
     { text: "Good to know  ", options: { bold: true, color: C.accent1 } },
-    { text: "Interest is simple (not compounded) and starts the next business day after you invest. Prefer part of your money back with every payout? Choose ", options: { color: C.text1 } },
-    { text: "Interest and Principal", options: { bold: true, color: C.text1 } },
-    { text: " instead of Interest Only.", options: { color: C.text1 } },
+    { text: "Earnings are simple (not compounded) and start the next business day after you invest. Prefer part of your money back with every payout? Choose ", options: { color: C.text1 } },
+    { text: "Earnings and Principal", options: { bold: true, color: C.text1 } },
+    { text: " instead of Earnings Only.", options: { color: C.text1 } },
   ], { x: 0.75, y: 4.0, w: 8.5, h: 0.95, fontSize: 14, valign: "middle", margin: 0, isTextBox: true });
   s.addNotes(
-    "Four steps. Pick an amount, lock it in for one or two years, choose how often you are paid, and receive interest each period with your full amount back at the end. The next three slides show what each payout term means in real dollars. Mention the Interest and Principal option for people who want part of their money back sooner.",
+    "Four steps. Pick an amount, lock it in for one or two years, choose how often you are paid, and receive earnings each period with your full amount back at the end. The next three slides show what each payout term means in real dollars. Mention the Earnings and Principal option for people who want part of their money back sooner.",
   );
 
   // ---------- 3-5. Plans ----------
@@ -244,7 +244,7 @@ async function main() {
         head(`1-year term (${one} payout${one === 1 ? "" : "s"})`, { colspan: 2 }),
         head(`2-year term (${two} payouts)`, { colspan: 2 }),
       ],
-      [sub("Interest"), sub("You receive"), sub("Interest"), sub("You receive")],
+      [sub("Earnings"), sub("You receive"), sub("Earnings"), sub("You receive")],
       ...AMOUNTS.map((amount, i) => {
         const a = planNumbers(plan, amount, 1);
         const b = planNumbers(plan, amount, 2);
@@ -272,18 +272,18 @@ async function main() {
     s.addText([
       { text: "Example: ", options: { bold: true, color: C.accent1 } },
       { text: "$100,000 for 2 years earns ", options: { color: C.text1 } },
-      { text: `${usd(big.totalInterest)} in interest`, options: { bold: true, color: C.text1 } },
+      { text: `${usd(big.totalInterest)} in earnings`, options: { bold: true, color: C.text1 } },
       { text: ` (${big.payouts} payout${big.payouts === 1 ? "" : "s"} of ${usd(big.perPayout)}), plus your $100,000 back at the end.`, options: { color: C.text1 } },
     ], { x: 4.0, y: 3.92, w: 5.3, h: 0.8, fontSize: 14, valign: "middle", margin: 0, isTextBox: true });
 
-    s.addText("Interest Only payouts shown. Illustrative figures; see the disclaimer at the end.", {
+    s.addText("Earnings Only payouts shown. Illustrative figures; see the disclaimer at the end.", {
       x: 0.5, y: 4.88, w: 9.0, h: 0.22, fontSize: 10, color: C.accent4, italic: true, margin: 0, isTextBox: true,
     });
     const ex = planNumbers(plan, 25000, 1);
     s.addNotes(
       `${plan.title}. You are paid ${plan.every}. On $25,000 that is ${usd(ex.perPayout)} each time. ` +
         `Over a 1-year term that is ${plural(planNumbers(plan, 25000, 1).payouts)}; over 2 years, ${plural(planNumbers(plan, 25000, 2).payouts)}. ` +
-        `Your full investment is returned with the last payout. The table shows total interest and the total you receive for $25,000, $50,000 and $100,000.`,
+        `Your full investment is returned with the last payout. The table shows total earnings and the total you receive for $25,000, $50,000 and $100,000.`,
     );
   }
 

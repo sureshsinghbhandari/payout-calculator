@@ -5,7 +5,7 @@
  * and the portal.
  *
  * Every email is noted in a sent-log keyed by investment, payout number and
- * kind, so the same reminder is never sent twice. The interest rate is never
+ * kind, so the same reminder is never sent twice. The earnings rate is never
  * part of these emails.
  */
 import type { Investment, Investor, PayoutPayment } from "./accounts";
@@ -53,7 +53,7 @@ export function investmentText(investment: Pick<Investment, "principal" | "inves
   return `${formatDollars(investment.principal)} investment of ${formatIsoDate(investment.investmentDate)}`;
 }
 
-/** Placeholder values for the payout reminder (without {team}). Never includes the interest rate. */
+/** Placeholder values for the payout reminder (without {team}). Never includes the earnings rate. */
 export function reminderTemplateValues(
   investor: Pick<Investor, "name">,
   investment: Investment,
@@ -73,7 +73,7 @@ export function reminderTemplateValues(
   };
 }
 
-/** Placeholder values for the payment confirmation (without {team}). Never includes the interest rate. */
+/** Placeholder values for the payment confirmation (without {team}). Never includes the earnings rate. */
 export function confirmationTemplateValues(
   investor: Pick<Investor, "name">,
   investment: Investment,

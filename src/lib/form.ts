@@ -1,5 +1,5 @@
 /**
- * Calculator form state. The interest rate is not part of the form: it is
+ * Calculator form state. The earnings rate is not part of the form: it is
  * managed by an admin and applied on the server.
  */
 import { DEFAULT_PAYOUT_TYPE } from "./config";

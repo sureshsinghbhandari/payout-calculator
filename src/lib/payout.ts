@@ -3,9 +3,9 @@
  *
  * All money is handled as integer cents and the rate as an integer number of
  * ten-thousandths of a percent, so every calculation is exact integer math
- * and fully deterministic. Interest products are worked out with BigInt, so
+ * and fully deterministic. Money amounts are worked out with BigInt, so
  * large amounts and long terms stay exact too.
- * Interest is simple interest; it is never compounded.
+ * Earnings are simple (never compounded).
  */
 import {
   INTEREST_START_BUSINESS_DAYS,
@@ -33,14 +33,14 @@ export const FREQUENCY_LABELS: Record<PayoutFrequency, string> = {
 };
 
 export const PAYOUT_TYPE_LABELS: Record<PayoutType, string> = {
-  "interest-only": "Interest Only",
-  "interest-and-principal": "Interest and Principal",
+  "interest-only": "Earnings Only",
+  "interest-and-principal": "Earnings and Principal",
 };
 
 export interface PayoutInputs {
   /** Original investment in whole US dollars. */
   principal: number;
-  /** Annual simple-interest rate as a percentage, e.g. 10 for 10%. */
+  /** Annual simple earnings rate as a percentage, e.g. 10 for 10%. */
   annualRatePercent: number;
   lockInYears: number;
   payoutType: PayoutType;
@@ -68,7 +68,7 @@ export interface PayoutTotals {
 
 export interface PayoutSchedule {
   inputs: PayoutInputs;
-  /** Date interest starts (the next business day after the investment date), YYYY-MM-DD. */
+  /** Date earnings start (the next business day after the investment date), YYYY-MM-DD. */
   startDate: string;
   periodsPerYear: number;
   totalPeriods: number;
@@ -85,21 +85,21 @@ const NUMBER_PATTERN = /^\+?(\d+(\.\d*)?|\.\d+)$/;
 /** Validates the annual-rate field. Accepts raw text from the form or a number. */
 export function validateRate(input: string | number): RateValidation {
   if (typeof input === "number" && !Number.isFinite(input)) {
-    return { ok: false, error: "Interest rate must be a number, for example 10 or 7.5." };
+    return { ok: false, error: "Earnings rate must be a number, for example 10 or 7.5." };
   }
   const text = typeof input === "number" ? String(input) : input.trim();
   if (text === "") {
-    return { ok: false, error: "Enter an annual interest rate." };
+    return { ok: false, error: "Enter an annual earnings rate." };
   }
   if (text.startsWith("-") && NUMBER_PATTERN.test(text.slice(1))) {
-    return { ok: false, error: "Interest rate must be between 0% and 100%." };
+    return { ok: false, error: "Earnings rate must be between 0% and 100%." };
   }
   if (!NUMBER_PATTERN.test(text)) {
-    return { ok: false, error: "Interest rate must be a number, for example 10 or 7.5." };
+    return { ok: false, error: "Earnings rate must be a number, for example 10 or 7.5." };
   }
   const value = Number(text);
   if (value < 0 || value > 100) {
-    return { ok: false, error: "Interest rate must be between 0% and 100%." };
+    return { ok: false, error: "Earnings rate must be between 0% and 100%." };
   }
   const decimals = text.includes(".") ? text.split(".")[1].length : 0;
   if (decimals > MAX_RATE_DECIMALS) {
@@ -152,7 +152,7 @@ export function interestStartDelayText(): string {
     : `${INTEREST_START_BUSINESS_DAYS} business days`;
 }
 
-/** The date interest starts: the configured number of business days after the investment date. */
+/** The date earnings start: the configured number of business days after the investment date. */
 export function interestStartDate(investmentDate: string): string {
   return addBusinessDays(investmentDate, INTEREST_START_BUSINESS_DAYS);
 }
