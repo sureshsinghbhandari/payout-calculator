@@ -424,7 +424,7 @@ private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
 `month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a daily job
 refreshes them at **4:01 PM Eastern** after the market closes
 (`/api/cron/trading-snapshots`; `vercel.json` lists both 20:01 and 21:01 UTC on weekdays
-and the route runs only in the 4:00–4:29 PM Eastern window, which covers daylight saving).
+and the route runs only during the 4 PM hour Eastern, which covers daylight saving). On Vercel's free Hobby plan a cron job runs at some point inside its hour, not at the minute, so the copy is saved between 4:00 and 5:00 PM Eastern; Pro runs it at 4:01 PM sharp.
 When the trading app, its tunnel or your PC is off, the page shows the saved copy under a
 yellow notice with the time it was saved. A month that ended before its copy was saved is
 final and is shown without calling the trading app. Today's positions fall back only to a

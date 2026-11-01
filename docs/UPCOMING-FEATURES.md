@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**34 done · 11 in progress · 9 pending** · 19 [waiting on you](#waiting-on-you)
+**35 done · 11 in progress · 8 pending** · 18 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -16,16 +16,16 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 
 | # | Feature | Status | Priority | Area | Needs from you |
 | --- | --- | --- | --- | --- | --- |
-| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | Now | Email and messaging | A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD. |
-| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Now | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording. |
-| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Now | Email and messaging | Email set up (Gmail settings in Vercel). |
-| 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Next | Email and messaging | Email set up (Gmail settings in Vercel) before alerts can be sent. |
-| 5 | [Email templates](#email-templates) | 🔄 In progress | Next | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the wording. |
-| 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Next | Investor portal | Email set up (Gmail settings in Vercel) before reset links can be sent. |
-| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Next | Security and compliance | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
-| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions. |
-| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
+| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | Now | Email and messaging | The Gmail settings (GMAIL_USER, GMAIL_APP_PASSWORD, EMAIL_PROVIDER) are already in Vercel production. Open Settings > Email and send the test email once to confirm it works; replace the app password there if it has been revoked. |
+| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Now | Email and messaging | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the acknowledgement wording. |
+| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Now | Email and messaging | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm). |
+| 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Next | Email and messaging | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before alerts can be sent. |
+| 5 | [Email templates](#email-templates) | 🔄 In progress | Next | Email and messaging | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the wording. |
+| 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Next | Investor portal | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before reset links can be sent. |
+| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Next | Security and compliance | Enter the privacy contact email and company details in src/lib/company.ts, then have a licensed attorney review /privacy using docs/legal-review.md before go-live. |
+| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and redeploy so the CRON_SECRET (already added in Vercel production and in .env.local) takes effect for the daily job. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json. |
+| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Not needed for now. When you want visit counts, turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
 | 11 | [Accessibility review](#accessibility-review) | 🔄 In progress | Later | Platform and experience | — |
 | 12 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
 | 13 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
@@ -34,39 +34,39 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 16 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
 | 17 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations | Confirm Monthly should be offered, and the monthly rate. |
 | 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
-| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 20 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
-| 21 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
-| 22 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
-| 23 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 24 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 27 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 28 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 29 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 30 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 31 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 32 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 33 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 34 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 35 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 36 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 37 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 39 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 40 | [Investor documents and signing (BoldSign)](#investor-signing) | ✅ Done | Next | Investor portal | — |
-| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 44 | [Automated tests and checks](#automated-tests) | ✅ Done | Next | Security and compliance | — |
-| 45 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 46 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 47 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 48 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 49 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
-| 50 | [Bank holiday calendar](#holiday-calendar) | ✅ Done | Later | Payouts and operations | — |
-| 51 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 19 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
+| 20 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
+| 21 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
+| 22 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 23 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
+| 24 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 25 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 27 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 28 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 29 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 30 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 31 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 32 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 33 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 34 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 35 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 36 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 37 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 39 | [Investor documents and signing (BoldSign)](#investor-signing) | ✅ Done | Next | Investor portal | — |
+| 40 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 41 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 42 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 43 | [Automated tests and checks](#automated-tests) | ✅ Done | Next | Security and compliance | — |
+| 44 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 45 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 46 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 47 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 48 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 49 | [Bank holiday calendar](#holiday-calendar) | ✅ Done | Later | Payouts and operations | — |
+| 50 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 51 | [E-signature of agreements](#e-signature) | ✅ Done | Later | Security and compliance | — |
 | 52 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
 | 53 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
 | 54 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
@@ -80,16 +80,16 @@ Everything else in the list can be built without your help.
 
 | # | Feature | Status | What is needed from you |
 | --- | --- | --- | --- |
-| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD. |
-| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording. |
-| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Email set up (Gmail settings in Vercel). |
-| 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Email set up (Gmail settings in Vercel) before alerts can be sent. |
-| 5 | [Email templates](#email-templates) | 🔄 In progress | Email set up (Gmail settings in Vercel), and approval of the wording. |
-| 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Email set up (Gmail settings in Vercel) before reset links can be sent. |
-| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
-| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions. |
-| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
+| 1 | [Send and receive email (Gmail now, Resend later)](#email-setup) | 🔄 In progress | The Gmail settings (GMAIL_USER, GMAIL_APP_PASSWORD, EMAIL_PROVIDER) are already in Vercel production. Open Settings > Email and send the test email once to confirm it works; replace the app password there if it has been revoked. |
+| 2 | [Acknowledge inquiries by email](#inquiry-acknowledgement) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the acknowledgement wording. |
+| 3 | [Customer email replies](#customer-responses) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm). |
+| 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before alerts can be sent. |
+| 5 | [Email templates](#email-templates) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the wording. |
+| 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before reset links can be sent. |
+| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Enter the privacy contact email and company details in src/lib/company.ts, then have a licensed attorney review /privacy using docs/legal-review.md before go-live. |
+| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and redeploy so the CRON_SECRET (already added in Vercel production and in .env.local) takes effect for the daily job. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json. |
+| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Not needed for now. When you want visit counts, turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
 | 11 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
 | 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
 | 13 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
@@ -97,8 +97,7 @@ Everything else in the list can be built without your help.
 | 15 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
 | 16 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
 | 17 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
-| 18 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 19 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
+| 18 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
 
 <a id="app-map"></a>
 
@@ -144,7 +143,7 @@ Staff, all under /admin (gear menu at the top right)
 
 Email works with Gmail now (no domain needed; replies are picked up by checking the inbox) and can switch to Resend with the EMAIL_PROVIDER setting once there is a company domain (replies arrive instantly, with delivery and bounce tracking). Settings > Email shows the status and a test button.
 
-**Needs from you:** A Gmail account with an app password, added in Vercel as GMAIL_USER and GMAIL_APP_PASSWORD.
+**Needs from you:** The Gmail settings (GMAIL_USER, GMAIL_APP_PASSWORD, EMAIL_PROVIDER) are already in Vercel production. Open Settings > Email and send the test email once to confirm it works; replace the app password there if it has been revoked.
 
 **Outcome:** Customers get emails from the business, and their replies come back into the app.
 
@@ -181,7 +180,7 @@ Settings > Email
 
 As soon as an inquiry arrives, email the customer a thank-you with their reference number and what happens next.
 
-**Needs from you:** Email set up (Gmail settings in Vercel), and approval of the acknowledgement wording.
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the acknowledgement wording.
 
 **Outcome:** Every customer gets an immediate confirmation, recorded in the audit log.
 
@@ -201,7 +200,7 @@ As soon as an inquiry arrives, email the customer a thank-you with their referen
 
 Customers' replies are picked up (from the Gmail inbox now, through the Resend webhook later) and attached to the matching inquiry by its reply address or reference number. Staff can answer from the inquiry page.
 
-**Needs from you:** Email set up (Gmail settings in Vercel).
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm).
 
 **Outcome:** Admins see the conversation on the inquiry; each response is recorded in the audit log under Customer responses.
 
@@ -217,7 +216,7 @@ Customers' replies are picked up (from the Gmail inbox now, through the Resend w
 
 Notify the sales team by email (and optionally Slack or Teams) the moment a new inquiry arrives.
 
-**Needs from you:** Email set up (Gmail settings in Vercel) before alerts can be sent.
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before alerts can be sent.
 
 **Outcome:** Built: admins add their email on My account and switch on alerts. Emails start once email is set up.
 
@@ -245,7 +244,7 @@ My account
 
 Editable templates for follow-ups, welcome-to-the-portal emails, password setup links and payout notices, with the customer's name and plan filled in.
 
-**Needs from you:** Email set up (Gmail settings in Vercel), and approval of the wording.
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and approval of the wording.
 
 **Outcome:** Built: Settings > Email templates edits the acknowledgement, alert and reset emails with a preview.
 
@@ -276,7 +275,7 @@ Settings > Email templates
 
 Investors and staff reset their own password with an emailed link instead of asking an admin.
 
-**Needs from you:** Email set up (Gmail settings in Vercel) before reset links can be sent.
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm) before reset links can be sent.
 
 **Outcome:** Built: Forgot password? on the admin and portal sign-in pages. Emails start once email is set up.
 
@@ -302,7 +301,7 @@ Forgot password?                       (admin and investor versions)
 
 A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.
 
-**Needs from you:** Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one.
+**Needs from you:** Enter the privacy contact email and company details in src/lib/company.ts, then have a licensed attorney review /privacy using docs/legal-review.md before go-live.
 
 **Outcome:** /privacy explains what is collected and why; the inquiry form requires agreeing to it; investors request a copy or deletion from Your details, reviewed by a Master Admin at /admin/privacy-requests.
 
@@ -341,7 +340,7 @@ A privacy notice on the inquiry form, consent checkbox, retention periods, and a
 
 Email investors a few days before each payout, and confirm when it has been paid.
 
-**Needs from you:** Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job.
+**Needs from you:** Email confirmed working (the Gmail settings are already in Vercel; send the test email in Settings > Email to confirm), and redeploy so the CRON_SECRET (already added in Vercel production and in .env.local) takes effect for the daily job.
 
 **Outcome:** Built: a daily reminder before each payout and a confirmation when a payout is recorded, with templates and an opt-out in the portal.
 
@@ -371,9 +370,9 @@ Settings > Email > Payout emails to investors
 
 A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there. A copy of each account's figures is saved here after every market close (4:01 PM Eastern), so past data still shows when that app is off.
 
-**Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions.
+**Needs from you:** TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json.
 
-**Outcome:** Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views fill in once that app serves them (the contract and a prompt to build it are in docs/trading-dashboard-api.md).
+**Outcome:** Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views are served by that app (the contract is in docs/trading-dashboard-api.md). If it is off, the last saved copy is shown with a notice.
 
 **Layout** (a sketch, not a screenshot):
 
@@ -439,7 +438,7 @@ Settings > Trading dashboard
 
 Privacy-friendly visit counts for the calculator page (Vercel Web Analytics has a free tier).
 
-**Needs from you:** Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard.
+**Needs from you:** Not needed for now. When you want visit counts, turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard.
 
 **Outcome:** @vercel/analytics and @vercel/speed-insights are wired into every page; they report nothing until turned on for this project in Vercel (no code change needed to do that).
 
@@ -562,20 +561,6 @@ Collect and verify investor identity documents before an investment is confirmed
 
 - Advice on the rules that apply to your business
 - An identity verification provider
-
-[Back to the table](#summary)
-
-<a id="e-signature"></a>
-
-### E-signature of agreements
-
-**Status:** ⏳ Pending · **Priority:** Later · **Area:** Security and compliance
-
-Send the investment agreement for electronic signature and store the signed copy in the document vault.
-
-**Needs from you:** An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys.
-
-**Depends on:** [Document vault](#documents) (✅ Done)
 
 [Back to the table](#summary)
 
@@ -1414,6 +1399,20 @@ Settings > Amounts and terms
  [ Save ]       Last saved Oct 27, 2026 by Ashwin Patel
  Change history (last 20 saves)
 ```
+
+[Back to the table](#summary)
+
+<a id="e-signature"></a>
+
+### E-signature of agreements
+
+**Status:** ✅ Done · **Priority:** Later · **Area:** Security and compliance
+
+Send the investment agreement for electronic signature and store the signed copy in the document vault.
+
+**Outcome:** Built as Investor documents and signing (BoldSign): the agreement is prepared here, sent for signature in BoldSign, and the signed copy is uploaded back into the document vault.
+
+**Depends on:** [Document vault](#documents) (✅ Done), [Investor documents and signing (BoldSign)](#investor-signing) (✅ Done)
 
 [Back to the table](#summary)
 
