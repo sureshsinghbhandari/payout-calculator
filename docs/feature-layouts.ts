@@ -278,6 +278,10 @@ Investors
    1     Cooper         $4,820   9.6%   61%       1.8            ...
    2     Warren         $3,110   7.1%   55%       1.5            ...
 
+ When the trading app is off, a yellow line says
+   "The trading app is unreachable. Showing the copy saved Oct 30, 4:05 PM EDT; ..."
+ and the saved figures are shown below it.
+
  Monthly sheet                       ‹  October 2026  ›
    Returns       $0   $137,406   $23,712 ...  TOTAL $205,498
    Capital Reqd       $210,000    $30,000 ...        $595,000

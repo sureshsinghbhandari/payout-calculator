@@ -369,7 +369,7 @@ Settings > Email > Payout emails to investors
 
 **Status:** 🔄 In progress · **Priority:** Later · **Area:** Reports and insights
 
-A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there.
+A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there. A copy of each account's figures is saved here after every market close (4:01 PM Eastern), so past data still shows when that app is off.
 
 **Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions.
 
@@ -395,6 +395,10 @@ Settings > Trading dashboard
    Rank  Strategy      Net P&L   ROI    Win rate  Profit factor  ...
    1     Cooper         $4,820   9.6%   61%       1.8            ...
    2     Warren         $3,110   7.1%   55%       1.5            ...
+
+ When the trading app is off, a yellow line says
+   "The trading app is unreachable. Showing the copy saved Oct 30, 4:05 PM EDT; ..."
+ and the saved figures are shown below it.
 
  Monthly sheet                       ‹  October 2026  ›
    Returns       $0   $137,406   $23,712 ...  TOTAL $205,498

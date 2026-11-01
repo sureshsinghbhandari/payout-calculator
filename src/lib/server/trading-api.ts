@@ -254,6 +254,9 @@ async function call<T>(path: string): Promise<TradingResult<T>> {
   } catch {
     body = null;
   }
+  // The trading app always answers with JSON. A non-JSON error page (ngrok's "tunnel offline" 404, a gateway 502/504)
+  // means the app itself could not be reached, so it counts as an outage, not as a missing tab.
+  if (!response.ok && body === null) return { ok: false, error: friendlyError(null, null), status: null };
   if (!response.ok) return { ok: false, error: friendlyError(response.status, body), status: response.status };
   return { ok: true, value: body as T };
 }

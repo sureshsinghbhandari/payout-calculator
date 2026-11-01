@@ -8,29 +8,15 @@ import { OverviewView } from "@/components/admin/trading/OverviewView";
 import { TodayView } from "@/components/admin/trading/TodayView";
 import { toPublicAdmin } from "@/lib/accounts";
 import { requireAdminPage } from "@/lib/server/auth";
-import {
-  getTradingMonth,
-  getTradingTabData,
-  getTradingToday,
-  isMonthKey,
-  isNotBuiltYet,
-  isTradingApiConfigured,
-} from "@/lib/server/trading-api";
+import { isMonthKey, isNotBuiltYet, isTradingApiConfigured } from "@/lib/server/trading-api";
+import { loadMonth, loadOverview, loadToday, type Loaded } from "@/lib/server/trading-snapshots";
+import { TRADING_ACCOUNTS as ACCOUNTS } from "@/lib/trading-accounts";
+import { formatTimestamp } from "@/lib/time";
 
 export const metadata: Metadata = {
   title: "Trading dashboard | Admin | Investment Payout Calculator",
   robots: { index: false, follow: false },
 };
-
-/**
- * The accounts (tabs of the other app) this dashboard shows, in this order.
- * The slug is the other app's tab slug (its `/api/public/eod-excel/tabs`).
- * Add a line here to show another one.
- */
-const ACCOUNTS = [
-  { slug: "simulator", label: "Simulator" },
-  { slug: "tradier-sb-live", label: "Tradier_SB Live" },
-] as const;
 
 const VIEWS = [
   { key: "overview", label: "Overview" },
@@ -186,26 +172,53 @@ function NotBuiltYetCard({ what }: { what: string }) {
   );
 }
 
+/** Shown above a view that comes from the saved copy instead of the trading app. */
+function SavedCopyNotice({ stale }: { stale: NonNullable<Extract<Loaded<unknown>, { ok: true }>["stale"]> }) {
+  const when = formatTimestamp(stale.savedAt);
+  return (
+    <p role="status" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+      {stale.reason === "final"
+        ? `Closed month, shown from the copy saved ${when}.`
+        : `The trading app is unreachable. Showing the copy saved ${when}; it updates after each market close (4:01 PM Eastern) and whenever the app can be reached.`}
+    </p>
+  );
+}
+
 async function OverviewSection({ slug }: { slug: string }) {
-  const result = await getTradingTabData(slug);
+  const result = await loadOverview(slug);
   if (!result.ok) return <ErrorCard message={result.error} />;
-  return <OverviewView data={result.value} />;
+  return (
+    <>
+      {result.stale && <SavedCopyNotice stale={result.stale} />}
+      <OverviewView data={result.value} />
+    </>
+  );
 }
 
 async function MonthSection({ slug, month }: { slug: string; month: string | null }) {
-  const result = await getTradingMonth(slug, month);
+  const result = await loadMonth(slug, month);
   if (!result.ok) {
     return isNotBuiltYet(result, "month") ? <NotBuiltYetCard what="its month sheets" /> : <ErrorCard message={result.error} />;
   }
   const sheet = result.value.month;
   if (!sheet) return <NotBuiltYetCard what="its month sheets" />;
-  return <MonthSheet month={sheet} tab={result.value.tab} hrefFor={(m) => hrefFor({ tab: slug, view: "month", month: m })} />;
+  return (
+    <>
+      {result.stale && <SavedCopyNotice stale={result.stale} />}
+      <MonthSheet month={sheet} tab={result.value.tab} hrefFor={(m) => hrefFor({ tab: slug, view: "month", month: m })} />
+    </>
+  );
 }
 
 async function TodaySection({ slug }: { slug: string }) {
-  const result = await getTradingToday(slug);
+  const result = await loadToday(slug);
   if (!result.ok) {
     return isNotBuiltYet(result, "today") ? <NotBuiltYetCard what="today's positions" /> : <ErrorCard message={result.error} />;
   }
-  return <TodayView data={result.value} />;
+  return (
+    <>
+      {result.stale && <SavedCopyNotice stale={result.stale} />}
+      <TodayView data={result.value} />
+    </>
+  );
 }

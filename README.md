@@ -418,6 +418,20 @@ Pick an **account** (Simulator, Tradier_SB Live; the list is `ACCOUNTS` in
   payoff icon that opens the at-expiration payoff curve. Refreshes itself every 30 seconds
   while the market is open.
 
+**Saved copies.** Only Simulator and Tradier_SB Live are shown and saved
+(`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
+private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
+`month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a daily job
+refreshes them at **4:01 PM Eastern** after the market closes
+(`/api/cron/trading-snapshots`; `vercel.json` lists both 20:01 and 21:01 UTC on weekdays
+and the route runs only in the 4:00–4:29 PM Eastern window, which covers daylight saving).
+When the trading app, its tunnel or your PC is off, the page shows the saved copy under a
+yellow notice with the time it was saved. A month that ended before its copy was saved is
+final and is shown without calling the trading app. Today's positions fall back only to a
+copy saved the same day. Needs `BLOB_READ_WRITE_TOKEN` and `CRON_SECRET`; on a Vercel plan
+that limits cron jobs or their timing, see the Vercel docs (Hobby may run a job any time
+within its hour and allows few jobs).
+
 The Monthly sheet and Today views need two additions to that app's data API (a `month`
 section and a `today` route). Until they exist the page says so; the exact contract and
 a ready-to-paste prompt for Claude Code in that repo are in
