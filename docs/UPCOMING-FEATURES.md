@@ -336,14 +336,14 @@ A read-only page showing end-of-day KPI tiles and ranked strategy figures from a
 
 **Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running.
 
-**Outcome:** Settings > Trading dashboard (Master Admin): pick a tab, see its KPI tiles and strategy table, always current, no Excel file to open.
+**Outcome:** Settings > Trading dashboard (Master Admin): the Simulator tab's KPI tiles and strategy table, always current, no Excel file to open. Other tabs can be added on request.
 
 **Layout** (a sketch, not a screenshot):
 
 ```text
 Settings > Trading dashboard
 ------------------------------------------------------------------
- [ Simulator ] [ Strategies (US) ] [ Strategies (India) ] ...   (tabs)
+ Only the Simulator tab is shown (ask to add more, or a picker).
 
  Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
 

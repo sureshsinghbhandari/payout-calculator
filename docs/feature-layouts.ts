@@ -226,7 +226,7 @@ Investors
 
   "trading-dashboard": `Settings > Trading dashboard
 ------------------------------------------------------------------
- [ Simulator ] [ Strategies (US) ] [ Strategies (India) ] ...   (tabs)
+ Only the Simulator tab is shown (ask to add more, or a picker).
 
  Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
 

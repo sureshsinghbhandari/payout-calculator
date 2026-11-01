@@ -306,10 +306,13 @@ the first time an inquiry's page is opened.
 
 **Settings > Trading dashboard** (`/admin/trading`) is a read-only view of a separate
 trading app (`tradiersuinew`) that you run on your own machine. It shows that app's
-end-of-day KPI tiles and ranked strategy figures for the tab you pick — the same numbers
-as its own Excel export, fetched live over its data API (see that app's
-`docs/eod-excel.md`). This app only ever reads from it: no order is placed, nothing there
-is changed, and nothing of this app's own data (inquiries, investors, rates) is sent to it.
+end-of-day KPI tiles and ranked strategy figures — the same numbers as its own Excel
+export, fetched live over its data API (see that app's `docs/eod-excel.md`). This app only
+ever reads from it: no order is placed, nothing there is changed, and nothing of this
+app's own data (inquiries, investors, rates) is sent to it.
+
+Only the **Simulator** tab is shown for now (`DEFAULT_TAB_SLUG` in
+`src/app/admin/trading/page.tsx`); ask for more tabs or a picker between them if needed.
 
 Needs `TRADING_API_URL` and `TRADING_API_TOKEN` set here (see
 [Environment variables](#environment-variables)), and on the other app: its own

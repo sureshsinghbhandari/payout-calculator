@@ -509,7 +509,7 @@ export const ROADMAP: RoadmapItem[] = [
     status: "in-progress",
     description:
       "A read-only page showing end-of-day KPI tiles and ranked strategy figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API. Nothing is written there; only what that app already computes for its own Excel export is shown.",
-    outcome: "Settings > Trading dashboard (Master Admin): pick a tab, see its KPI tiles and strategy table, always current, no Excel file to open.",
+    outcome: "Settings > Trading dashboard (Master Admin): the Simulator tab's KPI tiles and strategy table, always current, no Excel file to open. Other tabs can be added on request.",
     fromYou: "Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running.",
   },
   {

@@ -1,39 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
 import { toPublicAdmin } from "@/lib/accounts";
 import { formatTimestamp } from "@/lib/time";
 import { requireAdminPage } from "@/lib/server/auth";
-import {
-  getTradingTabData,
-  isTradingApiConfigured,
-  listTradingTabs,
-  type TradingKpi,
-  type TradingStrategy,
-  type TradingTab,
-} from "@/lib/server/trading-api";
+import { getTradingTabData, isTradingApiConfigured, type TradingKpi, type TradingStrategy, type TradingTab } from "@/lib/server/trading-api";
 
 export const metadata: Metadata = {
   title: "Trading dashboard | Admin | Investment Payout Calculator",
   robots: { index: false, follow: false },
 };
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+/** Only this tab is shown for now; ask to add more or make it switchable when needed. */
+const DEFAULT_TAB_SLUG = "simulator";
 
-export default function TradingDashboardPage({ searchParams }: { searchParams: SearchParams }) {
+export default function TradingDashboardPage() {
   return (
     <Suspense fallback={<AdminLoading />}>
-      <TradingDashboardContent searchParams={searchParams} />
+      <TradingDashboardContent />
     </Suspense>
   );
 }
-
-const chip = (active: boolean) =>
-  `rounded-full border px-3 py-1 text-sm font-semibold ${
-    active ? "border-blue-900 bg-blue-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-  }`;
 
 function money(value: number | null, currency: string): string {
   if (value === null) return "—";
@@ -61,11 +49,11 @@ function whole(value: number | null): string {
  * figures, fetched over its data API (src/lib/server/trading-api.ts). This
  * page shows nothing more than that app already writes into its own Excel
  * export; it places no orders and changes nothing there. Master Admin only.
+ * Shows DEFAULT_TAB_SLUG only for now (no tab picker).
  */
-async function TradingDashboardContent({ searchParams }: { searchParams: SearchParams }) {
+async function TradingDashboardContent() {
   await connection();
   const user = await requireAdminPage("trading.view");
-  const params = await searchParams;
 
   if (!isTradingApiConfigured()) {
     return (
@@ -96,26 +84,7 @@ async function TradingDashboardContent({ searchParams }: { searchParams: SearchP
     );
   }
 
-  const tabsResult = await listTradingTabs();
-  if (!tabsResult.ok) {
-    return (
-      <AdminFrame user={toPublicAdmin(user)}>
-        <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Trading dashboard" }]} />
-        <h1 className="mb-5 text-2xl font-semibold text-slate-900">Trading dashboard</h1>
-        <AdminCard>
-          <p role="alert" className="text-sm font-medium text-red-700">
-            {tabsResult.error}
-          </p>
-        </AdminCard>
-      </AdminFrame>
-    );
-  }
-
-  const tabs = tabsResult.value.tabs;
-  const requested = typeof params.tab === "string" ? params.tab : "";
-  const selected: TradingTab | undefined = tabs.find((t) => t.slug === requested) ?? tabs[0];
-
-  const dataResult = selected ? await getTradingTabData(selected.slug) : null;
+  const dataResult = await getTradingTabData(DEFAULT_TAB_SLUG);
 
   return (
     <AdminFrame user={toPublicAdmin(user)}>
@@ -126,33 +95,17 @@ async function TradingDashboardContent({ searchParams }: { searchParams: SearchP
         export. Nothing here places an order or changes anything there.
       </p>
 
-      {tabs.length === 0 ? (
-        <AdminCard>
-          <p className="mt-6 text-sm text-slate-700">No tabs with trading data yet.</p>
-        </AdminCard>
-      ) : (
-        <>
-          <nav aria-label="Tab" className="mt-5 flex flex-wrap gap-2">
-            {tabs.map((t) => (
-              <Link key={t.slug} href={`/admin/trading?tab=${encodeURIComponent(t.slug)}`} className={chip(t.slug === selected?.slug)}>
-                {t.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="mt-5">
-            {!dataResult ? null : !dataResult.ok ? (
-              <AdminCard>
-                <p role="alert" className="text-sm font-medium text-red-700">
-                  {dataResult.error}
-                </p>
-              </AdminCard>
-            ) : (
-              <TradingTabView data={dataResult.value} />
-            )}
-          </div>
-        </>
-      )}
+      <div className="mt-5">
+        {!dataResult.ok ? (
+          <AdminCard>
+            <p role="alert" className="text-sm font-medium text-red-700">
+              {dataResult.error}
+            </p>
+          </AdminCard>
+        ) : (
+          <TradingTabView data={dataResult.value} />
+        )}
+      </div>
     </AdminFrame>
   );
 }
