@@ -509,9 +509,9 @@ export const ROADMAP: RoadmapItem[] = [
     priority: "later",
     status: "in-progress",
     description:
-      "A read-only page showing end-of-day KPI tiles and ranked strategy figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API. Nothing is written there; only what that app already computes for its own Excel export is shown.",
-    outcome: "Settings > Trading dashboard (Master Admin): the Simulator tab's KPI tiles and strategy table, always current, no Excel file to open. Other tabs can be added on request.",
-    fromYou: "Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running.",
+      "A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there.",
+    outcome: "Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views fill in once that app serves them (the contract and a prompt to build it are in docs/trading-dashboard-api.md).",
+    fromYou: "Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions.",
   },
   {
     id: "audit-export",

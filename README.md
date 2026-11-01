@@ -323,14 +323,31 @@ a lawyer — have it reviewed, and replace its placeholder contact address with 
 ## Trading dashboard (Master Admin, optional)
 
 **Settings > Trading dashboard** (`/admin/trading`) is a read-only view of a separate
-trading app (`tradiersuinew`) that you run on your own machine. It shows that app's
-end-of-day KPI tiles and ranked strategy figures — the same numbers as its own Excel
-export, fetched live over its data API (see that app's `docs/eod-excel.md`). This app only
-ever reads from it: no order is placed, nothing there is changed, and nothing of this
-app's own data (inquiries, investors, rates) is sent to it.
+trading app (`tradiersuinew`) that you run on your own machine, fetched live over its data
+API (see that app's `docs/eod-excel.md`). This app only ever reads from it: no order is
+placed, nothing there is changed, and nothing of this app's own data (inquiries,
+investors, rates) is sent to it.
 
-Only the **Simulator** tab is shown for now (`DEFAULT_TAB_SLUG` in
-`src/app/admin/trading/page.tsx`); ask for more tabs or a picker between them if needed.
+Pick an **account** (Simulator, Tradier_SB Live; the list is `ACCOUNTS` in
+`src/app/admin/trading/page.tsx`) and a **view**:
+
+- **Overview** — that app's end-of-day KPI tiles and ranked strategy figures, the same
+  numbers as its Dashboard and Strategy Stats sheets.
+- **Monthly sheet** — the month sheet of its Excel export (`October 2026`, …): Returns,
+  Capital Reqd, ROI%, Underlying, Profit / Loss Days, then one row per trading day with a
+  column per strategy, TOTAL and CUMULATIVE, shaded by size. Arrows (or the month pills)
+  step to the previous / next month; `?month=YYYY-MM` is in the address, so a month can be
+  bookmarked.
+- **Today** — one row per position that expires, closes or closed today: all its legs,
+  the distance of each short strike from the spot now and at entry (points, %, and the
+  OTM+N ladder step), the current P/L (unrealized while open, realized once closed) and a
+  payoff icon that opens the at-expiration payoff curve. Refreshes itself every 30 seconds
+  while the market is open.
+
+The Monthly sheet and Today views need two additions to that app's data API (a `month`
+section and a `today` route). Until they exist the page says so; the exact contract and
+a ready-to-paste prompt for Claude Code in that repo are in
+[docs/trading-dashboard-api.md](docs/trading-dashboard-api.md).
 
 Needs `TRADING_API_URL` and `TRADING_API_TOKEN` set here (see
 [Environment variables](#environment-variables)), and on the other app: its own

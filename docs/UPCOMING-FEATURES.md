@@ -24,7 +24,7 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Next | Investor portal | Email set up (Gmail settings in Vercel) before reset links can be sent. |
 | 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Next | Security and compliance | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
 | 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions. |
 | 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
 | 11 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
 | 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
@@ -87,7 +87,7 @@ Everything else in the list can be built without your help.
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Email set up (Gmail settings in Vercel) before reset links can be sent. |
 | 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
 | 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions. |
 | 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
 | 11 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
 | 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
@@ -370,20 +370,22 @@ Settings > Email > Payout emails to investors
 
 **Status:** 🔄 In progress · **Priority:** Later · **Area:** Reports and insights
 
-A read-only page showing end-of-day KPI tiles and ranked strategy figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API. Nothing is written there; only what that app already computes for its own Excel export is shown.
+A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there.
 
-**Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running.
+**Needs from you:** Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions.
 
-**Outcome:** Settings > Trading dashboard (Master Admin): the Simulator tab's KPI tiles and strategy table, always current, no Excel file to open. Other tabs can be added on request.
+**Outcome:** Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views fill in once that app serves them (the contract and a prompt to build it are in docs/trading-dashboard-api.md).
 
 **Layout** (a sketch, not a screenshot):
 
 ```text
 Settings > Trading dashboard
 ------------------------------------------------------------------
- Only the Simulator tab is shown (ask to add more, or a picker).
+ Account  [Simulator] [Tradier_SB Live]
+ View     [Overview] [Monthly sheet] [Today]
 
- Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+ Overview
+ Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
 
  NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
  $12,340     $410        $3,120       58.2%            1.46
@@ -395,11 +397,33 @@ Settings > Trading dashboard
    1     Cooper         $4,820   9.6%   61%       1.8            ...
    2     Warren         $3,110   7.1%   55%       1.5            ...
 
+ Monthly sheet                       ‹  October 2026  ›
+   Returns       $0   $137,406   $23,712 ...  TOTAL $205,498
+   Capital Reqd       $210,000    $30,000 ...        $595,000
+   ROI%                 65.43%    79.04% ...          34.54%
+   Profit Days            22         17   ...             17
+   DATE             EOM  Michael   Wynn   ...  TOTAL  CUMULATIVE
+   Thu 01 Oct 2026   $0   $6,032  $2,352  ...  $15,547   $15,547
+   Fri 02 Oct 2026   $0   $5,643  $2,480  ...  $18,451   $33,998
+   (cells shaded green / red by size, like the Excel sheet)
+
+ Today                 Market open · SPX 6,781.20 · refreshes every 30 s
+   Strategy   Today's position   Distance now        Distance at entry   Current P/L   Payoff
+   Cooper     S 6850 C  B 6875 C  P 73.5 (1.08%) OTM+14  P 81.0 (1.19%) OTM+16  +$410       [graph]
+   (open)     S 6700 P  B 6675 P  C 68.8 (1.01%) OTM+13  C 61.3 (0.90%) OTM+12  of max $1,200
+   Warren     ...                                                        -$230 (realized)
+   (closed, profit target)
+   [graph] opens the at-expiration payoff curve (strikes, breakevens,
+   spot now, max profit / loss)
+
  Not set up yet:
    "Add TRADING_API_URL and TRADING_API_TOKEN in Vercel. ..."
  Unreachable:
    "Could not reach the trading app. It may be turned off,
     asleep, or the tunnel may be down."
+ Other app not updated yet (Monthly sheet / Today):
+   "The trading app does not serve its month sheets yet. ...
+    see docs/trading-dashboard-api.md"
 ```
 
 [Back to the table](#summary)

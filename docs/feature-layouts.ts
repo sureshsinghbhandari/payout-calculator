@@ -262,9 +262,11 @@ Investors
 
   "trading-dashboard": `Settings > Trading dashboard
 ------------------------------------------------------------------
- Only the Simulator tab is shown (ask to add more, or a picker).
+ Account  [Simulator] [Tradier_SB Live]
+ View     [Overview] [Monthly sheet] [Today]
 
- Fixed-Term Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+ Overview
+ Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
 
  NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
  $12,340     $410        $3,120       58.2%            1.46
@@ -276,11 +278,33 @@ Investors
    1     Cooper         $4,820   9.6%   61%       1.8            ...
    2     Warren         $3,110   7.1%   55%       1.5            ...
 
+ Monthly sheet                       ‹  October 2026  ›
+   Returns       $0   $137,406   $23,712 ...  TOTAL $205,498
+   Capital Reqd       $210,000    $30,000 ...        $595,000
+   ROI%                 65.43%    79.04% ...          34.54%
+   Profit Days            22         17   ...             17
+   DATE             EOM  Michael   Wynn   ...  TOTAL  CUMULATIVE
+   Thu 01 Oct 2026   $0   $6,032  $2,352  ...  $15,547   $15,547
+   Fri 02 Oct 2026   $0   $5,643  $2,480  ...  $18,451   $33,998
+   (cells shaded green / red by size, like the Excel sheet)
+
+ Today                 Market open · SPX 6,781.20 · refreshes every 30 s
+   Strategy   Today's position   Distance now        Distance at entry   Current P/L   Payoff
+   Cooper     S 6850 C  B 6875 C  P 73.5 (1.08%) OTM+14  P 81.0 (1.19%) OTM+16  +$410       [graph]
+   (open)     S 6700 P  B 6675 P  C 68.8 (1.01%) OTM+13  C 61.3 (0.90%) OTM+12  of max $1,200
+   Warren     ...                                                        -$230 (realized)
+   (closed, profit target)
+   [graph] opens the at-expiration payoff curve (strikes, breakevens,
+   spot now, max profit / loss)
+
  Not set up yet:
    "Add TRADING_API_URL and TRADING_API_TOKEN in Vercel. ..."
  Unreachable:
    "Could not reach the trading app. It may be turned off,
-    asleep, or the tunnel may be down."`,
+    asleep, or the tunnel may be down."
+ Other app not updated yet (Monthly sheet / Today):
+   "The trading app does not serve its month sheets yet. ...
+    see docs/trading-dashboard-api.md"`,
 
   "dashboard": `Dashboard
 ------------------------------------------------------------------
