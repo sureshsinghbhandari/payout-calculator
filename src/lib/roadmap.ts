@@ -491,9 +491,9 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Automated tests and checks",
     category: "security",
     priority: "next",
-    status: "planned",
-    fromYou: "Your go-ahead to add and run tests.",
+    status: "done",
     description: "Tests for sign-in, roles, conversion and the portal, run automatically before each deployment.",
+    outcome: "147 -> 274 tests: roles and every permission, admin and investor sign-in (incl. two-step), inquiry-to-investor conversion and renewals, and the portal's own actions (password change, statements, contact/bank/privacy requests). Real store and auth logic runs against a fake in-memory Blob store, not hand-stubbed shortcuts. \"Run automatically before each deployment\" still needs CI wiring (e.g. a GitHub Actions check) — not set up yet.",
   },
   {
     id: "sign-in-alerts",
@@ -607,8 +607,8 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Accessibility review",
     category: "platform",
     priority: "later",
-    status: "planned",
-    fromYou: "Your go-ahead for browser checks.",
+    status: "in-progress",
     description: "A full check against WCAG 2.2 AA with screen readers and keyboard-only use.",
+    outcome: "A first pass found the app in solid shape: labelled and grouped form fields, visible focus, a properly labelled and focus-trapped inquiry dialog (native <dialog>, Escape closes it and returns focus), status shown with text as well as color, scoped table headers, icon-only buttons with aria-label, and the two-step code input's one-time-code/numeric hints. Covered live: the calculator, the inquiry form, /privacy, and the admin and portal sign-in pages. Covered by source review: the shared admin components (every signed-in admin/investor page is built from these). Not yet done: a page-by-page pass of every signed-in screen, real screen-reader testing (NVDA/VoiceOver/JAWS), full colour-contrast and touch-target-size measurement, and the newest WCAG 2.2 criteria (consistent help, accessible authentication, dragging).",
   },
 ];

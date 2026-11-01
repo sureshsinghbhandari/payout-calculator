@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**33 done · 10 in progress · 11 pending** · 21 [waiting on you](#waiting-on-you)
+**34 done · 11 in progress · 9 pending** · 19 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -26,9 +26,9 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
 | 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. Paste the prompt in docs/trading-dashboard-api.md into Claude Code in tradiersuinew so it serves the month sheet and today's positions. |
 | 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
-| 11 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
-| 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
-| 13 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance | Your go-ahead to add and run tests. |
+| 11 | [Accessibility review](#accessibility-review) | 🔄 In progress | Later | Platform and experience | — |
+| 12 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 13 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
 | 14 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience | The domain (see Company domain) and access to its DNS settings. |
 | 15 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
 | 16 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
@@ -36,30 +36,30 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
 | 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
 | 20 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
-| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
-| 22 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
-| 23 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
-| 24 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 27 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 28 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 29 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 30 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 31 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 32 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 33 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 34 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 35 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 36 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 37 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 39 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 40 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 41 | [Investor documents and signing (BoldSign)](#investor-signing) | ✅ Done | Next | Investor portal | — |
-| 42 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 43 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 44 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 21 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
+| 22 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
+| 23 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 24 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
+| 25 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 27 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 28 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 29 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 30 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 31 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 32 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 33 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 34 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 35 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 36 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 37 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 39 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 40 | [Investor documents and signing (BoldSign)](#investor-signing) | ✅ Done | Next | Investor portal | — |
+| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 44 | [Automated tests and checks](#automated-tests) | ✅ Done | Next | Security and compliance | — |
 | 45 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
 | 46 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
 | 47 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
@@ -92,15 +92,13 @@ Everything else in the list can be built without your help.
 | 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
 | 11 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
 | 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
-| 13 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Your go-ahead to add and run tests. |
-| 14 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
-| 15 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
-| 16 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
-| 17 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
-| 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
-| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 20 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
-| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
+| 13 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
+| 14 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
+| 15 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
+| 16 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
+| 17 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
+| 18 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 19 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
 
 <a id="app-map"></a>
 
@@ -443,6 +441,18 @@ Privacy-friendly visit counts for the calculator page (Vercel Web Analytics has 
 
 [Back to the table](#summary)
 
+<a id="accessibility-review"></a>
+
+### Accessibility review
+
+**Status:** 🔄 In progress · **Priority:** Later · **Area:** Platform and experience
+
+A full check against WCAG 2.2 AA with screen readers and keyboard-only use.
+
+**Outcome:** A first pass found the app in solid shape: labelled and grouped form fields, visible focus, a properly labelled and focus-trapped inquiry dialog (native <dialog>, Escape closes it and returns focus), status shown with text as well as color, scoped table headers, icon-only buttons with aria-label, and the two-step code input's one-time-code/numeric hints. Covered live: the calculator, the inquiry form, /privacy, and the admin and portal sign-in pages. Covered by source review: the shared admin components (every signed-in admin/investor page is built from these). Not yet done: a page-by-page pass of every signed-in screen, real screen-reader testing (NVDA/VoiceOver/JAWS), full colour-contrast and touch-target-size measurement, and the newest WCAG 2.2 criteria (consistent help, accessible authentication, dragging).
+
+[Back to the table](#summary)
+
 ## Pending
 
 <a id="company-domain"></a>
@@ -473,18 +483,6 @@ Buy a domain (about $11 a year) for the website and email, verify it in Resend, 
 The temporary Delete permanently button for inquiries is removed once the app is ready.
 
 **Needs from you:** Your go-ahead at go-live, after the test data is cleaned up.
-
-[Back to the table](#summary)
-
-<a id="automated-tests"></a>
-
-### Automated tests and checks
-
-**Status:** ⏳ Pending · **Priority:** Next · **Area:** Security and compliance
-
-Tests for sign-in, roles, conversion and the portal, run automatically before each deployment.
-
-**Needs from you:** Your go-ahead to add and run tests.
 
 [Back to the table](#summary)
 
@@ -586,18 +584,6 @@ Send the investment agreement for electronic signature and store the signed copy
 Show the calculator and portal in other languages, with local number and date formats.
 
 **Needs from you:** Which languages, and someone to check the translations.
-
-[Back to the table](#summary)
-
-<a id="accessibility-review"></a>
-
-### Accessibility review
-
-**Status:** ⏳ Pending · **Priority:** Later · **Area:** Platform and experience
-
-A full check against WCAG 2.2 AA with screen readers and keyboard-only use.
-
-**Needs from you:** Your go-ahead for browser checks.
 
 [Back to the table](#summary)
 
@@ -1228,6 +1214,18 @@ Sign-in, second step                     Setting it up (My account)
  Optional for every role,             3. Save your 10 recovery codes
  including Master Admins.             [ Copy ] [ Download ]  (shown once)
 ```
+
+[Back to the table](#summary)
+
+<a id="automated-tests"></a>
+
+### Automated tests and checks
+
+**Status:** ✅ Done · **Priority:** Next · **Area:** Security and compliance
+
+Tests for sign-in, roles, conversion and the portal, run automatically before each deployment.
+
+**Outcome:** 147 -> 274 tests: roles and every permission, admin and investor sign-in (incl. two-step), inquiry-to-investor conversion and renewals, and the portal's own actions (password change, statements, contact/bank/privacy requests). Real store and auth logic runs against a fake in-memory Blob store, not hand-stubbed shortcuts. "Run automatically before each deployment" still needs CI wiring (e.g. a GitHub Actions check) — not set up yet.
 
 [Back to the table](#summary)
 

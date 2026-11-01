@@ -621,6 +621,22 @@ npm test            # Vitest tests
 npm run build       # Production build
 ```
 
+`npm test` covers the calculation engine and date/holiday logic, the admin and investor
+sign-in flow (including two-step sign-in), every role's permissions, inquiry-to-investor
+conversion and renewals, and the portal's own actions (password change, statements,
+contact/bank/privacy requests). The server-side tests run real store and auth logic
+against a fake in-memory Blob store (`vi.mock("@vercel/blob", ...)`, see
+`src/lib/server/rates-store.test.ts` and `src/lib/server/auth.test.ts`), not hand-stubbed
+shortcuts. These checks are not yet wired to run automatically before a deployment (no CI
+workflow yet).
+
+**Accessibility:** a first WCAG 2.2 AA pass (the calculator, the inquiry form, `/privacy`,
+and the admin and portal sign-in pages, live; the shared admin components by source
+review) found no defects — labelled and grouped fields, visible focus, a properly
+labelled and focus-trapped inquiry dialog, status shown with text as well as colour, and
+scoped table headers. Not yet done: every signed-in page, real screen-reader testing, and
+colour-contrast/touch-target measurement.
+
 ## Changing defaults
 
 `src/lib/config.ts` holds the starting rates, the investment amount options, the default
