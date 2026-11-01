@@ -163,7 +163,7 @@ describe("disclaimer", () => {
       "This calculator is not a guarantee of investment performance or a substitute for professional financial advice.",
     );
     expect(DISCLAIMER).toContain(
-      "Earnings are assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days; public holidays are not taken into account.",
+      "Earnings are assumed to start on the next business day after the planned investment date, counting Monday to Friday as business days and skipping US federal holidays.",
     );
   });
 });

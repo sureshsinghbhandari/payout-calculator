@@ -2,6 +2,7 @@
  * Calendar-date helpers. Dates are plain "YYYY-MM-DD" strings and all
  * arithmetic is done in UTC, so results never shift with the visitor's time zone.
  */
+import { isUSFederalHoliday } from "./holidays";
 
 function pad(value: number, width: number): string {
   return String(value).padStart(width, "0");
@@ -56,15 +57,16 @@ export function addMonths(iso: string, months: number): string {
   return makeIsoDate(year, month + 1, Math.min(d, lastDay));
 }
 
-/** True for Monday to Friday. Holidays are not taken into account. */
+/** True for Monday to Friday, excluding US federal holidays. */
 export function isBusinessDay(iso: string): boolean {
   const weekday = dayOfWeek(iso);
-  return weekday !== 0 && weekday !== 6;
+  return weekday !== 0 && weekday !== 6 && !isUSFederalHoliday(iso);
 }
 
 /**
  * The date `count` business days after `iso`, where business days are Monday
- * to Friday (holidays are ignored). With count = 1 this is the next weekday.
+ * to Friday, excluding US federal holidays. With count = 1 this is the next
+ * such day.
  */
 export function addBusinessDays(iso: string, count: number): string {
   let date = iso;

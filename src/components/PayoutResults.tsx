@@ -263,10 +263,10 @@ export function PayoutResults({ scenarios, isStale, ref }: Props) {
         <p>
           <span className="font-semibold text-slate-700">How dates are set:</span> your planned investment date is{" "}
           {formatIsoDateLong(inputs.investmentDate)}. Earnings start {START_DELAY} after that,{" "}
-          {formatIsoDateLong(startDate)}, counting Monday to Friday as business days (public holidays
-          are not taken into account). Payouts then fall every {MONTHS_LABEL[periodsPerYear]}, counted
+          {formatIsoDateLong(startDate)}, counting Monday to Friday as business days and skipping US
+          federal holidays. Payouts then fall every {MONTHS_LABEL[periodsPerYear]}, counted
           from the earnings start date. When that day does not exist in a month, the payout falls on
-          the last day of that month. Payout dates are not moved for weekends.
+          the last day of that month. Payout dates are not moved for weekends or holidays.
         </p>
         <p>
           <span className="font-semibold text-slate-700">How amounts are calculated:</span> simple
