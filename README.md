@@ -321,6 +321,13 @@ set here, the page explains what is missing instead of guessing. Because it depe
 your own machine and tunnel being on, the page also shows a plain message (not a crash)
 when that app cannot be reached, or when the token is rejected.
 
+## Visitor analytics
+
+Vercel Web Analytics and Speed Insights (`@vercel/analytics`, `@vercel/speed-insights`)
+are wired into every page. They collect no cookies and report nothing until **Web
+Analytics** (and, if wanted, **Speed Insights**) is turned on for this project in the
+Vercel dashboard — no code change needed to do that.
+
 ## Upcoming features
 
 **Settings > Upcoming features** (`/admin/settings/upcoming`, Master Admin) lists planned

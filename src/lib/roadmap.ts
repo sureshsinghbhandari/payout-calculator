@@ -526,9 +526,10 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Visitor analytics",
     category: "reporting",
     priority: "later",
-    status: "planned",
-    fromYou: "Turn on Web Analytics in the Vercel project.",
+    status: "in-progress",
+    fromYou: "Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard.",
     description: "Privacy-friendly visit counts for the calculator page (Vercel Web Analytics has a free tier).",
+    outcome: "@vercel/analytics and @vercel/speed-insights are wired into every page; they report nothing until turned on for this project in Vercel (no code change needed to do that).",
   },
 
   // ---------- Platform and experience ----------

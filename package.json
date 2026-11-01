@@ -14,7 +14,9 @@
     "docs:features": "tsx docs/build-features.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.2",
+    "@vercel/speed-insights": "^2.0.0",
     "exceljs": "^4.4.0",
     "imapflow": "^2.9.1",
     "next": "16.4.3",
