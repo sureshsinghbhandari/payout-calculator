@@ -27,8 +27,8 @@ export const DEFAULT_FREQUENCY: PayoutFrequency = "yearly";
 export const DEFAULT_PAYOUT_TYPE: PayoutType = "interest-only";
 
 /**
- * Earnings start this many business days (Monday to Friday) after the
- * investment date. Holidays are not taken into account.
+ * Earnings start this many business days (Monday to Friday, excluding US
+ * federal holidays) after the investment date.
  */
 export const INTEREST_START_BUSINESS_DAYS = 1;
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addBusinessDays, addDays, dayOfWeek, isBusinessDay } from "./dates";
 import { calculatePayoutSchedule, interestStartDate, validateInvestmentDate } from "./payout";
 
-describe("business days (Monday to Friday, holidays ignored)", () => {
+describe("business days (Monday to Friday, US federal holidays skipped)", () => {
   it("knows weekdays from weekends", () => {
     expect(dayOfWeek("2026-10-25")).toBe(0); // Sunday
     expect(isBusinessDay("2026-10-24")).toBe(false); // Saturday
@@ -17,8 +17,8 @@ describe("business days (Monday to Friday, holidays ignored)", () => {
     ["2026-10-23", "2026-10-26", "Friday -> Monday"],
     ["2026-10-24", "2026-10-26", "Saturday -> Monday"],
     ["2026-10-25", "2026-10-26", "Sunday -> Monday"],
-    ["2026-12-31", "2027-01-01", "across a year end, holiday ignored"],
-    ["2026-12-24", "2026-12-25", "Christmas Day still counts"],
+    ["2026-12-31", "2027-01-04", "across a year end, New Year's Day (Fri) and the weekend are skipped"],
+    ["2026-12-24", "2026-12-28", "Christmas Day (Fri) and the weekend are skipped"],
     ["2026-07-03", "2026-07-06", "Friday before July 4 -> Monday"],
     ["2028-02-28", "2028-02-29", "leap day"],
   ])("%s -> %s (%s)", (from, to) => {
@@ -75,17 +75,18 @@ describe("schedule dates", () => {
   });
 
   it("does not move payout dates that land on a weekend", () => {
-    // Earnings start Friday Dec 25, 2026; the second payout, Dec 25, 2027, is a Saturday.
+    // Nov 26, 2026 is Thanksgiving, so earnings start the next business day,
+    // Friday Nov 27, 2026; the second payout, Nov 27, 2027, is a Saturday.
     const s = calculatePayoutSchedule({
       principal: 25_000,
       annualRatePercent: 8,
       lockInYears: 1,
       payoutType: "interest-only",
       frequency: "half-yearly",
-      investmentDate: "2026-12-24", // Thursday -> earnings start Friday Dec 25, 2026
+      investmentDate: "2026-11-25", // Wednesday before Thanksgiving
     });
-    expect(s.startDate).toBe("2026-12-25");
-    expect(s.rows.map((r) => r.payoutDate)).toEqual(["2027-06-25", "2027-12-25"]);
-    expect(isBusinessDay("2027-12-25")).toBe(false); // Saturday, left as is
+    expect(s.startDate).toBe("2026-11-27");
+    expect(s.rows.map((r) => r.payoutDate)).toEqual(["2027-05-27", "2027-11-27"]);
+    expect(isBusinessDay("2027-11-27")).toBe(false); // Saturday, left as is
   });
 });

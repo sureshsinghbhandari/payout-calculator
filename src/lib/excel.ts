@@ -202,7 +202,7 @@ function addParagraph(ws: Worksheet, text: string, columns: number, bold?: strin
 
 function datesNote(schedule: PublicSchedule): string {
   const months = 12 / schedule.periodsPerYear;
-  return `Payout dates: earnings start ${interestStartDelayText()} after the planned investment date, counting Monday to Friday as business days (public holidays are not taken into account). Payouts then fall every ${months} months, counted from the earnings start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends.`;
+  return `Payout dates: earnings start ${interestStartDelayText()} after the planned investment date, counting Monday to Friday as business days and skipping US federal holidays. Payouts then fall every ${months} months, counted from the earnings start date. When that day does not exist in a month, the payout falls on the last day of that month. Payout dates are not moved for weekends or holidays.`;
 }
 
 const SCHEDULE_HEADERS = [

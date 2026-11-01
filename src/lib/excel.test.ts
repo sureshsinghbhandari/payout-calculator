@@ -296,7 +296,7 @@ describe("Excel workbook", () => {
     }
     expect(checked).toBeGreaterThanOrEqual(10); // notes and disclaimers on every sheet
     const dates = sheetText(workbook.getWorksheet(SELECTION_SHEET_NAME)!);
-    expect(dates).toContain("Payout dates are not moved for weekends.");
+    expect(dates).toContain("Payout dates are not moved for weekends or holidays.");
   });
 
   it("estimates paragraph heights generously", () => {
