@@ -5,10 +5,18 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { BankDetailsSummary } from "@/components/BankDetailsSummary";
 import { ChangeRequestHistory } from "@/components/ChangeRequestHistory";
-import { BankChangeForm, ContactChangeForm, WithdrawRequestButton } from "@/components/investor/DetailsForms";
+import {
+  BankChangeForm,
+  ContactChangeForm,
+  PrivacyRequestForm,
+  WithdrawPrivacyRequestButton,
+  WithdrawRequestButton,
+} from "@/components/investor/DetailsForms";
 import { InvestorCard, InvestorFrame, InvestorLoading } from "@/components/investor/InvestorFrame";
+import { PrivacyRequestHistory } from "@/components/PrivacyRequestHistory";
 import type { Investor } from "@/lib/accounts";
 import { maskedAccountNumber, type ChangeRequestView } from "@/lib/profile-requests";
+import { sortPrivacyRequests, type PrivacyRequest } from "@/lib/privacy-requests";
 import { getCurrentInvestor } from "@/lib/server/auth";
 import { bankDetailsView, changeRequestViews } from "@/lib/server/change-requests";
 
@@ -63,6 +71,11 @@ async function DetailsContent({ searchParams }: { searchParams: SearchParams }) 
   const pendingBank = requests.find((r) => r.kind === "bank" && r.status === "pending");
   const past = requests.filter((r) => r.status !== "pending");
 
+  const privacyRequests = sortPrivacyRequests(investor.privacyRequests);
+  const pendingCopy = privacyRequests.find((r) => r.kind === "copy" && r.status === "pending");
+  const pendingDeletion = privacyRequests.find((r) => r.kind === "deletion" && r.status === "pending");
+  const pastPrivacy = privacyRequests.filter((r) => r.status !== "pending");
+
   return (
     <InvestorFrame signedIn>
       <div className="mx-auto max-w-3xl">
@@ -86,7 +99,12 @@ async function DetailsContent({ searchParams }: { searchParams: SearchParams }) 
             Thank you. We will review your new bank details before any payout is made to them.
           </p>
         )}
-        {params.withdrawn === "1" && (
+        {(params.sent === "privacy-copy" || params.sent === "privacy-deletion") && (
+          <p role="status" className={notice}>
+            Thank you. We will review your request soon.
+          </p>
+        )}
+        {(params.withdrawn === "1" || params.withdrawn === "privacy") && (
           <p role="status" className={notice}>
             Your request has been withdrawn.
           </p>
@@ -161,6 +179,40 @@ async function DetailsContent({ searchParams }: { searchParams: SearchParams }) 
               </InvestorCard>
             </section>
           )}
+
+          <section aria-labelledby="privacy-heading">
+            <InvestorCard>
+              <h2 id="privacy-heading" className="text-lg font-semibold text-slate-900">
+                Privacy
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Read our{" "}
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  Privacy Notice
+                </Link>{" "}
+                for how we handle your information, or ask us for a copy of it, or to delete your account. We review
+                every request by hand — there is no automatic export or deletion.
+              </p>
+
+              {pendingCopy ? (
+                <PrivacyPendingNotice request={pendingCopy} withdrawLabel="Withdraw request for a copy of your data" />
+              ) : (
+                <PrivacyRequestForm kind="copy" />
+              )}
+              {pendingDeletion ? (
+                <PrivacyPendingNotice request={pendingDeletion} withdrawLabel="Withdraw request to delete your account" />
+              ) : (
+                <PrivacyRequestForm kind="deletion" />
+              )}
+
+              {pastPrivacy.length > 0 && (
+                <div className="mt-5 border-t border-slate-200 pt-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Earlier requests</h3>
+                  <PrivacyRequestHistory requests={pastPrivacy} audience="investor" />
+                </div>
+              )}
+            </InvestorCard>
+          </section>
         </div>
       </div>
     </InvestorFrame>
@@ -192,6 +244,21 @@ function PendingNotice({
         <p className="mt-0.5 break-words">{children}</p>
       </div>
       <WithdrawRequestButton requestId={request.id} label={withdrawLabel} />
+    </div>
+  );
+}
+
+function PrivacyPendingNotice({ request, withdrawLabel }: { request: PrivacyRequest; withdrawLabel: string }) {
+  return (
+    <div className="mt-5 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-sm text-amber-900">
+        <p className="font-semibold">
+          {request.kind === "copy" ? "Request for a copy of your data" : "Request to delete your account"} waiting for
+          review
+        </p>
+        {request.note && <p className="mt-0.5 break-words">Note: {request.note}</p>}
+      </div>
+      <WithdrawPrivacyRequestButton requestId={request.id} label={withdrawLabel} />
     </div>
   );
 }

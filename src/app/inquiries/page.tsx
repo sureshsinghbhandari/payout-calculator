@@ -50,7 +50,16 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-4 py-6 text-xs leading-relaxed text-slate-500 sm:px-6">
           Illustrative calculator only. This is not an offer to invest. Your selections are sent
           to our server only to calculate the schedule and are not stored. If you send an inquiry,
-          the details you enter are stored so our team can respond.
+          the details you enter are stored so our team can respond. See our{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-slate-600 underline underline-offset-2 hover:text-slate-900"
+          >
+            Privacy Notice
+          </Link>{" "}
+          for details.
         </div>
       </footer>
     </div>

@@ -5,6 +5,7 @@
  * pass `toPublicAdmin` / `toPublicInvestor` results to client components.
  */
 import type { PayoutFrequency, PayoutType } from "./payout";
+import type { PrivacyRequest } from "./privacy-requests";
 import type { ChangeRequest, StoredBankDetails } from "./profile-requests";
 
 export type AdminRole = "master" | "sales";
@@ -34,6 +35,8 @@ export type Permission =
   | "audit.view"
   | "roadmap.view"
   | "trading.view"
+  // Reviewing investors' requests for a copy of their data or account deletion.
+  | "privacy.manage"
   // TEMPORARY: permanent deletion of inquiries, to be removed before go-live.
   | "inquiries.purge";
 
@@ -58,6 +61,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
     "audit.view",
     "roadmap.view",
     "trading.view",
+    "privacy.manage",
     "inquiries.purge",
   ],
   // Sales admins only work with inquiries: view them, add notes, email the customer, mark them contacted,
@@ -174,6 +178,8 @@ export interface Investor extends Credentials {
   bankDetails: StoredBankDetails | null;
   /** Changes the investor asked for in the portal: pending ones and recent decided ones. */
   changeRequests: ChangeRequest[];
+  /** Requests for a copy of their data or account deletion: pending ones and recent decided ones. */
+  privacyRequests: PrivacyRequest[];
 }
 
 /**

@@ -48,6 +48,7 @@ function formValues(formData: FormData): Record<string, string> {
     "howFound",
     "webinarDetails",
     "referrerContact",
+    "privacyConsent",
     "website",
     "principal",
     "lockInYears",
@@ -72,6 +73,7 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
     howFound: raw.howFound,
     webinarDetails: raw.webinarDetails,
     referrerContact: raw.referrerContact,
+    privacyConsent: raw.privacyConsent,
   };
 
   let products: ProductSettings;
@@ -123,6 +125,8 @@ export async function submitInquiryAction(_prev: InquiryState, formData: FormDat
         totalPaidCents: selected.totals.payoutCents,
       },
       source: parsed.source,
+      // Validation above requires the checkbox, so this is always true for a new inquiry.
+      consent: { agreed: true, at: new Date(now).toISOString() },
     };
     await saveInquiry(inquiry);
     const via = inquiry.source === DEFAULT_LEAD_SOURCE ? "" : ` (source: ${inquiry.source})`;

@@ -4,6 +4,11 @@ import { redirect } from "next/navigation";
 import { investorActor } from "@/lib/audit";
 import type { Investor } from "@/lib/accounts";
 import {
+  isPrivacyRequestKind,
+  parsePrivacyNote,
+  type PrivacyRequestKind,
+} from "@/lib/privacy-requests";
+import {
   accountLast4,
   parseBankDetails,
   parseContactChange,
@@ -13,8 +18,10 @@ import {
 import {
   AccountError,
   addChangeRequest,
+  addPrivacyRequest,
   isAccountStorageConfigured,
   withdrawChangeRequest,
+  withdrawPrivacyRequest,
 } from "@/lib/server/accounts-store";
 import { recordAudit } from "@/lib/server/audit-store";
 import { getCurrentInvestor } from "@/lib/server/auth";
@@ -170,4 +177,88 @@ export async function withdrawChangeRequestAction(_prev: WithdrawState, formData
     return { status: "error", message: "The request could not be withdrawn. Please try again." };
   }
   redirect(`${DETAILS}?withdrawn=1`);
+}
+
+/*
+ * Privacy requests: ask for a copy of your data, or for your account to be
+ * deleted. There is no automated export or deletion — a Master Admin handles
+ * each request manually, then marks it fulfilled or declined (see
+ * src/app/admin/privacy-requests).
+ */
+
+export interface PrivacyRequestState {
+  attempt?: number;
+  status?: "error";
+  message?: string;
+  fieldError?: string;
+  note?: string;
+}
+
+function privacyKindSummary(kind: PrivacyRequestKind): string {
+  return kind === "deletion" ? "their account to be deleted" : "a copy of their data";
+}
+
+export async function requestPrivacyAction(
+  prev: PrivacyRequestState,
+  formData: FormData,
+): Promise<PrivacyRequestState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const investor = await signedInInvestor();
+  if (!investor) return { attempt, status: "error", message: SESSION_ENDED };
+
+  const kind = formData.get("kind");
+  if (!isPrivacyRequestKind(kind)) {
+    return { attempt, status: "error", message: "This request could not be found. Reload the page." };
+  }
+  const noteRaw = formData.get("note");
+  const note = typeof noteRaw === "string" ? noteRaw.slice(0, 2000) : "";
+  const parsedNote = parsePrivacyNote(note);
+  if (!parsedNote.ok) {
+    return { attempt, status: "error", message: "Check the note.", fieldError: parsedNote.error, note };
+  }
+  if (!isAccountStorageConfigured()) {
+    return { attempt, status: "error", message: "This is not available right now. Please contact us.", note };
+  }
+
+  try {
+    await addPrivacyRequest(investor.id, { kind, note: parsedNote.value });
+  } catch (error) {
+    if (error instanceof AccountError) return { attempt, status: "error", message: error.message, note };
+    console.error("Saving a privacy request failed", error);
+    return { attempt, status: "error", message: "Your request could not be sent. Please try again.", note };
+  }
+
+  recordAudit({
+    actor: investorActor(investor),
+    category: "privacy",
+    action: `investor.privacy_${kind}_requested`,
+    summary: `Asked for ${privacyKindSummary(kind)}${parsedNote.value ? ` (note: ${parsedNote.value})` : ""}`,
+    target: target(investor),
+  });
+  redirect(`${DETAILS}?sent=privacy-${kind}`);
+}
+
+/** Withdraws one of the investor's own pending privacy requests. */
+export async function withdrawPrivacyRequestAction(_prev: WithdrawState, formData: FormData): Promise<WithdrawState> {
+  const investor = await signedInInvestor();
+  if (!investor) return { status: "error", message: SESSION_ENDED };
+  const requestId = formData.get("requestId");
+  const own = typeof requestId === "string" ? investor.privacyRequests.find((r) => r.id === requestId) : undefined;
+  if (!own) return { status: "error", message: "This request could not be found. Reload the page." };
+
+  try {
+    const { request } = await withdrawPrivacyRequest(investor.id, own.id);
+    recordAudit({
+      actor: investorActor(investor),
+      category: "privacy",
+      action: "investor.privacy_request_withdrawn",
+      summary: `Withdrew their request for ${privacyKindSummary(request.kind)}`,
+      target: target(investor),
+    });
+  } catch (error) {
+    if (error instanceof AccountError) return { status: "error", message: error.message };
+    console.error("Withdrawing a privacy request failed", error);
+    return { status: "error", message: "The request could not be withdrawn. Please try again." };
+  }
+  redirect(`${DETAILS}?withdrawn=privacy`);
 }
