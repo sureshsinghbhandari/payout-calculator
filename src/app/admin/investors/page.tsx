@@ -7,6 +7,7 @@ import { investorLoginState, isoDay, LOGIN_STATE_BADGES } from "@/components/adm
 import { textLink } from "@/components/admin/investors/ui";
 import { can, INVESTOR_SEARCH_MAX, matchesInvestorSearch, toPublicAdmin, type Investor } from "@/lib/accounts";
 import { formatDollars, formatIsoDate } from "@/lib/format";
+import { pendingPrivacyCount } from "@/lib/privacy-requests";
 import { isAccountStorageConfigured, listInvestors } from "@/lib/server/accounts-store";
 import { requireAdminPage } from "@/lib/server/auth";
 import { pendingCount } from "@/lib/server/change-requests";
@@ -49,6 +50,7 @@ async function InvestorsContent({ searchParams }: { searchParams: SearchParams }
     .filter((investor) => matchesInvestorSearch(investor, query))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   const pending = pendingCount(investors ?? []);
+  const privacyPending = pendingPrivacyCount(investors ?? []);
 
   return (
     <AdminFrame user={toPublicAdmin(admin)}>
@@ -74,6 +76,16 @@ async function InvestorsContent({ searchParams }: { searchParams: SearchParams }
               </span>
             )}
           </Link>
+          {can(admin.role, "privacy.manage") && (
+            <Link href="/admin/privacy-requests" className={textLink}>
+              Privacy requests
+              {privacyPending > 0 && (
+                <span className="ml-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 no-underline">
+                  {privacyPending} pending
+                </span>
+              )}
+            </Link>
+          )}
           {can(admin.role, "payouts.manage") && (
             <Link href="/admin/payouts" className={textLink}>
               Payout calendar

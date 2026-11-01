@@ -17,6 +17,12 @@ import {
 } from "../accounts";
 import type { PayoutFrequency, PayoutType } from "../payout";
 import {
+  PRIVACY_HISTORY_KEEP,
+  type PrivacyRequest,
+  type PrivacyRequestKind,
+  type PrivacyRequestStatus,
+} from "../privacy-requests";
+import {
   CHANGE_HISTORY_KEEP,
   type ChangeRequest,
   type ChangeRequestKind,
@@ -38,6 +44,7 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *     createInvestor, updateInvestor, setInvestorPayoutEmails, setInvestorPassword, issueInvestorSetupToken
  *   Investments: addInvestment, setPayoutPayment, removePayoutPayment
  *   Change requests: addChangeRequest, withdrawChangeRequest, decideChangeRequest
+ *   Privacy requests: addPrivacyRequest, withdrawPrivacyRequest, decidePrivacyRequest
  *   Setup links: findAccountBySetupToken
  *   Two-step sign-in (admins and investors): setTwoStepPending, enableTwoStep,
  *     disableTwoStep, markTotpStepUsed, spendRecoveryCode
@@ -255,6 +262,37 @@ function parseChangeRequests(list: unknown): ChangeRequest[] {
   });
 }
 
+const PRIVACY_KINDS: PrivacyRequestKind[] = ["copy", "deletion"];
+const PRIVACY_STATUSES: PrivacyRequestStatus[] = ["pending", "fulfilled", "declined", "withdrawn"];
+
+/** Keeps the well-formed privacy requests. */
+function parsePrivacyRequests(list: unknown): PrivacyRequest[] {
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((raw): PrivacyRequest[] => {
+    const d = (raw ?? {}) as Record<string, unknown>;
+    const id = str(d.id);
+    const kind = str(d.kind) as PrivacyRequestKind | null;
+    const status = str(d.status) as PrivacyRequestStatus | null;
+    const requestedAt = str(d.requestedAt);
+    if (!id || !kind || !PRIVACY_KINDS.includes(kind) || !status || !PRIVACY_STATUSES.includes(status) || !requestedAt) {
+      return [];
+    }
+    return [
+      {
+        id,
+        kind,
+        status,
+        requestedAt,
+        note: str(d.note) ?? "",
+        decidedAt: str(d.decidedAt),
+        decidedBy: str(d.decidedBy),
+        decidedById: str(d.decidedById),
+        reason: str(d.reason) ?? "",
+      },
+    ];
+  });
+}
+
 function parseInvestors(data: unknown): Investor[] {
   const list = (data as { investors?: unknown })?.investors;
   if (!Array.isArray(list)) throw new Error("Invalid investors file.");
@@ -281,6 +319,7 @@ function parseInvestors(data: unknown): Investor[] {
         payoutEmails: d.payoutEmails !== false,
         bankDetails: parseBankDetails(d.bankDetails),
         changeRequests: parseChangeRequests(d.changeRequests),
+        privacyRequests: parsePrivacyRequests(d.privacyRequests),
         ...parseCredentials(d),
       },
     ];
@@ -533,6 +572,7 @@ export function createInvestor(input: {
       payoutEmails: true,
       bankDetails: null,
       changeRequests: [],
+      privacyRequests: [],
       ...blankCredentials(),
     };
     return { investors: [...investors, investor], result: investor };
@@ -758,6 +798,102 @@ export function decideChangeRequest(
       investors: next,
       result: { before: before!, investor: next.find((i) => i.id === investorId)!, request: request! },
     };
+  });
+}
+
+// ---------- privacy requests (copy of data / account deletion) ----------
+
+/** Pending requests, plus the most recent decided ones. */
+function trimPrivacyRequests(requests: PrivacyRequest[]): PrivacyRequest[] {
+  const decided = requests
+    .filter((r) => r.status !== "pending")
+    .sort((a, b) => ((a.decidedAt ?? a.requestedAt) < (b.decidedAt ?? b.requestedAt) ? 1 : -1))
+    .slice(0, PRIVACY_HISTORY_KEEP);
+  return requests.filter((r) => r.status === "pending" || decided.includes(r));
+}
+
+/** Adds a pending privacy request. An investor can have one pending request of each kind. */
+export function addPrivacyRequest(
+  investorId: string,
+  input: { kind: PrivacyRequestKind; note: string },
+): Promise<{ investor: Investor; request: PrivacyRequest }> {
+  return mutateInvestors((investors) => {
+    let request: PrivacyRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      if (i.privacyRequests.some((r) => r.kind === input.kind && r.status === "pending")) {
+        throw new AccountError(
+          `You already have a request to ${input.kind === "deletion" ? "delete your account" : "get a copy of your data"} waiting for review. Withdraw it first to send a new one.`,
+        );
+      }
+      request = {
+        id: newId("prv"),
+        kind: input.kind,
+        status: "pending",
+        requestedAt: new Date().toISOString(),
+        note: input.note,
+        decidedAt: null,
+        decidedBy: null,
+        decidedById: null,
+        reason: "",
+      };
+      return { ...i, privacyRequests: trimPrivacyRequests([...i.privacyRequests, request]) };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, request: request! } };
+  });
+}
+
+function pendingPrivacyRequestIn(investor: Investor, requestId: string): PrivacyRequest {
+  const request = investor.privacyRequests.find((r) => r.id === requestId);
+  if (!request) throw new AccountError("This request could not be found. Reload the page.");
+  if (request.status !== "pending") throw new AccountError("This request has already been dealt with. Reload the page.");
+  return request;
+}
+
+/** The investor withdraws one of their own pending privacy requests. */
+export function withdrawPrivacyRequest(
+  investorId: string,
+  requestId: string,
+): Promise<{ investor: Investor; request: PrivacyRequest }> {
+  return mutateInvestors((investors) => {
+    let request: PrivacyRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      const closed: PrivacyRequest = {
+        ...pendingPrivacyRequestIn(i, requestId),
+        status: "withdrawn",
+        decidedAt: new Date().toISOString(),
+      };
+      request = closed;
+      return { ...i, privacyRequests: trimPrivacyRequests(i.privacyRequests.map((r) => (r.id === requestId ? closed : r))) };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, request: request! } };
+  });
+}
+
+/**
+ * A Master Admin marks a pending request fulfilled (after handling it
+ * manually) or declines it. This never exports or deletes anything itself.
+ */
+export function decidePrivacyRequest(
+  investorId: string,
+  requestId: string,
+  decision: { outcome: "fulfilled" | "declined"; reason: string; by: Pick<AdminUser, "id" | "name"> },
+): Promise<{ investor: Investor; request: PrivacyRequest }> {
+  return mutateInvestors((investors) => {
+    let request: PrivacyRequest | null = null;
+    const next = updateInvestorIn(investors, investorId, (i) => {
+      const pending = pendingPrivacyRequestIn(i, requestId);
+      const closed: PrivacyRequest = {
+        ...pending,
+        status: decision.outcome,
+        decidedAt: new Date().toISOString(),
+        decidedBy: decision.by.name,
+        decidedById: decision.by.id,
+        reason: decision.reason,
+      };
+      request = closed;
+      return { ...i, privacyRequests: trimPrivacyRequests(i.privacyRequests.map((r) => (r.id === requestId ? closed : r))) };
+    });
+    return { investors: next, result: { investor: next.find((i) => i.id === investorId)!, request: request! } };
   });
 }
 

@@ -18,7 +18,15 @@ export const INQUIRY_LIMITS = {
   webinarDetails: 120,
 } as const;
 
-export type InquiryField = "name" | "email" | "phone" | "message" | "howFound" | "webinarDetails" | "referrerContact";
+export type InquiryField =
+  | "name"
+  | "email"
+  | "phone"
+  | "message"
+  | "howFound"
+  | "webinarDetails"
+  | "referrerContact"
+  | "privacyConsent";
 export type InquiryStatus = "new" | "contacted" | "converted" | "deleted";
 /** Statuses an admin can set directly with Mark as new / Mark as contacted. */
 export type ActiveInquiryStatus = "new" | "contacted";
@@ -68,6 +76,13 @@ export interface InquiryContact {
   referrerContact: string;
 }
 
+/** That the visitor agreed to the Privacy Notice when sending the inquiry, and when. */
+export interface InquiryConsent {
+  agreed: boolean;
+  /** ISO timestamp (UTC). */
+  at: string;
+}
+
 /** Snapshot of the plan the visitor was looking at, calculated on the server. */
 export interface InquiryPlan extends QuoteInputs {
   startDate: string;
@@ -97,6 +112,8 @@ export interface StoredInquiry extends InquiryContact {
   notes?: InquiryNotesSummary;
   /** Where the visitor came from, e.g. "website" or "seminar-2026-11" (from ?source= on the calculator link). */
   source: string;
+  /** Agreement to the Privacy Notice. Missing on inquiries sent before this was asked. */
+  consent?: InquiryConsent;
   /** Admin user who follows the inquiry up (name as it was when assigned). */
   assignedTo?: InquiryAssignee;
   /** When to follow up next, YYYY-MM-DD. */
@@ -260,6 +277,10 @@ export function parseInquiryForm(raw: Record<string, unknown>, products?: Produc
     }
   }
 
+  // A checked checkbox submits as a non-empty string (usually "on"); unchecked fields are absent.
+  const agreedToPrivacyNotice = text(raw.privacyConsent) !== "";
+  if (!agreedToPrivacyNotice) errors.privacyConsent = "You must agree to the Privacy Notice to continue.";
+
   const plan = parseQuoteInputs({
     principal: Number(text(raw.principal)),
     lockInYears: Number(text(raw.lockInYears)),
@@ -377,6 +398,11 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
   const howFoundRaw = str(d.howFound);
   // Inquiries sent before this was asked default to "other".
   const howFound: HowFound = howFoundRaw && isHowFound(howFoundRaw) ? howFoundRaw : "other";
+  const consentData = (d.consent ?? null) as Record<string, unknown> | null;
+  const consentAt = str(consentData?.at);
+  // Inquiries sent before consent was asked for have no record of it.
+  const consent: InquiryConsent | undefined =
+    consentData && typeof consentData.agreed === "boolean" && consentAt ? { agreed: consentData.agreed, at: consentAt } : undefined;
   return {
     id,
     createdAt,
@@ -405,6 +431,7 @@ export function parseStoredInquiry(textValue: string): StoredInquiry {
     ...(notes ? { notes } : {}),
     // Inquiries sent before lead sources existed came from the website.
     source: parseLeadSource(d.source),
+    ...(consent ? { consent } : {}),
     ...(assignedId && assignedName ? { assignedTo: { id: assignedId, name: assignedName } } : {}),
     ...(followUpDate && isFollowUpDate(followUpDate) ? { followUpDate } : {}),
     ...(meeting ? { meeting } : {}),

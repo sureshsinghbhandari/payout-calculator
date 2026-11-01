@@ -4,10 +4,14 @@ import { useActionState, useId } from "react";
 import {
   requestBankChangeAction,
   requestContactChangeAction,
+  requestPrivacyAction,
   withdrawChangeRequestAction,
+  withdrawPrivacyRequestAction,
   type ChangeRequestState,
+  type PrivacyRequestState,
   type WithdrawState,
 } from "@/app/portal/details/actions";
+import { PRIVACY_NOTE_MAX, type PrivacyRequestKind } from "@/lib/privacy-requests";
 import type { BankField, ContactChangeField } from "@/lib/profile-requests";
 
 const inputClass =
@@ -161,6 +165,92 @@ export function BankChangeForm({ accountHolder }: { accountHolder: string }) {
 /** Withdraws a pending request (bound to the request on the page). */
 export function WithdrawRequestButton({ requestId, label }: { requestId: string; label: string }) {
   const [state, formAction, pending] = useActionState<WithdrawState, FormData>(withdrawChangeRequestAction, {});
+  return (
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        if (!window.confirm("Withdraw this request? You can send a new one afterwards.")) e.preventDefault();
+      }}
+    >
+      <input type="hidden" name="requestId" value={requestId} />
+      <button
+        type="submit"
+        disabled={pending}
+        aria-label={label}
+        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 disabled:cursor-wait disabled:opacity-70"
+      >
+        {pending ? "Withdrawing…" : "Withdraw request"}
+      </button>
+      {state.message && (
+        <p role="alert" className="mt-1.5 text-xs font-medium text-red-700">
+          {state.message}
+        </p>
+      )}
+    </form>
+  );
+}
+
+const PRIVACY_FORM_LABEL: Record<PrivacyRequestKind, { summary: string; submit: string; notePlaceholder: string }> = {
+  copy: {
+    summary: "Ask for a copy of your data",
+    submit: "Send request for review",
+    notePlaceholder: "Anything that helps us find or prepare it (optional)",
+  },
+  deletion: {
+    summary: "Ask to delete your account",
+    submit: "Send request for review",
+    notePlaceholder: "Anything you want us to know (optional)",
+  },
+};
+
+/** Asks for a copy of the investor's data, or for their account to be deleted. */
+export function PrivacyRequestForm({ kind }: { kind: PrivacyRequestKind }) {
+  const [state, formAction, pending] = useActionState<PrivacyRequestState, FormData>(requestPrivacyAction, {});
+  const id = useId();
+  const labels = PRIVACY_FORM_LABEL[kind];
+
+  return (
+    <details className="mt-5 border-t border-slate-200 pt-4">
+      <summary className="cursor-pointer text-sm font-semibold text-blue-900">{labels.summary}</summary>
+      <form key={state.attempt ?? 0} action={formAction} className="mt-4 space-y-3">
+        <input type="hidden" name="kind" value={kind} />
+        <div>
+          <label htmlFor={`${id}-note`} className="text-sm font-semibold text-slate-900">
+            Note <span className="font-normal text-slate-500">(optional)</span>
+          </label>
+          <textarea
+            id={`${id}-note`}
+            name="note"
+            rows={3}
+            maxLength={PRIVACY_NOTE_MAX}
+            defaultValue={state.note ?? ""}
+            placeholder={labels.notePlaceholder}
+            aria-invalid={state.fieldError ? true : undefined}
+            aria-describedby={state.fieldError ? `${id}-note-error` : undefined}
+            className={`${inputClass} ${state.fieldError ? errorInput : okInput}`}
+          />
+          {state.fieldError && (
+            <p id={`${id}-note-error`} className="mt-1.5 text-xs font-medium text-red-700">
+              {state.fieldError}
+            </p>
+          )}
+        </div>
+        {state.status === "error" && state.message && (
+          <p role="alert" className="text-sm font-medium text-red-700">
+            {state.message}
+          </p>
+        )}
+        <button type="submit" disabled={pending} className={submitButton}>
+          {pending ? "Sending…" : labels.submit}
+        </button>
+      </form>
+    </details>
+  );
+}
+
+/** Withdraws a pending privacy request (bound to the request on the page). */
+export function WithdrawPrivacyRequestButton({ requestId, label }: { requestId: string; label: string }) {
+  const [state, formAction, pending] = useActionState<WithdrawState, FormData>(withdrawPrivacyRequestAction, {});
   return (
     <form
       action={formAction}

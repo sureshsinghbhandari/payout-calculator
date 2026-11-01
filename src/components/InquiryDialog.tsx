@@ -227,10 +227,45 @@ function InquiryForm({ plan, onCancel }: FormProps) {
           <textarea {...field("message")} rows={4} maxLength={INQUIRY_LIMITS.message} />
           {errorText("message")}
         </div>
+        <div className="sm:col-span-2">
+          <label className="flex items-start gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="privacyConsent"
+              required
+              defaultChecked={state.values?.privacyConsent === "on"}
+              aria-invalid={state.fieldErrors?.privacyConsent ? true : undefined}
+              aria-describedby={state.fieldErrors?.privacyConsent ? `${baseId}-privacyConsent-error` : undefined}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700/30"
+            />
+            <span>
+              I agree to the{" "}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-blue-900 underline underline-offset-2 hover:text-blue-950"
+              >
+                Privacy Notice
+              </a>
+              .
+            </span>
+          </label>
+          {errorText("privacyConsent")}
+        </div>
       </div>
 
       <p className="text-xs leading-relaxed text-slate-500">
-        We store the details you send so our team can respond to your inquiry.
+        We store the details you send so our team can respond to your inquiry. See the{" "}
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900"
+        >
+          Privacy Notice
+        </a>{" "}
+        for details.
       </p>
 
       {state.status === "error" && (state.message || state.fieldErrors?.plan) && (

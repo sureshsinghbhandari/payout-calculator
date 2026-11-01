@@ -409,6 +409,7 @@ async function addDemo(): Promise<void> {
         payoutEmails: true,
         bankDetails: null,
         changeRequests: [],
+        privacyRequests: [],
         ...credentials,
       });
       event(when, admins.ashwin, "investor", "investor.created",
@@ -476,6 +477,7 @@ async function addDemo(): Promise<void> {
     payoutEmails: true,
     bankDetails: null,
     changeRequests: [],
+    privacyRequests: [],
     ...credentials,
   });
   event(directCreated, admins.ashwin, "investor", "investor.created",

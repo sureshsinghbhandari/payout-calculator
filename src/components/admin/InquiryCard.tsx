@@ -192,6 +192,7 @@ export function InquiryCard({
         Found us: <span className="font-medium text-slate-800">{HOW_FOUND_LABELS[inquiry.howFound]}</span>
         {inquiry.howFound === "webinar" && inquiry.webinarDetails && <> — {inquiry.webinarDetails}</>}
         {inquiry.howFound === "friend-family" && inquiry.referrerContact && <> — referred by {inquiry.referrerContact}</>}
+        {inquiry.consent?.agreed && <> · Agreed to the Privacy Notice {formatTimestamp(inquiry.consent.at)}</>}
       </p>
 
       {inquiry.message && (
