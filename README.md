@@ -302,6 +302,21 @@ the first time an inquiry's page is opened.
   username within 15 minutes, and admin sign-ins from a device or network not used in the
   previous 30 days. Only a short coded fingerprint is kept, never the IP address.
 
+## Privacy notice and data requests
+
+**`/privacy`** explains what personal data is collected and why, how long it is kept, that
+it is never sold, and how to ask for a copy or deletion. The public inquiry form requires
+agreeing to it (a checkbox, recorded with a timestamp on the inquiry). Signed-in investors
+can request a copy of their data or ask to delete their account from **Your details** in
+the portal, see the status of their request and withdraw a pending one; someone who is not
+yet an investor can ask the same way by the email address on the page. A Master Admin
+reviews requests at **`/admin/privacy-requests`** (new permission `privacy.manage`) and
+marks each one fulfilled or declined, with an optional reason shown to the person who
+asked; nothing is exported or deleted automatically; every step is in the audit log.
+
+**Before go-live:** the wording on `/privacy` is a first draft written for this app, not by
+a lawyer — have it reviewed, and replace its placeholder contact address with a real one.
+
 ## Trading dashboard (Master Admin, optional)
 
 **Settings > Trading dashboard** (`/admin/trading`) is a read-only view of a separate

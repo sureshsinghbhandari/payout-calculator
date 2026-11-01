@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**31 done · 9 in progress · 13 pending** · 22 [waiting on you](#waiting-on-you)
+**31 done · 10 in progress · 12 pending** · 22 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -22,12 +22,12 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Next | Email and messaging | Email set up (Gmail settings in Vercel) before alerts can be sent. |
 | 5 | [Email templates](#email-templates) | 🔄 In progress | Next | Email and messaging | Email set up (Gmail settings in Vercel), and approval of the wording. |
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Next | Investor portal | Email set up (Gmail settings in Vercel) before reset links can be sent. |
-| 7 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 8 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
-| 9 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
-| 10 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
-| 11 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
-| 12 | [Privacy notice and data requests](#privacy) | ⏳ Pending | Next | Security and compliance | The privacy notice wording, ideally checked by a lawyer. |
+| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Next | Security and compliance | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
+| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Later | Email and messaging | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Later | Reports and insights | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Later | Reports and insights | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
+| 11 | [Company domain](#company-domain) | ⏳ Pending | Now | Email and messaging | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Now | Security and compliance | Your go-ahead at go-live, after the test data is cleaned up. |
 | 13 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Next | Security and compliance | Your go-ahead to add and run tests. |
 | 14 | [Your own web address](#custom-domain) | ⏳ Pending | Next | Platform and experience | The domain (see Company domain) and access to its DNS settings. |
 | 15 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
@@ -85,12 +85,12 @@ Everything else in the list can be built without your help.
 | 4 | [Alerts for new inquiries](#new-inquiry-alerts) | 🔄 In progress | Email set up (Gmail settings in Vercel) before alerts can be sent. |
 | 5 | [Email templates](#email-templates) | 🔄 In progress | Email set up (Gmail settings in Vercel), and approval of the wording. |
 | 6 | [Forgot password by email](#forgot-password) | 🔄 In progress | Email set up (Gmail settings in Vercel) before reset links can be sent. |
-| 7 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
-| 8 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
-| 9 | [Visitor analytics](#web-analytics) | 🔄 In progress | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
-| 10 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
-| 11 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
-| 12 | [Privacy notice and data requests](#privacy) | ⏳ Pending | The privacy notice wording, ideally checked by a lawyer. |
+| 7 | [Privacy notice and data requests](#privacy) | 🔄 In progress | Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one. |
+| 8 | [Payout notices to investors](#payout-reminders) | 🔄 In progress | Email set up (Gmail settings in Vercel), and a CRON_SECRET added in Vercel for the daily job. |
+| 9 | [Trading dashboard](#trading-dashboard) | 🔄 In progress | Set TRADING_API_URL and TRADING_API_TOKEN in Vercel, matching the token and address of that app's data API; keep that app and its ngrok tunnel running. |
+| 10 | [Visitor analytics](#web-analytics) | 🔄 In progress | Turn on Web Analytics (and, if wanted, Speed Insights) for this project in the Vercel dashboard. |
+| 11 | [Company domain](#company-domain) | ⏳ Pending | Buy the domain (about $11 a year) and add the DNS records it needs. |
+| 12 | [Remove permanent delete before go-live](#remove-permanent-delete) | ⏳ Pending | Your go-ahead at go-live, after the test data is cleaned up. |
 | 13 | [Automated tests and checks](#automated-tests) | ⏳ Pending | Your go-ahead to add and run tests. |
 | 14 | [Your own web address](#custom-domain) | ⏳ Pending | The domain (see Company domain) and access to its DNS settings. |
 | 15 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
@@ -296,6 +296,45 @@ Forgot password?                       (admin and investor versions)
 
 [Back to the table](#summary)
 
+<a id="privacy"></a>
+
+### Privacy notice and data requests
+
+**Status:** 🔄 In progress · **Priority:** Next · **Area:** Security and compliance
+
+A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.
+
+**Needs from you:** Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one.
+
+**Outcome:** /privacy explains what is collected and why; the inquiry form requires agreeing to it; investors request a copy or deletion from Your details, reviewed by a Master Admin at /admin/privacy-requests.
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+/privacy (linked from the inquiry form and the portal footer)
+------------------------------------------------------------------
+ Privacy Notice
+ What we collect · Why · How long we keep it · Not sold · Cookies
+ "Ask for a copy or deletion" -> see below
+
+ Send inquiry form:
+   [ ] I agree to the Privacy Notice   (required)
+
+ Portal > Your details > Privacy
+   Your requests
+     Copy of your data · Pending            [ Withdraw ]
+   [ Request a copy of your data ] [ Request account deletion ]
+
+ Admin > Investors > Privacy requests                [2 pending]
+------------------------------------------------------------------
+   Investor       Kind      Requested      Status
+   Jane Doe       Copy      Oct 30, 2026   Pending
+     Note: "please email it to my work address"
+     [ Mark fulfilled ] [ Decline ]  Reason [ ................ ]
+```
+
+[Back to the table](#summary)
+
 <a id="payout-reminders"></a>
 
 ### Payout notices to investors
@@ -410,18 +449,6 @@ Buy a domain (about $11 a year) for the website and email, verify it in Resend, 
 The temporary Delete permanently button for inquiries is removed once the app is ready.
 
 **Needs from you:** Your go-ahead at go-live, after the test data is cleaned up.
-
-[Back to the table](#summary)
-
-<a id="privacy"></a>
-
-### Privacy notice and data requests
-
-**Status:** ⏳ Pending · **Priority:** Next · **Area:** Security and compliance
-
-A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.
-
-**Needs from you:** The privacy notice wording, ideally checked by a lawyer.
 
 [Back to the table](#summary)
 

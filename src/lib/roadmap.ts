@@ -457,10 +457,11 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Privacy notice and data requests",
     category: "security",
     priority: "next",
-    status: "planned",
-    fromYou: "The privacy notice wording, ideally checked by a lawyer.",
+    status: "in-progress",
+    fromYou: "Have the /privacy wording checked by a lawyer before go-live, and replace its placeholder contact address with a real one.",
     description:
       "A privacy notice on the inquiry form, consent checkbox, retention periods, and a way to handle deletion requests.",
+    outcome: "/privacy explains what is collected and why; the inquiry form requires agreeing to it; investors request a copy or deletion from Your details, reviewed by a Master Admin at /admin/privacy-requests.",
   },
   {
     id: "remove-permanent-delete",

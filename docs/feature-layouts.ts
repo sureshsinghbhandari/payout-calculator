@@ -224,6 +224,27 @@ Investors
    seminar-2026-10           4         1         25%     [ View inquiries ]
      link  https://<site>/inquiries?source=seminar-2026-10  [ Copy ] [QR]`,
 
+  "privacy": `/privacy (linked from the inquiry form and the portal footer)
+------------------------------------------------------------------
+ Privacy Notice
+ What we collect · Why · How long we keep it · Not sold · Cookies
+ "Ask for a copy or deletion" -> see below
+
+ Send inquiry form:
+   [ ] I agree to the Privacy Notice   (required)
+
+ Portal > Your details > Privacy
+   Your requests
+     Copy of your data · Pending            [ Withdraw ]
+   [ Request a copy of your data ] [ Request account deletion ]
+
+ Admin > Investors > Privacy requests                [2 pending]
+------------------------------------------------------------------
+   Investor       Kind      Requested      Status
+   Jane Doe       Copy      Oct 30, 2026   Pending
+     Note: "please email it to my work address"
+     [ Mark fulfilled ] [ Decline ]  Reason [ ................ ]`,
+
   "trading-dashboard": `Settings > Trading dashboard
 ------------------------------------------------------------------
  Only the Simulator tab is shown (ask to add more, or a picker).
