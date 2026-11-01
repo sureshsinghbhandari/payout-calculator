@@ -318,6 +318,20 @@ export const ROADMAP: RoadmapItem[] = [
     outcome: "Master Admins upload PDF, JPEG or PNG files (up to 10 MB) on the investor's page; investors download their own under Your documents in the portal.",
   },
   {
+    id: "investor-signing",
+    title: "Investor documents and signing (BoldSign)",
+    category: "portal",
+    priority: "next",
+    status: "done",
+    description:
+      "Make the documents each investor signs, filled in from their stored data, and keep the signed copies with their record. The signing itself is done by the owner in BoldSign (a manual flow); a BoldSign API step could replace the sending and collecting later.",
+    outcome:
+      "On the investor's page, a Signing section lists the Investment Agreement for each investment and the Investor Acknowledgment and Consent. Each has four steps: download the pre-filled PDF, send it in BoldSign (with the signer details to copy and the fields to place), download the signed PDF, upload it here. Status shows Not started, Prepared, Sent for signature or Signed on file. Signed PDFs and BoldSign audit trails are kept in the document vault (View and Download) and the investor can download them in the portal. Generating, sending marks, uploads and views are in the audit log.",
+    dependsOn: ["documents"],
+    fromYou:
+      "Replace the placeholder company name, address and governing state in src/lib/agreement-template.ts, have your attorney review the wording, and use a BoldSign account for the sending.",
+  },
+  {
     id: "multiple-investments",
     title: "More investments and renewals",
     category: "portal",

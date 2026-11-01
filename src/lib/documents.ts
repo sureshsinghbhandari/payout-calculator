@@ -4,10 +4,12 @@
  * investors download their own in the portal.
  */
 
-export type DocumentType = "agreement" | "certificate" | "tax" | "statement" | "other";
+export type DocumentType = "agreement" | "signed-agreement" | "certificate" | "tax" | "statement" | "other";
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   agreement: "Agreement",
+  // Kept by the signing flow (see signing.ts): the signed PDF the owner downloads from BoldSign.
+  "signed-agreement": "Signed agreement",
   certificate: "Certificate",
   tax: "Tax document",
   statement: "Statement",
@@ -22,6 +24,9 @@ export const DOCUMENT_KINDS: Record<DocumentKind, { extension: string; contentTy
   jpeg: { extension: "jpg", contentType: "image/jpeg", label: "JPEG" },
   png: { extension: "png", contentType: "image/png", label: "PNG" },
 };
+
+/** Types the generic upload form offers. A signed agreement is only added through the Signing panel, so it is linked to its document. */
+export const UPLOADABLE_DOCUMENT_TYPES: readonly DocumentType[] = ["agreement", "certificate", "tax", "statement", "other"];
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 export const DOCUMENT_TITLE_MAX = 100;
@@ -42,6 +47,8 @@ export interface InvestorDocument {
   /** Name and id of the admin who uploaded it. */
   uploadedBy: string;
   uploadedById: string;
+  /** The signing item (see signing.ts) this file belongs to: the signed PDF or its BoldSign audit trail. */
+  signingKey?: string;
 }
 
 /** What the browser may see of a document (no blob pathname). */
@@ -54,6 +61,7 @@ export interface PublicDocument {
   size: number;
   uploadedAt: string;
   uploadedBy: string;
+  signingKey?: string;
 }
 
 export function toPublicDocument(doc: InvestorDocument): PublicDocument {
@@ -66,6 +74,7 @@ export function toPublicDocument(doc: InvestorDocument): PublicDocument {
     size: doc.size,
     uploadedAt: doc.uploadedAt,
     uploadedBy: doc.uploadedBy,
+    ...(doc.signingKey ? { signingKey: doc.signingKey } : {}),
   };
 }
 

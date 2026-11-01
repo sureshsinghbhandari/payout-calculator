@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**32 done · 10 in progress · 11 pending** · 21 [waiting on you](#waiting-on-you)
+**33 done · 10 in progress · 11 pending** · 21 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -56,19 +56,20 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 38 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
 | 39 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
 | 40 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 44 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 45 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 46 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 47 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 48 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
-| 49 | [Bank holiday calendar](#holiday-calendar) | ✅ Done | Later | Payouts and operations | — |
-| 50 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
-| 51 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
-| 52 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
-| 53 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
+| 41 | [Investor documents and signing (BoldSign)](#investor-signing) | ✅ Done | Next | Investor portal | — |
+| 42 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 43 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 44 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 45 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 46 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 47 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 48 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 49 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 50 | [Bank holiday calendar](#holiday-calendar) | ✅ Done | Later | Payouts and operations | — |
+| 51 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
+| 52 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
+| 53 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
+| 54 | [Install on phones](#installable-app) | ✅ Done | Later | Platform and experience | — |
 
 <a id="waiting-on-you"></a>
 
@@ -1087,6 +1088,59 @@ Investors
 Investors download a statement for each investment (PDF and Excel) with the schedule and payments made.
 
 **Outcome:** Investors and admins download an Excel statement per investment (no rate for investors). PDF is not included yet.
+
+[Back to the table](#summary)
+
+<a id="investor-signing"></a>
+
+### Investor documents and signing (BoldSign)
+
+**Status:** ✅ Done · **Priority:** Next · **Area:** Investor portal
+
+Make the documents each investor signs, filled in from their stored data, and keep the signed copies with their record. The signing itself is done by the owner in BoldSign (a manual flow); a BoldSign API step could replace the sending and collecting later.
+
+**Outcome:** On the investor's page, a Signing section lists the Investment Agreement for each investment and the Investor Acknowledgment and Consent. Each has four steps: download the pre-filled PDF, send it in BoldSign (with the signer details to copy and the fields to place), download the signed PDF, upload it here. Status shows Not started, Prepared, Sent for signature or Signed on file. Signed PDFs and BoldSign audit trails are kept in the document vault (View and Download) and the investor can download them in the portal. Generating, sending marks, uploads and views are in the audit log.
+
+**Depends on:** [Document vault](#documents) (✅ Done)
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+Admin > Investors > James Wilson > Signing
+------------------------------------------------------------------
+ Investment Agreement, Investment 1                [Sent for signature]
+ Investor Acknowledgment and Consent               [Not started]
+ (open a document to see its four steps)
+
+ Investment Agreement, Investment 1
+  1  Download this document and upload it to BoldSign to get the
+     investor's signature
+       [ Download PDF to sign ]  Last downloaded Nov 1, 2:10 PM by Ana
+  2  Send it for signature in BoldSign
+       - upload the PDF, add the signer (copy buttons):
+           Signer name  James Wilson            [Copy]
+           Signer email jwilson@example.com     [Copy]
+           Document title ...                   [Copy]
+       - second signer for the company, investor signs first
+       - place fields: Signature + Date signed, Address text box
+       - send
+       Date sent in BoldSign [ 2026-11-01 ]  [ Mark as sent ]
+  3  When the investor has signed, download the signed PDF from
+     BoldSign and upload it here
+       This file is (o) The signed document  ( ) BoldSign audit trail
+       [ Choose file... ]  [ Upload signed PDF ]
+  4  Kept with the investor's record
+       Status: Signed on file
+       Signed Investment Agreement, Investment 1
+         PDF, 212 KB · Nov 3, 9:05 AM by Ana  [View] [Download]
+       BoldSign audit trail, Investment Agreement, ...
+                                               [View] [Download]
+
+ Then the same file appears under Documents (type Signed agreement)
+ and in Portal > Your documents.
+ Yellow note while the company name, address or state in the template
+ are still placeholders.
+```
 
 [Back to the table](#summary)
 

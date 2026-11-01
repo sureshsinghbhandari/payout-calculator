@@ -10,6 +10,7 @@ import { ChangeRequestReview } from "@/components/admin/investors/ChangeRequestR
 import { DocumentVault } from "@/components/admin/investors/DocumentVault";
 import { InvestmentCard } from "@/components/admin/investors/InvestmentCard";
 import { InvestorAccess } from "@/components/admin/investors/InvestorAccess";
+import { SigningPanel, type SigningItemView } from "@/components/admin/investors/SigningPanel";
 import { InvestorSignInInfo } from "@/components/admin/investors/InvestorSignInInfo";
 import { InvestorDetailsForm } from "@/components/admin/investors/InvestorDetailsForm";
 import {
@@ -20,15 +21,23 @@ import {
 } from "@/components/admin/investors/fields";
 import { errorNotice, primaryButton, successNotice, textLink } from "@/components/admin/investors/ui";
 import { can, toPublicAdmin, toPublicInvestor, type Investor } from "@/lib/accounts";
+import { unresolvedPlaceholders } from "@/lib/agreement-template";
 import { toPublicDocument, type PublicDocument } from "@/lib/documents";
 import { formatDollars } from "@/lib/format";
 import { inquiryReference, isInquiryId } from "@/lib/inquiry";
-import { todayEastern } from "@/lib/investments";
+import { latestPaidOn, todayEastern } from "@/lib/investments";
+import {
+  auditTrailsFor,
+  signedDocumentsFor,
+  signingItemsFor,
+  signingStatus,
+  type SigningRecord,
+} from "@/lib/signing";
 import { getInvestor, isAccountStorageConfigured } from "@/lib/server/accounts-store";
 import { paymentConfirmationBlocker } from "@/lib/server/payout-notices";
 import { requireAdminPage } from "@/lib/server/auth";
 import { bankDetailsView, changeRequestViews } from "@/lib/server/change-requests";
-import { documentFolder, isDocumentStorageConfigured, listDocuments } from "@/lib/server/documents-store";
+import { documentFolder, isDocumentStorageConfigured, listVault } from "@/lib/server/documents-store";
 import { MIN_USER_PASSWORD_LENGTH } from "@/lib/server/passwords";
 
 export const metadata: Metadata = {
@@ -63,10 +72,11 @@ async function loadInvestor(id: string): Promise<{ investor: Investor | null; lo
   }
 }
 
-/** The investor's documents, or null when they could not be loaded. */
-async function loadDocuments(investorId: string): Promise<PublicDocument[] | null> {
+/** The investor's documents and signing records, or null when they could not be loaded. */
+async function loadVault(investorId: string): Promise<{ documents: PublicDocument[]; signing: SigningRecord[] } | null> {
   try {
-    return (await listDocuments(investorId)).map(toPublicDocument);
+    const vault = await listVault(investorId);
+    return { documents: vault.documents.map(toPublicDocument), signing: vault.signing };
   } catch (error) {
     console.error("Listing investor documents failed", error);
     return null;
@@ -121,7 +131,27 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
   const requests = changeRequestViews(investor);
   const pendingRequests = requests.filter((r) => r.status === "pending");
   const pastRequests = requests.filter((r) => r.status !== "pending");
-  const documents = isDocumentStorageConfigured() ? await loadDocuments(investor.id) : null;
+  const vault = isDocumentStorageConfigured() ? await loadVault(investor.id) : null;
+  const documents = vault?.documents ?? null;
+  const signingItems: SigningItemView[] = vault
+    ? signingItemsFor(pub).map((item) => {
+        const record = vault.signing.find((r) => r.key === item.key) ?? null;
+        const signed = signedDocumentsFor(vault.documents, item.key);
+        return {
+          key: item.key,
+          kind: item.kind,
+          title: item.title,
+          summary: item.summary,
+          status: signingStatus(record, signed),
+          preparedAt: record?.preparedAt ?? null,
+          preparedBy: record?.preparedBy ?? "",
+          sentOn: record?.sentOn ?? null,
+          sentBy: record?.sentBy ?? "",
+          signed,
+          auditTrails: auditTrailsFor(vault.documents, item.key),
+        };
+      })
+    : [];
 
   return (
     <AdminFrame user={user}>
@@ -315,6 +345,32 @@ async function InvestorContent({ params, searchParams }: { params: Params; searc
             ))}
           </ol>
         )}
+      </section>
+
+      <section id="signing" aria-labelledby="investor-signing-heading" className="mt-8 scroll-mt-6">
+        <h2 id="investor-signing-heading" className="mb-3 text-lg font-semibold text-slate-900">
+          Signing
+        </h2>
+        <AdminCard>
+          {!isDocumentStorageConfigured() ? (
+            <p className="text-sm text-slate-700">Storage is not connected, so signed documents cannot be kept.</p>
+          ) : vault === null ? (
+            <p role="alert" className="text-sm font-medium text-red-700">
+              Signing documents could not be loaded. Reload the page to try again.
+            </p>
+          ) : (
+            <SigningPanel
+              investorId={pub.id}
+              investorName={pub.name}
+              investorEmail={pub.email}
+              uploadFolder={documentFolder(pub.id)}
+              today={today}
+              latestSentDate={latestPaidOn(today)}
+              placeholders={unresolvedPlaceholders()}
+              items={signingItems}
+            />
+          )}
+        </AdminCard>
       </section>
 
       <section aria-labelledby="investor-documents-heading" className="mt-8">

@@ -21,6 +21,7 @@
     "imapflow": "^2.9.1",
     "next": "16.4.3",
     "nodemailer": "^10.2.1",
+    "pdf-lib": "^1.17.1",
     "postal-mime": "^4.1.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",

@@ -388,6 +388,41 @@ Investors
  Agreement  Oct 10  PDF  [Download][Delete]
  Tax doc    Oct 12  PDF  [Download][Delete]`,
 
+  "investor-signing": `Admin > Investors > James Wilson > Signing
+------------------------------------------------------------------
+ Investment Agreement, Investment 1                [Sent for signature]
+ Investor Acknowledgment and Consent               [Not started]
+ (open a document to see its four steps)
+
+ Investment Agreement, Investment 1
+  1  Download this document and upload it to BoldSign to get the
+     investor's signature
+       [ Download PDF to sign ]  Last downloaded Nov 1, 2:10 PM by Ana
+  2  Send it for signature in BoldSign
+       - upload the PDF, add the signer (copy buttons):
+           Signer name  James Wilson            [Copy]
+           Signer email jwilson@example.com     [Copy]
+           Document title ...                   [Copy]
+       - second signer for the company, investor signs first
+       - place fields: Signature + Date signed, Address text box
+       - send
+       Date sent in BoldSign [ 2026-11-01 ]  [ Mark as sent ]
+  3  When the investor has signed, download the signed PDF from
+     BoldSign and upload it here
+       This file is (o) The signed document  ( ) BoldSign audit trail
+       [ Choose file... ]  [ Upload signed PDF ]
+  4  Kept with the investor's record
+       Status: Signed on file
+       Signed Investment Agreement, Investment 1
+         PDF, 212 KB · Nov 3, 9:05 AM by Ana  [View] [Download]
+       BoldSign audit trail, Investment Agreement, ...
+                                               [View] [Download]
+
+ Then the same file appears under Documents (type Signed agreement)
+ and in Portal > Your documents.
+ Yellow note while the company name, address or state in the template
+ are still placeholders.`,
+
   "profile-requests": `Portal > Your details                  Admin > Investor page
 -----------------------------------   --------------------------------
  Contact                                Bank details and change requests

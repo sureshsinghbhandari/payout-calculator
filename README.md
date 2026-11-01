@@ -43,6 +43,9 @@ Earnings rates are never shown to visitors or investors.
 | `src/lib/quote.ts` | Server-side validation of calculation requests |
 | `src/lib/excel.ts` | Excel workbook export |
 | `src/lib/disclaimer.ts` | Disclaimer text |
+| `src/lib/agreement-template.ts` | Wording and company details of the documents investors sign |
+| `src/lib/signing.ts` | Signing items, statuses and rules (pure) |
+| `src/lib/server/agreement-pdf.ts` | Draws a signing document as a PDF |
 | `src/lib/server/rates-store.ts` | Reads and saves rates in Vercel Blob (server only) |
 | `src/lib/server/session.ts`, `admin-auth.ts` | Admin password check and session cookie (server only) |
 | `src/app/actions.ts` | Public Server Action that calculates a quote |
@@ -268,7 +271,8 @@ Until the first save, the starting rates in `src/lib/config.ts`
 - **Documents:** Master Admins upload PDF, JPEG or PNG files (up to 10 MB) on the
   investor's page; the browser sends them straight to private Blob storage and the app
   checks each file's real type. Investors download their own under **Your documents** in
-  the portal. Uploads, deletions and downloads are in the audit log.
+  the portal. Uploads, deletions, views and downloads are in the audit log. Documents to
+  be signed with BoldSign are made and tracked under **Signing**, see the next section.
 - **Your details:** at `/portal/details` investors ask for changes to their email, phone or
   bank details. Nothing changes until a Master Admin approves it, on the investor's page or
   under Investors > **Change requests** (`/admin/investors/requests`). Bank details are
@@ -280,6 +284,76 @@ Until the first save, the starting rates in `src/lib/config.ts`
   `CRON_SECRET`; a sent-log makes sure nothing is sent twice. Investors can switch these
   emails off in the portal; they never include the rate. Settings > Email shows the last
   run and has **Run now**.
+
+## Investor documents and BoldSign (Master Admin)
+
+Each investor signs documents with [BoldSign](https://boldsign.com). You do the signing in
+BoldSign's website; the app makes the documents, keeps the signed copies with the investor
+and shows where each one stands. There is no BoldSign API connection, so nothing is sent
+automatically.
+
+**What the app makes.** On an investor's page, the **Signing** section lists:
+
+- **Investment Agreement**, one per investment. Filled in with the investor's name and
+  contact details, the amount, investment date, earnings start date, term, maturity date,
+  payout frequency and type, and the full payout schedule. The earnings rate is not
+  printed (investors never see it); set `showEarningsRate` to `true` in the template to
+  print it.
+- **Investor Acknowledgment and Consent**, one per investor. Risk, accuracy of
+  information, privacy, electronic communications, bank details and tax information, with
+  a list of their investments.
+
+The PDF is made fresh from the data on file each time you download it, so download it again
+after any change. The investor's address is not stored in the app: the PDF has a blank
+Address line for the investor to fill in while signing.
+
+**The four steps** (shown under each document on the investor's page):
+
+1. **Download the PDF.** Select **Download PDF to sign**. The status becomes **Prepared**.
+2. **Send it in BoldSign.** In BoldSign, start a new request to send a document for
+   signature and upload the PDF.
+   - Add the investor as the signer, using the name and email shown in the panel (it has
+     Copy buttons). The investor needs an email address on their page first.
+   - For an agreement, add yourself as a second signer for the company and put the
+     investor first in the signing order.
+   - Place the fields on the PDF: for the investor a **Signature** and a **Date signed**
+     on the signature block at the end, and a required **Text box** on the blank Address
+     line near the top; for the company a **Signature**, a **Date signed** and a **Text
+     box** for the signer's name.
+   - Send it. Back in the app, pick the date and select **Mark as sent**. This is
+     optional and only sets the status to **Sent for signature**.
+3. **Download the signed PDF.** When BoldSign shows the document as Completed, download
+   the signed PDF. Also download the audit trail (BoldSign calls it the certificate of
+   completion), which records who signed, when and from where.
+4. **Upload it here.** In the panel, choose the file, say whether it is the signed
+   document or the audit trail, and select **Upload signed PDF**. The status becomes
+   **Signed on file**. The file is kept in the document vault with type **Signed
+   agreement** (the audit trail is a **Certificate**), shown under **Documents** with
+   **View** and **Download**, and the investor can download it under **Your documents** in
+   the portal. Signed uploads do not email the investor, because BoldSign already sends
+   them their copy.
+
+Status rules: **Not started** until the PDF is downloaded, **Prepared** after that,
+**Sent for signature** once you mark it sent, **Signed on file** while a signed PDF is
+stored. Deleting the signed PDF from Documents takes the status back to Sent or Prepared.
+
+**The wording.** The text of both documents and the company details are in
+`src/lib/agreement-template.ts`. Before the first real use, replace the placeholders in
+`AGREEMENT_SETTINGS` (company name, address, governing state; the Signing section shows a
+yellow note until you do) and have your attorney review the clauses. This is a starting
+template, not legal advice. Changes apply to PDFs downloaded afterwards; documents already
+signed stay as they were. Names with letters outside Western European alphabets print with
+a "?" in the PDF; correct the name in BoldSign before sending.
+
+**Audit log.** Generating a document, marking it sent, uploading a signed file, and viewing
+or downloading a stored file are recorded under Investors (`investor.signing_*`,
+`investor.signed_document_uploaded`, `investor.document_viewed`).
+
+**Adding the BoldSign API later.** Steps 2 and 3 are the only ones that touch BoldSign
+(`SendStep` and `CollectStep` in `src/components/admin/investors/SigningPanel.tsx`). An API
+integration would send the generated PDF itself, and a webhook would store the signed PDF
+with the same `addDocument` call (type `signed-agreement`, same `signingKey`); the PDF
+generation, the vault and the statuses stay as they are.
 
 ## Dashboard
 

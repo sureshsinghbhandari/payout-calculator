@@ -12,9 +12,10 @@ import { downloadHeaders, getDocument, openDocumentFile } from "@/lib/server/doc
  * Downloads one of an investor's documents (Master Admin), streamed from the
  * private Blob store as an attachment.
  *
- * GET /admin/investors/<id>/documents/<document id>
+ * GET /admin/investors/<id>/documents/<document id>          (download)
+ * GET /admin/investors/<id>/documents/<document id>?view=1   (shown in the browser tab)
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string; documentId: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string; documentId: string }> }) {
   await connection();
   const admin = await requireAdminPermission("investors.manage");
   if (!admin) redirect("/admin");
@@ -34,14 +35,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
   if (!doc || !investor || !file) return notFound();
 
+  const view = request.nextUrl.searchParams.get("view") === "1";
   recordAudit({
     actor: adminActor(admin),
     category: "investor",
-    action: "investor.document_downloaded",
-    summary: `Downloaded the document "${doc.title}" of investor ${investor.name} (${investor.username})`,
+    action: view ? "investor.document_viewed" : "investor.document_downloaded",
+    summary: `${view ? "Viewed" : "Downloaded"} the document "${doc.title}" of investor ${investor.name} (${investor.username})`,
     target: { type: "investor", id: investor.id, label: `${investor.name} (${investor.username})` },
   });
-  return new Response(file.stream, { headers: downloadHeaders(doc, file.size) });
+  return new Response(file.stream, { headers: downloadHeaders(doc, file.size, { inline: view }) });
 }
 
 function notFound(): Response {

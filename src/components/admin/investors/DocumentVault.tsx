@@ -1,6 +1,5 @@
 "use client";
 
-import { upload } from "@vercel/blob/client";
 import { useId, useState, useTransition } from "react";
 import { deleteDocumentAction, registerDocumentAction, type DocumentActionResult } from "@/app/admin/investors/document-actions";
 import {
@@ -10,10 +9,12 @@ import {
   formatFileSize,
   kindFromFileName,
   MAX_DOCUMENT_BYTES,
+  UPLOADABLE_DOCUMENT_TYPES,
   type PublicDocument,
 } from "@/lib/documents";
 import { formatTimestamp } from "./fields";
 import { dangerButton, errorNotice, inputClass, primaryButton, successNotice, textLink } from "./ui";
+import { uploadInvestorFile } from "./upload-file";
 
 interface Props {
   investorId: string;
@@ -39,10 +40,6 @@ export function DocumentVault({ investorId, investorName, uploadFolder, document
       )}
     </div>
   );
-}
-
-function randomHex(bytes: number): string {
-  return Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function UploadForm({ investorId, investorName, uploadFolder }: Omit<Props, "documents">) {
@@ -77,14 +74,9 @@ function UploadForm({ investorId, investorName, uploadFolder }: Omit<Props, "doc
     setProgress(0);
     setBusy("uploading");
     try {
-      const pathname = `${uploadFolder}${randomHex(16)}.${DOCUMENT_KINDS[kind].extension}`;
+      let pathname: string;
       try {
-        await upload(pathname, file, {
-          access: "private",
-          handleUploadUrl: `/admin/investors/${encodeURIComponent(investorId)}/documents/upload`,
-          contentType: DOCUMENT_KINDS[kind].contentType,
-          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
-        });
+        pathname = await uploadInvestorFile({ investorId, uploadFolder, file, kind, onProgress: setProgress });
       } catch (error) {
         console.error("Uploading a document failed", error);
         setResult({ ok: false, message: "The file could not be uploaded. Check your connection and try again." });
@@ -143,9 +135,9 @@ function UploadForm({ investorId, investorName, uploadFolder }: Omit<Props, "doc
             aria-describedby={errors.type ? `${ids.type}-error` : undefined}
             className={inputClass(errors.type)}
           >
-            {Object.entries(DOCUMENT_TYPE_LABELS).map(([value, label]) => (
+            {UPLOADABLE_DOCUMENT_TYPES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {DOCUMENT_TYPE_LABELS[value]}
               </option>
             ))}
           </select>
@@ -220,17 +212,27 @@ function DocumentRow({ investorId, doc }: { investorId: string; doc: PublicDocum
         )}
       </div>
       <div className="flex shrink-0 items-center gap-4">
-        <a
-          href={`/admin/investors/${encodeURIComponent(investorId)}/documents/${encodeURIComponent(doc.id)}`}
-          className={`text-sm ${textLink}`}
-        >
-          Download<span className="sr-only"> {doc.title}</span>
-        </a>
+        <DocumentLinks investorId={investorId} doc={doc} />
         <button type="button" onClick={handleDelete} disabled={pending} className={dangerButton}>
           {pending ? "Deleting…" : "Delete"}
           <span className="sr-only"> {doc.title}</span>
         </button>
       </div>
     </li>
+  );
+}
+
+/** View (opens in a new tab) and Download links for one stored document. */
+export function DocumentLinks({ investorId, doc }: { investorId: string; doc: PublicDocument }) {
+  const href = `/admin/investors/${encodeURIComponent(investorId)}/documents/${encodeURIComponent(doc.id)}`;
+  return (
+    <>
+      <a href={`${href}?view=1`} target="_blank" rel="noopener" className={`text-sm ${textLink}`}>
+        View<span className="sr-only"> {doc.title} (opens in a new tab)</span>
+      </a>
+      <a href={href} className={`text-sm ${textLink}`}>
+        Download<span className="sr-only"> {doc.title}</span>
+      </a>
+    </>
   );
 }
