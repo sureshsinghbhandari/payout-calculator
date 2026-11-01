@@ -36,7 +36,8 @@ Earnings rates are never shown to visitors or investors.
 | --- | --- |
 | `src/lib/config.ts` | Defaults: starting rates, amounts, terms, form defaults, business-day offset |
 | `src/lib/payout.ts` | Calculation engine, investment-date and rate validation |
-| `src/lib/dates.ts` | Date helpers and business days (Monday to Friday) |
+| `src/lib/dates.ts` | Date helpers and business days (Monday to Friday, holidays excluded) |
+| `src/lib/holidays.ts` | US federal holidays, any year, with weekend-observed shifting |
 | `src/lib/scenarios.ts` | Comparison scenarios, and removing rates from results |
 | `src/lib/rates.ts` | Rate table validation and the stored rates format |
 | `src/lib/quote.ts` | Server-side validation of calculation requests |
@@ -56,9 +57,11 @@ Earnings rates are never shown to visitors or investors.
 - **Defaults:** $100,000, 2 years, Yearly payouts, Earnings Only, invested today. Reset
   returns to these.
 - **Planned investment date:** earnings start on the next business day after the
-  planned investment date. Business days are Monday to Friday; public holidays are not taken into account.
-  Payouts then fall every 3, 6 or 12 months, counted from the earnings start date, and
-  are not moved if they land on a weekend.
+  planned investment date. Business days are Monday to Friday, and skip the 11 US federal
+  holidays (`src/lib/holidays.ts`), with the standard rule that a holiday landing on a
+  Saturday is observed the preceding Friday and one landing on a Sunday is observed the
+  following Monday. Payouts then fall every 3, 6 or 12 months, counted from the earnings
+  start date, and are not moved if they land on a weekend or a holiday.
 - **Rates:** each payout term has its own annual rate. The browser never receives
   the rates. When a visitor clicks Calculate Payout, the server reads the current rates,
   calculates the schedule and the comparison scenarios, and sends back only the results.

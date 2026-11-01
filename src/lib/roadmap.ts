@@ -389,10 +389,10 @@ export const ROADMAP: RoadmapItem[] = [
     title: "Bank holiday calendar",
     category: "operations",
     priority: "later",
-    status: "planned",
-    fromYou: "Which country's public holidays to skip (for example US federal holidays).",
+    status: "done",
     description:
       "Skip public holidays when counting business days, and optionally move payouts that land on weekends or holidays.",
+    outcome: "The earnings start date now skips the 11 US federal holidays as well as weekends (src/lib/holidays.ts), with the standard weekend-observed shifting. Scheduled payout dates are still never moved for weekends or holidays, by design.",
   },
   {
     id: "configurable-products",

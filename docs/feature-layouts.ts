@@ -224,6 +224,21 @@ Investors
    seminar-2026-10           4         1         25%     [ View inquiries ]
      link  https://<site>/inquiries?source=seminar-2026-10  [ Copy ] [QR]`,
 
+  "holiday-calendar": `Calculator, planned investment date near a holiday
+------------------------------------------------------------------
+ Investment amount        [ $100,000          v ]
+ Planned investment date  [ 2026-12-24           ]   (Thu, before Christmas)
+ ...
+ Your payout schedule
+  #   Payout date    ...
+  1   2026-12-28     ...   <- earnings start skips Fri Dec 25 (holiday)
+                               and the weekend, landing on Monday
+
+ Excel export and the on-page note both say:
+ "...counting Monday to Friday as business days and skipping
+  US federal holidays. ... Payout dates are not moved for
+  weekends or holidays."`,
+
   "privacy": `/privacy (linked from the inquiry form and the portal footer)
 ------------------------------------------------------------------
  Privacy Notice

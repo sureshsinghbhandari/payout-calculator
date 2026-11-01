@@ -6,7 +6,7 @@ The same list is in the app under **Settings > Upcoming features** (Master Admin
 This file is generated from `src/lib/roadmap.ts`. To change it, edit that file and run
 `npm run docs:features`.
 
-**31 done · 10 in progress · 12 pending** · 22 [waiting on you](#waiting-on-you)
+**32 done · 10 in progress · 11 pending** · 21 [waiting on you](#waiting-on-you)
 
 Priority: **Now** is being worked on or needed first, **Next** comes after that, **Later** is for the future.
 
@@ -33,38 +33,38 @@ Priority: **Now** is being worked on or needed first, **Next** comes after that,
 | 15 | [Company branding](#branding) | ⏳ Pending | Next | Platform and experience | Your logo, colours and contact details. |
 | 16 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | Later | Email and messaging | A messaging provider account (for example Twilio) and its keys, and customer consent. |
 | 17 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Later | Payouts and operations | Confirm Monthly should be offered, and the monthly rate. |
-| 18 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Later | Payouts and operations | Which country's public holidays to skip (for example US federal holidays). |
-| 19 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
-| 20 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 21 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
-| 22 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
-| 23 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
-| 24 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
-| 25 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
-| 26 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
-| 27 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
-| 28 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
-| 29 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
-| 30 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
-| 31 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
-| 32 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
-| 33 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
-| 34 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
-| 35 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
-| 36 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
-| 37 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
-| 38 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
-| 39 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
-| 40 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
-| 41 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
-| 42 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
-| 43 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
-| 44 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
-| 45 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
-| 46 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
-| 47 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
-| 48 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
-| 49 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | Later | Security and compliance | An identity verification provider account, and advice on the rules that apply. |
+| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | Later | Security and compliance | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 20 | [More languages](#languages) | ⏳ Pending | Later | Platform and experience | Which languages, and someone to check the translations. |
+| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Later | Platform and experience | Your go-ahead for browser checks. |
+| 22 | [Meetings booked in a call](#meeting-info) | ✅ Done | Now | Sales and inquiries | — |
+| 23 | [New inquiry notifications](#inquiry-notifications) | ✅ Done | Now | Sales and inquiries | — |
+| 24 | [Inquiries from the calculator](#visitor-inquiries) | ✅ Done | Now | Sales and inquiries | — |
+| 25 | [How did you find us?](#how-found-us) | ✅ Done | Now | Sales and inquiries | — |
+| 26 | [Inquiry statuses, delete and restore](#inquiry-statuses) | ✅ Done | Now | Sales and inquiries | — |
+| 27 | [Convert an inquiry into an investor](#convert-to-investor) | ✅ Done | Now | Sales and inquiries | — |
+| 28 | [Investor portal](#investor-portal) | ✅ Done | Now | Investor portal | — |
+| 29 | [Investor logins](#investor-logins) | ✅ Done | Now | Investor portal | — |
+| 30 | [Payout calculator](#payout-calculator) | ✅ Done | Now | Payouts and operations | — |
+| 31 | [Earnings rates managed by Master Admins](#rates-management) | ✅ Done | Now | Payouts and operations | — |
+| 32 | [Employees and roles](#admin-roles) | ✅ Done | Now | Security and compliance | — |
+| 33 | [Audit log](#audit-log) | ✅ Done | Now | Security and compliance | — |
+| 34 | [Seminar presentation](#seminar-deck) | ✅ Done | Now | Platform and experience | — |
+| 35 | [Demo data for testing](#demo-data) | ✅ Done | Now | Platform and experience | — |
+| 36 | [Assign inquiries and follow-up dates](#assign-inquiries) | ✅ Done | Next | Sales and inquiries | — |
+| 37 | [Notes and call log on inquiries](#inquiry-notes) | ✅ Done | Next | Sales and inquiries | — |
+| 38 | [Lead source and seminar tracking](#lead-source) | ✅ Done | Next | Sales and inquiries | — |
+| 39 | [Search, filters and export](#search-export) | ✅ Done | Next | Sales and inquiries | — |
+| 40 | [Statements and downloads](#statements) | ✅ Done | Next | Investor portal | — |
+| 41 | [Record actual payouts](#record-payments) | ✅ Done | Next | Payouts and operations | — |
+| 42 | [Payout calendar](#payout-calendar) | ✅ Done | Next | Payouts and operations | — |
+| 43 | [Two-step sign-in](#two-factor) | ✅ Done | Next | Security and compliance | — |
+| 44 | [Dashboard](#dashboard) | ✅ Done | Next | Reports and insights | — |
+| 45 | [Pipeline board](#pipeline-board) | ✅ Done | Later | Sales and inquiries | — |
+| 46 | [Document vault](#documents) | ✅ Done | Later | Investor portal | — |
+| 47 | [More investments and renewals](#multiple-investments) | ✅ Done | Later | Investor portal | — |
+| 48 | [Profile and bank detail updates](#profile-requests) | ✅ Done | Later | Investor portal | — |
+| 49 | [Bank holiday calendar](#holiday-calendar) | ✅ Done | Later | Payouts and operations | — |
 | 50 | [Amounts and terms in settings](#configurable-products) | ✅ Done | Later | Payouts and operations | — |
 | 51 | [Sign-in alerts](#sign-in-alerts) | ✅ Done | Later | Security and compliance | — |
 | 52 | [Audit log export](#audit-export) | ✅ Done | Later | Reports and insights | — |
@@ -96,11 +96,10 @@ Everything else in the list can be built without your help.
 | 15 | [Company branding](#branding) | ⏳ Pending | Your logo, colours and contact details. |
 | 16 | [SMS and WhatsApp messages](#sms-whatsapp) | ⏳ Pending | A messaging provider account (for example Twilio) and its keys, and customer consent. |
 | 17 | [Monthly payout term](#monthly-payouts) | ⏳ Pending | Confirm Monthly should be offered, and the monthly rate. |
-| 18 | [Bank holiday calendar](#holiday-calendar) | ⏳ Pending | Which country's public holidays to skip (for example US federal holidays). |
-| 19 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
-| 20 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
-| 21 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
-| 22 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
+| 18 | [Identity checks (KYC)](#kyc) | ⏳ Pending | An identity verification provider account, and advice on the rules that apply. |
+| 19 | [E-signature of agreements](#e-signature) | ⏳ Pending | An e-signature provider account (for example DocuSign or Dropbox Sign) and its keys. |
+| 20 | [More languages](#languages) | ⏳ Pending | Which languages, and someone to check the translations. |
+| 21 | [Accessibility review](#accessibility-review) | ⏳ Pending | Your go-ahead for browser checks. |
 
 <a id="app-map"></a>
 
@@ -519,18 +518,6 @@ Optional text or WhatsApp messages for acknowledgements and payout notices.
 Add Monthly alongside Quarterly, Half-Yearly and Yearly, with its own rate.
 
 **Needs from you:** Confirm Monthly should be offered, and the monthly rate.
-
-[Back to the table](#summary)
-
-<a id="holiday-calendar"></a>
-
-### Bank holiday calendar
-
-**Status:** ⏳ Pending · **Priority:** Later · **Area:** Payouts and operations
-
-Skip public holidays when counting business days, and optionally move payouts that land on weekends or holidays.
-
-**Needs from you:** Which country's public holidays to skip (for example US federal holidays).
 
 [Back to the table](#summary)
 
@@ -1288,6 +1275,37 @@ Portal > Your details                  Admin > Investor page
  Your requests                           Investors > Change requests
    Bank · Pending · [ Withdraw ]          (all pending + recent decisions)
    Phone · Approved Oct 12
+```
+
+[Back to the table](#summary)
+
+<a id="holiday-calendar"></a>
+
+### Bank holiday calendar
+
+**Status:** ✅ Done · **Priority:** Later · **Area:** Payouts and operations
+
+Skip public holidays when counting business days, and optionally move payouts that land on weekends or holidays.
+
+**Outcome:** The earnings start date now skips the 11 US federal holidays as well as weekends (src/lib/holidays.ts), with the standard weekend-observed shifting. Scheduled payout dates are still never moved for weekends or holidays, by design.
+
+**Layout** (a sketch, not a screenshot):
+
+```text
+Calculator, planned investment date near a holiday
+------------------------------------------------------------------
+ Investment amount        [ $100,000          v ]
+ Planned investment date  [ 2026-12-24           ]   (Thu, before Christmas)
+ ...
+ Your payout schedule
+  #   Payout date    ...
+  1   2026-12-28     ...   <- earnings start skips Fri Dec 25 (holiday)
+                               and the weekend, landing on Monday
+
+ Excel export and the on-page note both say:
+ "...counting Monday to Friday as business days and skipping
+  US federal holidays. ... Payout dates are not moved for
+  weekends or holidays."
 ```
 
 [Back to the table](#summary)
