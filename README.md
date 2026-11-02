@@ -425,7 +425,7 @@ private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
 refreshes them at **4:01 PM Eastern** after the market closes
 (`/api/cron/trading-snapshots`; `vercel.json` lists both 20:01 and 21:01 UTC on weekdays
 and the route runs only during the 4 PM hour Eastern, which covers daylight saving). On Vercel's free Hobby plan a cron job runs at some point inside its hour, not at the minute, so the copy is saved between 4:00 and 5:00 PM Eastern; Pro runs it at 4:01 PM sharp.
-When the trading app, its tunnel or your PC is off, the page shows the saved copy under a
+To fill the copies from the start (all months and today), run `npm run trading:sync` while the trading app is running; it reads from `http://localhost:3000` (or `--url`), takes the token from that app's own `.env`, and saves into the production folder (`--env local` for the local one). Run it again any time. When the trading app, its tunnel or your PC is off, the page shows the saved copy under a
 yellow notice with the time it was saved. A month that ended before its copy was saved is
 final and is shown without calling the trading app. Today's positions fall back only to a
 copy saved the same day. Needs `BLOB_READ_WRITE_TOKEN` and `CRON_SECRET`; on a Vercel plan

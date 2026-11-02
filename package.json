@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "seed:demo": "node --env-file=.env.local --import tsx scripts/seed-demo.ts",
+    "trading:sync": "node --conditions react-server --import tsx scripts/sync-trading.mts",
     "docs:features": "tsx docs/build-features.ts"
   },
   "dependencies": {

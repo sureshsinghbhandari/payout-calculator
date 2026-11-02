@@ -525,7 +525,7 @@ export const ROADMAP: RoadmapItem[] = [
     description:
       "A read-only page showing figures from a separate trading app (tradiersuinew) on the owner's own machine, fetched live over its data API: end-of-day KPI tiles and ranked strategies, the month sheet of its Excel export (step month by month), and the positions expiring or closing today with their legs, distance from the spot now and at entry, current P/L and a payoff graph. Nothing is written there. A copy of each account's figures is saved here after every market close (4:01 PM Eastern), so past data still shows when that app is off.",
     outcome: "Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views are served by that app (the contract is in docs/trading-dashboard-api.md). If it is off, the last saved copy is shown with a notice.",
-    fromYou: "TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json.",
+    fromYou: "TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Run npm run trading:sync while that app is running to fill the saved copies (done once on 2026-11-01), then push and redeploy so the page uses them. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json.",
   },
   {
     id: "audit-export",

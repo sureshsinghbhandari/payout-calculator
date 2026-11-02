@@ -128,7 +128,7 @@ export async function loadMonth(slug: string, month: string | null): Promise<Loa
   if (saved && saved.data.month) {
     return { ok: true, value: await withFreshMonthList(slug, saved.data), stale: { savedAt: saved.savedAt, reason: "unreachable" } };
   }
-  return live;
+  return withNoCopyNote(live);
 }
 
 /** A saved month's list of months can miss newer months; add the ones the latest saved current month knows about, and the current month itself. */
@@ -155,20 +155,36 @@ export async function loadToday(slug: string): Promise<Loaded<TradingToday>> {
   return live;
 }
 
-async function fallback<T>(slug: string, name: string, failed: Extract<TradingResult<unknown>, { ok: false }>): Promise<Loaded<T>> {
+type Failure = Extract<TradingResult<unknown>, { ok: false }>;
+
+/** The outage message plus a note that there is no saved copy to show instead (yet). */
+function withNoCopyNote(failed: Failure): Failure {
+  return {
+    ...failed,
+    error: `${failed.error} No saved copy exists yet. Start the trading app once and run npm run trading:sync in this project, or open this page while the app is reachable, to save one.`,
+  };
+}
+
+async function fallback<T>(slug: string, name: string, failed: Failure): Promise<Loaded<T>> {
   // Only an outage (no answer) falls back; a refused token or a missing tab must be seen as such.
   if (failed.status !== null) return failed;
   const saved = await readSnapshot<T>(slug, name);
   if (saved) return { ok: true, value: saved.data, stale: { savedAt: saved.savedAt, reason: "unreachable" } };
-  return failed;
+  return withNoCopyNote(failed);
 }
 
 /**
  * Pulls and saves the numbers of one account (Overview, the current and the
  * previous month) without showing anything. Used by the daily job after the
- * close. Returns what could and could not be saved.
+ * close. With `everything`, also every other month the trading app has and
+ * today's positions: used by the one-time sync (npm run trading:sync) that
+ * fills the saved copies from the start. Returns what could and could not be
+ * saved.
  */
-export async function refreshSnapshots(slug: string): Promise<{ slug: string; saved: string[]; failed: string[] }> {
+export async function refreshSnapshots(
+  slug: string,
+  options: { everything?: boolean } = {},
+): Promise<{ slug: string; saved: string[]; failed: string[] }> {
   const saved: string[] = [];
   const failed: string[] = [];
   const current = currentMonthKey();
@@ -181,12 +197,31 @@ export async function refreshSnapshots(slug: string): Promise<{ slug: string; sa
     saved.push("overview");
   } else failed.push("overview");
 
-  for (const key of [current, previous]) {
+  const queued = new Set<string>([current, previous]);
+  const pending = [current, previous];
+  while (pending.length > 0) {
+    const key = pending.shift() as string;
     const sheet = await getTradingMonth(slug, key);
     if (sheet.ok && sheet.value.month) {
       await writeSnapshot(slug, `month-${sheet.value.month.month}`, sheet.value);
       saved.push(`month-${sheet.value.month.month}`);
+      if (options.everything) {
+        for (const other of sheet.value.month.available ?? []) {
+          if (isMonthKey(other) && !queued.has(other)) {
+            queued.add(other);
+            pending.push(other);
+          }
+        }
+      }
     } else failed.push(`month-${key}`);
+  }
+
+  if (options.everything) {
+    const today = await getTradingToday(slug);
+    if (today.ok) {
+      await writeSnapshot(slug, "today", today.value);
+      saved.push("today");
+    } else failed.push("today");
   }
   return { slug, saved, failed };
 }
