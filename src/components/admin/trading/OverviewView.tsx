@@ -120,19 +120,32 @@ function RateBar({ value }: { value: number | null }) {
   );
 }
 
-const RANK_BADGE = ["bg-amber-100 text-amber-800", "bg-slate-200 text-slate-700", "bg-orange-100 text-orange-800"];
+/** Strategies in the given name order (the month sheet's column order); any not named keep their ranked order at the end. */
+function inColumnOrder(strategies: TradingStrategy[], order: string[]): TradingStrategy[] {
+  if (order.length === 0) return strategies;
+  const position = (name: string) => {
+    const i = order.indexOf(name);
+    return i === -1 ? order.length : i;
+  };
+  return [...strategies].sort((a, b) => position(a.name) - position(b.name) || a.rank - b.rank);
+}
 
 /**
  * The Overview view of the Trading dashboard: the other app's Dashboard KPI
  * tiles (two rows of tinted tiles, laid out like its Excel export) and its
- * ranked Strategy Stats rows for one tab (account). Read-only.
+ * Strategy Stats rows for one tab (account), in the same order as the strategy
+ * columns of the month sheet and the Excel export (`columnOrder`); the Rank
+ * column still shows each one's rank by net P&L. Read-only.
  */
 export function OverviewView({
   data,
+  columnOrder = [],
 }: {
   data: { tab: TradingTab; generatedAt: string; asOf: string | null; kpi?: TradingKpi; strategies?: TradingStrategy[] };
+  columnOrder?: string[];
 }) {
-  const { tab, kpi, strategies } = data;
+  const { tab, kpi } = data;
+  const strategies = data.strategies && inColumnOrder(data.strategies, columnOrder);
   const m = (v: number | null) => money(v, tab.currency);
   const [top, bottom] = kpi ? buildTiles(kpi, tab.currency) : [[], []];
 
@@ -195,11 +208,7 @@ export function OverviewView({
                   {strategies.map((s) => (
                     <tr key={s.rank} className="border-b border-slate-100 last:border-b-0 odd:bg-white even:bg-slate-50/60">
                       <td className="whitespace-nowrap px-4 py-3 sm:pl-6">
-                        <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                            RANK_BADGE[s.rank - 1] ?? "bg-slate-100 text-slate-600"
-                          }`}
-                        >
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
                           {s.rank}
                         </span>
                       </td>

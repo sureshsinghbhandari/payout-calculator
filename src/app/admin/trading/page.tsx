@@ -185,12 +185,14 @@ function SavedCopyNotice({ stale }: { stale: NonNullable<Extract<Loaded<unknown>
 }
 
 async function OverviewSection({ slug }: { slug: string }) {
-  const result = await loadOverview(slug);
+  // The month sheet gives the strategy order used everywhere else (and in the Excel export).
+  const [result, sheet] = await Promise.all([loadOverview(slug), loadMonth(slug, null)]);
   if (!result.ok) return <ErrorCard message={result.error} />;
+  const columnOrder = sheet.ok ? (sheet.value.month?.columns.map((column) => column.name) ?? []) : [];
   return (
     <>
       {result.stale && <SavedCopyNotice stale={result.stale} />}
-      <OverviewView data={result.value} />
+      <OverviewView data={result.value} columnOrder={columnOrder} />
     </>
   );
 }
