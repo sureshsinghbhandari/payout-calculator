@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
 import { money, number, signedMoney } from "./format";
+import { canDrawPayoff } from "./payoff-legs";
 
 /** The subset of a leg the payoff needs (plain and serialisable, so a server component can pass it). */
 export interface PayoffLeg {
@@ -29,12 +30,6 @@ export interface PayoffDialogProps {
 }
 
 const SAMPLES = 200;
-
-/** True when the at-expiration payoff can be drawn: at least one open leg, every open leg with a finite strike and entry mid. */
-export function canDrawPayoff(legs: PayoffLeg[]): boolean {
-  const open = legs.filter((leg) => leg.status === "open");
-  return open.length > 0 && open.every((leg) => Number.isFinite(leg.strike) && leg.entryMid !== null && Number.isFinite(leg.entryMid));
-}
 
 /** The position's P/L (in currency, all open legs) if the underlying settles at `price`. */
 function pnlAt(legs: PayoffLeg[], multiplier: number, price: number): number {

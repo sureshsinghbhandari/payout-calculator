@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { TradingDistance, TradingDistanceSide, TradingLeg, TradingToday, TradingTodayRow } from "@/lib/server/trading-api";
 import { AutoRefresh } from "./AutoRefresh";
 import { money, number, percent, pnlClass, sheetDate, signedMoney, stepLabel } from "./format";
-import { canDrawPayoff, PayoffDialog } from "./PayoffDialog";
+import { PayoffDialog } from "./PayoffDialog";
+import { canDrawPayoff } from "./payoff-legs";
 
 /** "14:05" in US Eastern for an ISO timestamp; empty when it is not a date. */
 const easternClock = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/New_York" });
