@@ -4,8 +4,8 @@ import { money, monthShort, monthTitle, percent, pnlClass, sheetDate, whole } fr
 
 /**
  * One month of trading results laid out like the Excel month sheet of the
- * other app ("October 2026"): a title bar, the summary rows (Returns, Capital
- * Reqd, ROI%, Underlying, Profit Days, Loss Days) per strategy column plus a
+ * other app ("October 2026"): a title bar, the summary rows (Capital
+ * Required, Returns, ROI%, Underlying, Profit Days, Loss Days) per strategy column plus a
  * TOTAL column, then one row per trading day with a heat colour per strategy
  * cell, the day's TOTAL and the running CUMULATIVE. Above it, previous / next
  * month arrows and a pill list of every month that has a sheet.
@@ -143,6 +143,18 @@ export function MonthSheet({ month, tab, hrefFor }: { month: TradingMonth; tab: 
             <thead>
               <tr className="border-b border-slate-200">
                 <th scope="row" className={LABEL_CELL}>
+                  Capital Required
+                </th>
+                {summary.capital.map((value, i) => (
+                  <td key={columns[i]?.name ?? i} className={`${SUMMARY_CELL} text-slate-900`}>
+                    {value === null ? "" : m(value)}
+                  </td>
+                ))}
+                <td className={`${SUMMARY_CELL} text-slate-900`}>{summary.total.capital === null ? "" : m(summary.total.capital)}</td>
+                <td className="bg-[#F1F5F9]" />
+              </tr>
+              <tr className="border-b border-slate-200">
+                <th scope="row" className={LABEL_CELL}>
                   Returns
                 </th>
                 {summary.returns.map((value, i) => (
@@ -151,18 +163,6 @@ export function MonthSheet({ month, tab, hrefFor }: { month: TradingMonth; tab: 
                   </td>
                 ))}
                 <td className={`${SUMMARY_CELL} ${summary.total.returns < 0 ? "text-red-700" : "text-slate-900"}`}>{m(summary.total.returns)}</td>
-                <td className="bg-[#F1F5F9]" />
-              </tr>
-              <tr className="border-b border-slate-200">
-                <th scope="row" className={LABEL_CELL}>
-                  Capital Reqd
-                </th>
-                {summary.capital.map((value, i) => (
-                  <td key={columns[i]?.name ?? i} className={`${SUMMARY_CELL} text-slate-900`}>
-                    {value === null ? "" : m(value)}
-                  </td>
-                ))}
-                <td className={`${SUMMARY_CELL} text-slate-900`}>{summary.total.capital === null ? "" : m(summary.total.capital)}</td>
                 <td className="bg-[#F1F5F9]" />
               </tr>
               <tr className="border-b border-slate-200">
@@ -181,7 +181,7 @@ export function MonthSheet({ month, tab, hrefFor }: { month: TradingMonth; tab: 
               </tr>
               <tr className="border-b border-slate-200">
                 <td colSpan={columnCount} className="bg-white px-3 py-1.5 text-left text-xs italic text-slate-600">
-                  All figures in {tab.currency}, net of broker charges; each day is the trades closed that day. Capital Reqd is the
+                  All figures in {tab.currency}, net of broker charges; each day is the trades closed that day. Capital Required is the
                   strategy&apos;s Funds allocated.
                 </td>
               </tr>
