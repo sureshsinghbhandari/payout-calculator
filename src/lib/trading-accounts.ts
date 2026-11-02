@@ -5,8 +5,8 @@
  * add a line here to include another one.
  */
 export const TRADING_ACCOUNTS = [
-  { slug: "simulator", label: "Simulator" },
-  { slug: "tradier-sb-live", label: "Tradier_SB Live" },
+  { slug: "simulator", label: "Ashwin" },
+  { slug: "tradier-sb-live", label: "Suresh_Live" },
 ] as const;
 
 export type TradingAccount = (typeof TRADING_ACCOUNTS)[number];

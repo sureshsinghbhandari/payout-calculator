@@ -464,7 +464,7 @@ Field rules:
 ## Acceptance checklist
 
 - [ ] `npm run test:server` passes.
-- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/data?sections=month&month=2026-10"` returns `sections: ["month"]` and a `month` object whose `days` / `summary` match the `October 2026` sheet of `Simulator - EOD DATA.xlsx` (compare three cells by hand: a strategy's Returns, the TOTAL Returns, the last CUMULATIVE).
+- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/data?sections=month&month=2026-10"` returns `sections: ["month"]` and a `month` object whose `days` / `summary` match the `October 2026` sheet of `Ashwin - EOD DATA.xlsx` (compare three cells by hand: a strategy's Returns, the TOTAL Returns, the last CUMULATIVE).
 - [ ] The same URL without `&month=` returns the current month; `&month=2026-13` returns 400; `?sections=kpi,strategies,month` returns all three keys.
 - [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/today"` and `.../tab/tradier-sb-live/today` return the envelope with `date` = today (ET), `marketOpen`, `spot`, `rows` (during the session: `pnl.unrealized` and `distanceNow` filled for the condor rows; after the close: today's closed rows with `pnl.realized`), `note` null or a sentence.
 - [ ] `curl.exe -s -o NUL -w "%{http_code}" -H "x-forwarded-for: 203.0.113.7" -H "x-forwarded-host: x.ngrok-free.dev" -H "x-forwarded-proto: https" -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/today"` is 200 (the tunnel guard lets it through), while the same with `-X POST` is 403 or 405 and `GET .../tab/simulator/today/extra` is 403.

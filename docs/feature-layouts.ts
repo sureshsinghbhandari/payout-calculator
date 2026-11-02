@@ -262,11 +262,11 @@ Investors
 
   "trading-dashboard": `Settings > Trading dashboard
 ------------------------------------------------------------------
- Account  [Simulator] [Tradier_SB Live]
+ Account  [Ashwin] [Suresh_Live]
  View     [Overview] [Monthly sheet] [Today]
 
  Overview
- Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+ Ashwin · USD · Generated Oct 31, 2026, 11:55 AM EDT
 
  NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
  $12,340     $410        $3,120       58.2%            1.46

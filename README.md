@@ -418,7 +418,7 @@ Pick an **account** (Simulator, Tradier_SB Live; the list is `ACCOUNTS` in
   payoff icon that opens the at-expiration payoff curve. Refreshes itself every 30 seconds
   while the market is open.
 
-**Saved copies.** Only Simulator and Tradier_SB Live are shown and saved
+**Saved copies.** Only Ashwin and Suresh_Live are shown and saved
 (`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
 private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
 `month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a daily job

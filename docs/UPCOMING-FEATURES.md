@@ -372,18 +372,18 @@ A read-only page showing figures from a separate trading app (tradiersuinew) on 
 
 **Needs from you:** TRADING_API_URL, TRADING_API_TOKEN and BLOB_READ_WRITE_TOKEN are set in Vercel production; redeploy so CRON_SECRET and the daily save take effect. Run npm run trading:sync while that app is running to fill the saved copies (done once on 2026-11-01), then push and redeploy so the page uses them. Keep that app and its ngrok tunnel running at 4:01 PM Eastern, open Today on a trading day to check it, and confirm the Vercel plan runs the cron jobs in vercel.json.
 
-**Outcome:** Settings > Trading dashboard (Master Admin): pick the account (Simulator, Tradier_SB Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views are served by that app (the contract is in docs/trading-dashboard-api.md). If it is off, the last saved copy is shown with a notice.
+**Outcome:** Settings > Trading dashboard (Master Admin): pick the account (Ashwin, Suresh_Live) and the view (Overview, Monthly sheet, Today). The Monthly sheet and Today views are served by that app (the contract is in docs/trading-dashboard-api.md). If it is off, the last saved copy is shown with a notice.
 
 **Layout** (a sketch, not a screenshot):
 
 ```text
 Settings > Trading dashboard
 ------------------------------------------------------------------
- Account  [Simulator] [Tradier_SB Live]
+ Account  [Ashwin] [Suresh_Live]
  View     [Overview] [Monthly sheet] [Today]
 
  Overview
- Simulator · USD · Generated Oct 31, 2026, 11:55 AM EDT
+ Ashwin · USD · Generated Oct 31, 2026, 11:55 AM EDT
 
  NET P&L     LAST DAY    THIS MONTH   TRADE WIN RATE   PROFIT FACTOR
  $12,340     $410        $3,120       58.2%            1.46

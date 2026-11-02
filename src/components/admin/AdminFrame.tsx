@@ -13,7 +13,7 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
   return (
     <div className="flex min-h-full flex-col">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link
             href={user ? "/admin/inquiries" : "/admin"}
             className="min-w-0 truncate text-base font-semibold text-slate-900 hover:text-blue-900"
@@ -44,7 +44,7 @@ export function AdminFrame({ user, children }: { user: PublicAdmin | null; child
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-10">{children}</main>
     </div>
   );
 }
