@@ -179,7 +179,7 @@ function SavedCopyNotice({ stale }: { stale: NonNullable<Extract<Loaded<unknown>
     <p role="status" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
       {stale.reason === "final"
         ? `Closed month, shown from the copy saved ${when}.`
-        : `The trading app is unreachable. Showing the copy saved ${when}; it updates after each market close (4:01 PM Eastern) and whenever the app can be reached.`}
+        : `The trading app is unreachable. Showing the copy saved ${when}; it updates at 9:35 AM and 4:01 PM Eastern and whenever the app can be reached.`}
     </p>
   );
 }
@@ -207,6 +207,11 @@ async function MonthSection({ slug, month }: { slug: string; month: string | nul
   return (
     <>
       {result.stale && <SavedCopyNotice stale={result.stale} />}
+      {result.savedAt && (
+        <p className="mb-3 text-center text-xs text-slate-500">
+          Updated {formatTimestamp(result.savedAt)} · refreshed twice a day, at 9:35 AM and 4:01 PM Eastern.
+        </p>
+      )}
       <MonthSheet month={sheet} tab={result.value.tab} hrefFor={(m) => hrefFor({ tab: slug, view: "month", month: m })} />
     </>
   );

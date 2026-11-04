@@ -22,8 +22,12 @@ import {
  * copy is shown instead, marked with the time it was saved. Only the accounts
  * in lib/trading-accounts.ts are ever read or saved by the callers.
  *
- * A month that ended before its copy was saved cannot change any more, so
- * that copy is used without calling the other app at all. Today's positions
+ * The month sheets only change once the figures are final, so they are read
+ * from the saved copy and refreshed twice a day, at 9:35 AM and 4:01 PM
+ * Eastern (REFRESH_TIMES; the cron job does it, and a page view does it when
+ * a refresh time has passed and the copy is older). A month that ended before
+ * its copy was saved cannot change any more, so that copy is used without
+ * calling the other app at all. Today's positions
  * only fall back to a copy saved today: yesterday's open positions would
  * mislead.
  *
@@ -43,9 +47,9 @@ interface Snapshot<T> {
   data: T;
 }
 
-/** A read that may come from the saved copy: `stale` is set when the live app could not be reached. */
+/** A read that may come from the saved copy: `stale` is set when the live app could not be reached. `savedAt` is when the figures were last pulled from the trading app. */
 export type Loaded<T> =
-  | { ok: true; value: T; stale: null | { savedAt: string; reason: "unreachable" | "final" } }
+  | { ok: true; value: T; stale: null | { savedAt: string; reason: "unreachable" | "final" }; savedAt?: string }
   | { ok: false; error: string; status?: number | null };
 
 const pathFor = (slug: string, name: string) => `trading/${ENV_FOLDER}/${slug}/${name}.json`;
@@ -80,6 +84,41 @@ async function writeSnapshot<T>(slug: string, name: string, data: T): Promise<vo
   }
 }
 
+/** When the month sheets are refreshed, US Eastern, on weekdays: after the open, and just after the close. */
+export const REFRESH_TIMES = [
+  { hour: 9, minute: 35 },
+  { hour: 16, minute: 1 },
+] as const;
+
+const etParts = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/New_York" });
+
+/** The instant of `hour:minute` US Eastern on `day` (YYYY-MM-DD), whichever of EST / EDT applies. */
+function easternInstant(day: string, hour: number, minute: number): number {
+  const [y, mo, d] = day.split("-").map(Number);
+  for (const offset of [4, 5]) {
+    const guess = Date.UTC(y, mo - 1, d, hour + offset, minute);
+    const parts = Object.fromEntries(etParts.formatToParts(new Date(guess)).map((p) => [p.type, p.value]));
+    if (Number(parts.hour) === hour && Number(parts.minute) === minute) return guess;
+  }
+  return Date.UTC(y, mo - 1, d, hour + 5, minute);
+}
+
+/** The most recent scheduled refresh time (weekdays only) that is not after `now`. */
+export function lastScheduledRefresh(now: Date = new Date()): Date {
+  let best = 0;
+  for (let back = 0; back <= 5 && best === 0; back++) {
+    const day = easternDay(new Date(now.getTime() - back * 86_400_000).toISOString());
+    const [y, mo, d] = day.split("-").map(Number);
+    const weekday = new Date(Date.UTC(y, mo - 1, d)).getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+    for (const { hour, minute } of REFRESH_TIMES) {
+      const at = easternInstant(day, hour, minute);
+      if (at <= now.getTime() && at > best) best = at;
+    }
+  }
+  return new Date(best);
+}
+
 /** The current month (YYYY-MM) in US Eastern Time. */
 export function currentMonthKey(now: Date = new Date()): string {
   return easternDay(now.toISOString()).slice(0, 7);
@@ -102,31 +141,39 @@ export async function loadOverview(slug: string): Promise<Loaded<TradingTabData>
 
 /**
  * One month sheet. A past month whose copy was saved after the month ended is
- * final and served without calling the other app. Otherwise live first, saved
- * on success, the saved copy on failure. `month` null = the current month.
+ * final and served without calling the other app. Any other month is served
+ * from its saved copy until the next refresh time (9:35 AM / 4:01 PM Eastern)
+ * has passed; after that, live first, saved on success, the older saved copy
+ * on failure. `month` null = the current month.
  */
 export async function loadMonth(slug: string, month: string | null): Promise<Loaded<TradingTabData>> {
   const current = currentMonthKey();
   const wanted = isMonthKey(month) ? month : current;
+  const saved = await readSnapshot<TradingTabData>(slug, `month-${wanted}`);
+  const usable = saved && saved.data.month ? saved : null;
 
-  if (wanted < current) {
-    const saved = await readSnapshot<TradingTabData>(slug, `month-${wanted}`);
-    if (saved && currentMonthKey(new Date(saved.savedAt)) > wanted && saved.data.month) {
-      return { ok: true, value: await withFreshMonthList(slug, saved.data), stale: { savedAt: saved.savedAt, reason: "final" } };
+  if (usable) {
+    const fresh = () => (wanted === current ? usable.data : withFreshMonthList(slug, usable.data));
+    // A past month saved after it ended cannot change any more.
+    if (wanted < current && currentMonthKey(new Date(usable.savedAt)) > wanted) {
+      return { ok: true, value: await fresh(), stale: { savedAt: usable.savedAt, reason: "final" }, savedAt: usable.savedAt };
+    }
+    // Otherwise the copy is current until the next scheduled refresh time passes.
+    if (Date.parse(usable.savedAt) >= lastScheduledRefresh().getTime()) {
+      return { ok: true, value: await fresh(), stale: null, savedAt: usable.savedAt };
     }
   }
 
   const live = await getTradingMonth(slug, month);
   if (live.ok && live.value.month) {
     await writeSnapshot(slug, `month-${live.value.month.month}`, live.value);
-    return { ok: true, value: live.value, stale: null };
+    return { ok: true, value: live.value, stale: null, savedAt: new Date().toISOString() };
   }
   if (live.ok) return { ok: true, value: live.value, stale: null };
 
   if (live.status !== null) return live; // a refusal (token, bad request, missing route) must be seen as such
-  const saved = await readSnapshot<TradingTabData>(slug, `month-${wanted}`);
-  if (saved && saved.data.month) {
-    return { ok: true, value: await withFreshMonthList(slug, saved.data), stale: { savedAt: saved.savedAt, reason: "unreachable" } };
+  if (usable) {
+    return { ok: true, value: await withFreshMonthList(slug, usable.data), stale: { savedAt: usable.savedAt, reason: "unreachable" }, savedAt: usable.savedAt };
   }
   return withNoCopyNote(live);
 }

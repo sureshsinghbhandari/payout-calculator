@@ -402,8 +402,8 @@ API (see that app's `docs/eod-excel.md`). This app only ever reads from it: no o
 placed, nothing there is changed, and nothing of this app's own data (inquiries,
 investors, rates) is sent to it.
 
-Pick an **account** (Simulator, Tradier_SB Live; the list is `ACCOUNTS` in
-`src/app/admin/trading/page.tsx`) and a **view**:
+Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
+`src/lib/trading-accounts.ts`) and a **view**:
 
 - **Overview** — that app's end-of-day KPI tiles and ranked strategy figures, the same
   numbers as its Dashboard and Strategy Stats sheets.
@@ -421,10 +421,10 @@ Pick an **account** (Simulator, Tradier_SB Live; the list is `ACCOUNTS` in
 **Saved copies.** Only Ashwin and Suresh_Live are shown and saved
 (`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
 private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
-`month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a daily job
-refreshes them at **4:01 PM Eastern** after the market closes
-(`/api/cron/trading-snapshots`; `vercel.json` lists both 20:01 and 21:01 UTC on weekdays
-and the route runs only during the 4 PM hour Eastern, which covers daylight saving). On Vercel's free Hobby plan a cron job runs at some point inside its hour, not at the minute, so the copy is saved between 4:00 and 5:00 PM Eastern; Pro runs it at 4:01 PM sharp.
+`month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a job
+refreshes them twice a day on weekdays, at **9:35 AM and 4:01 PM Eastern**
+(`/api/cron/trading-snapshots`; `vercel.json` lists both UTC times of each, 13:35 / 14:35 and 20:01 / 21:01,
+and the route runs only during the 9 AM or 4 PM hour Eastern, which covers daylight saving). The **Monthly sheet is read from the saved copy** and the trading app is only called when a refresh time has passed since the copy was saved, so a missed or early run heals itself on the next page view. On Vercel's free Hobby plan a cron job runs at some point inside its hour, not at the minute; Pro runs it at the minute.
 To fill the copies from the start (all months and today), run `npm run trading:sync` while the trading app is running; it reads from `http://localhost:3000` (or `--url`), takes the token from that app's own `.env`, and saves into the production folder (`--env local` for the local one). Run it again any time. When the trading app, its tunnel or your PC is off, the page shows the saved copy under a
 yellow notice with the time it was saved. A month that ended before its copy was saved is
 final and is shown without calling the trading app. Today's positions fall back only to a
