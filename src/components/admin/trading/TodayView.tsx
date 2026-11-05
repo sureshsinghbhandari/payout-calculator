@@ -4,6 +4,12 @@ import { AutoRefresh } from "./AutoRefresh";
 import { money, number, percent, pnlClass, sheetDate, signedMoney, stepLabel } from "./format";
 import { PayoffDialog } from "./PayoffDialog";
 import { canDrawPayoff } from "./payoff-legs";
+import { TodayColumns } from "./TodayColumns";
+
+/** Classes that hide a cell while TodayColumns lists its column in `data-hide` (written out in full so Tailwind keeps them). */
+const HIDE_POSITION = "[[data-hide~=position]_&]:hidden";
+const HIDE_NOW = "[[data-hide~=now]_&]:hidden";
+const HIDE_ENTRY = "[[data-hide~=entry]_&]:hidden";
 
 /** "14:05" in US Eastern for an ISO timestamp; empty when it is not a date. */
 const easternClock = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "America/New_York" });
@@ -105,7 +111,8 @@ function PnlCell({ row, currency }: { row: TradingTodayRow; currency: string }) 
  * Today's positions of one tab: every strategy position that expires today,
  * is closing today, or closed / expired today, as the other app reports them
  * (the `today` route). Read-only; refreshes itself every 30 s while the
- * market is open.
+ * market is open. The position legs, distance now and distance at entry
+ * columns are hidden until chosen in the Columns menu (TodayColumns).
  */
 export function TodayView({ data }: { data: TradingToday }) {
   const { tab, rows } = data;
@@ -149,6 +156,7 @@ export function TodayView({ data }: { data: TradingToday }) {
     <div className="space-y-3">
       {header}
       <p className="text-xs text-slate-500 md:hidden">Swipe the table sideways to see every column.</p>
+      <TodayColumns>
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div
           className="relative overflow-x-auto rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
@@ -156,7 +164,7 @@ export function TodayView({ data }: { data: TradingToday }) {
           role="region"
           aria-label="Today's positions, scrolls horizontally"
         >
-          <table className="w-full min-w-[1080px] border-collapse text-sm">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
             <caption className="sr-only">
               Positions expiring, closing or closed today for {tab.label} on {sheetDate(data.date)}
             </caption>
@@ -165,13 +173,13 @@ export function TodayView({ data }: { data: TradingToday }) {
                 <th scope="col" className="px-4 py-3 text-left font-semibold sm:pl-6">
                   Strategy
                 </th>
-                <th scope="col" className="px-4 py-3 text-left font-semibold">
+                <th scope="col" className={`px-4 py-3 text-left font-semibold ${HIDE_POSITION}`}>
                   Today&apos;s position
                 </th>
-                <th scope="col" className="px-4 py-3 text-left font-semibold">
+                <th scope="col" className={`px-4 py-3 text-left font-semibold ${HIDE_NOW}`}>
                   Distance now
                 </th>
-                <th scope="col" className="px-4 py-3 text-left font-semibold">
+                <th scope="col" className={`px-4 py-3 text-left font-semibold ${HIDE_ENTRY}`}>
                   Distance at entry
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
@@ -185,14 +193,11 @@ export function TodayView({ data }: { data: TradingToday }) {
             <tbody className="text-slate-800">
               {rows.map((row) => {
                 const legs = [...row.legs].sort((a, b) => b.strike - a.strike);
-                const title = [row.strategy, row.underlying, row.structure].filter(Boolean).join(" · ");
+                const title = row.strategy;
                 return (
                   <tr key={row.id} className="border-b border-slate-100 align-top last:border-b-0">
                     <th scope="row" className="px-4 py-3 text-left font-medium text-slate-900 sm:pl-6">
                       <div>{row.strategy}</div>
-                      {(row.underlying || row.structure) && (
-                        <div className="text-xs font-normal text-slate-500">{[row.underlying, row.structure].filter(Boolean).join(" · ")}</div>
-                      )}
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {row.status === "open" ? (
                           <Pill tone="blue">Open</Pill>
@@ -202,7 +207,7 @@ export function TodayView({ data }: { data: TradingToday }) {
                         {row.status === "open" && row.dte === 0 && <Pill tone="amber">Expires today</Pill>}
                       </div>
                     </th>
-                    <td className="px-4 py-3">
+                    <td className={`px-4 py-3 ${HIDE_POSITION}`}>
                       <ul className="space-y-0.5">
                         {legs.map((leg, i) => (
                           <LegLine key={`${leg.action}-${leg.type}-${leg.strike}-${leg.expiration ?? ""}-${i}`} leg={leg} />
@@ -212,10 +217,10 @@ export function TodayView({ data }: { data: TradingToday }) {
                         {row.quantity} lot{row.quantity === 1 ? "" : "s"} · exp {row.expiration}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={`px-4 py-3 ${HIDE_NOW}`}>
                       <DistanceCell distance={row.distanceNow} spot={row.liveSpot} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={`px-4 py-3 ${HIDE_ENTRY}`}>
                       <DistanceCell distance={row.distanceAtEntry} spot={row.entrySpot} />
                     </td>
                     <td className="px-4 py-3">
@@ -253,10 +258,13 @@ export function TodayView({ data }: { data: TradingToday }) {
               <tr className="border-t border-slate-200 bg-slate-50 text-sm">
                 <th scope="row" className="px-4 py-3 text-left font-semibold text-slate-900 sm:pl-6">
                   Total
+                  <span className="block text-xs font-normal text-slate-600">
+                    {rows.length} position{rows.length === 1 ? "" : "s"} · {openCount} open · {closedCount} closed
+                  </span>
                 </th>
-                <td colSpan={3} className="px-4 py-3 text-xs text-slate-600">
-                  {rows.length} position{rows.length === 1 ? "" : "s"} · {openCount} open · {closedCount} closed
-                </td>
+                <td className={HIDE_POSITION} />
+                <td className={HIDE_NOW} />
+                <td className={HIDE_ENTRY} />
                 <td className={`px-4 py-3 text-right text-lg font-semibold tabular-nums ${pnlClass(total)}`}>{signedMoney(total, currency)}</td>
                 <td className="sm:pr-6" />
               </tr>
@@ -264,6 +272,7 @@ export function TodayView({ data }: { data: TradingToday }) {
           </table>
         </div>
       </div>
+      </TodayColumns>
       {data.note && <p className="text-xs text-slate-500">{data.note}</p>}
     </div>
   );

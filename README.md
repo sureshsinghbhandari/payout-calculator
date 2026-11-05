@@ -416,7 +416,8 @@ Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
   the distance of each short strike from the spot now and at entry (points, %, and the
   OTM+N ladder step), the current P/L (unrealized while open, realized once closed) and a
   payoff icon that opens the at-expiration payoff curve. Refreshes itself every 30 seconds
-  while the market is open.
+  while the market is open. The legs, distance-now and distance-at-entry columns are hidden
+  until chosen in the **Columns** menu above the table (kept per browser).
 
 **Saved copies.** Only Ashwin and Suresh_Live are shown and saved
 (`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
