@@ -1,0 +1,22 @@
+# Netlify deployment (backup 1). See docs/MULTI_PROVIDER.md.
+# Deploy with `npm run deploy:netlify` (CLI deploys only: do NOT connect the Git repository, so
+# Netlify never builds on its own and uses no build minutes while it is not the live provider).
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The official Next.js runtime (App Router, Server Actions, route handlers).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Settings for the production context. Secrets are set in the Netlify UI or with
+# `npx netlify-cli env:set`, never here.
+[context.production.environment]
+  DEPLOY_PROVIDER = "netlify"
+  APP_ENV = "production"
+  # Set to "false" while another provider is the live one: scheduled jobs then do nothing.
+  PROVIDER_ACTIVE = "true"

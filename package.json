@@ -10,17 +10,23 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "seed:demo": "node --env-file=.env.local --import tsx scripts/seed-demo.ts",
+    "seed:demo": "node --env-file=.env.local --conditions react-server --import tsx scripts/seed-demo.ts",
     "trading:sync": "node --conditions react-server --import tsx scripts/sync-trading.mts",
-    "docs:features": "tsx docs/build-features.ts"
+    "docs:features": "tsx docs/build-features.ts",
+    "migrate:vercel-to-supabase": "node --env-file=.env.local --import tsx scripts/migrate-vercel-to-supabase.ts",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:vercel": "node scripts/deploy.mjs --provider=vercel",
+    "deploy:netlify": "node scripts/deploy.mjs --provider=netlify",
+    "deploy:cloudflare": "node scripts/deploy.mjs --provider=cloudflare",
+    "build:cloudflare": "opennextjs-cloudflare build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/blob": "^2.8.2",
     "@vercel/speed-insights": "^2.0.0",
     "exceljs": "^4.4.0",
     "imapflow": "^2.9.1",
-    "next": "16.4.3",
+    "next": "16.4.5",
     "nodemailer": "^10.2.1",
     "pdf-lib": "^1.17.1",
     "postal-mime": "^4.1.4",
@@ -30,17 +36,20 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.16",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.20.5",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vercel/blob": "^2.8.2",
     "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "eslint-config-next": "16.4.5",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^4.1.12"
+    "vitest": "^4.1.12",
+    "wrangler": "^4.158.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

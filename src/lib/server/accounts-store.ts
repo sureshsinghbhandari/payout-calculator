@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import {
   normalizeEmail,
@@ -32,8 +33,8 @@ import {
 import { hashSetupToken, newSetupToken } from "./passwords";
 
 /**
- * Admin users and investors are stored as two private JSON files in Vercel
- * Blob. Every write checks the file's ETag, so concurrent changes never
+ * Admin users and investors are stored as two private JSON documents in
+ * Supabase. Every write checks the document's version, so concurrent changes never
  * overwrite each other (the write is retried on a conflict). Production,
  * preview and local development use separate folders.
  *
@@ -49,13 +50,13 @@ import { hashSetupToken, newSetupToken } from "./passwords";
  *   Two-step sign-in (admins and investors): setTwoStepPending, enableTwoStep,
  *     disableTwoStep, markTotpStepUsed, spendRecoveryCode
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const ADMINS_PATH = `accounts/${ENV}/admin-users.json`;
 const INVESTORS_PATH = `accounts/${ENV}/investors.json`;
 const WRITE_ATTEMPTS = 3;
 
 export function isAccountStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 export class AccountError extends Error {}
@@ -72,8 +73,8 @@ async function readDoc<T>(path: string, parse: (data: unknown) => T): Promise<{ 
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

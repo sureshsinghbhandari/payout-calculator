@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { TRADING_ACCOUNTS } from "@/lib/trading-accounts";
+import { runExclusive } from "@/lib/server/job-guard";
 import { isCronRequestAuthorized } from "@/lib/server/payout-notices";
 import { isSnapshotStorageConfigured, REFRESH_TIMES, refreshSnapshots } from "@/lib/server/trading-snapshots";
 import { isTradingApiConfigured } from "@/lib/server/trading-api";
@@ -46,9 +47,12 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json({ skipped: "Not the 9 AM or 4 PM hour Eastern; the other scheduled hour handles this season." });
   }
   if (!isTradingApiConfigured()) return Response.json({ skipped: "TRADING_API_URL and TRADING_API_TOKEN are not set." });
-  if (!isSnapshotStorageConfigured()) return Response.json({ skipped: "Blob storage is not set up." });
+  if (!isSnapshotStorageConfigured()) return Response.json({ skipped: "Supabase storage is not set up." });
 
-  const results = [];
-  for (const account of TRADING_ACCOUNTS) results.push(await refreshSnapshots(account.slug));
-  return Response.json({ ok: true, results });
+  const outcome = await runExclusive("trading-snapshots", 120, async () => {
+    const results = [];
+    for (const account of TRADING_ACCOUNTS) results.push(await refreshSnapshots(account.slug));
+    return { ok: true, results };
+  });
+  return Response.json(outcome);
 }

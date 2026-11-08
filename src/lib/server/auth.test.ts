@@ -41,9 +41,10 @@ const blobs = vi.hoisted(() => {
 });
 
 vi.mock("server-only", () => ({}));
-vi.mock("@vercel/blob", () => ({
-  BlobError: blobs.FakeBlobError,
-  BlobPreconditionFailedError: blobs.FakePreconditionFailed,
+vi.mock("@/lib/server/object-store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/server/object-store")>()),
+  StoreError: blobs.FakeBlobError,
+  StoreConflictError: blobs.FakePreconditionFailed,
   get: blobs.get,
   put: blobs.put,
 }));
@@ -81,7 +82,8 @@ vi.mock("next/navigation", () => ({
 const { authConfig, endAdminSession, getCurrentAdmin, getPendingTwoStepAdmin, requireAdminPage, requireAdminPermission, startAdminSession, startTwoStepSignIn, endTwoStepSignIn, verifyAdminCredentials, getCurrentInvestor, startInvestorSession, verifyInvestorCredentials } = await import("./auth");
 const { createAdminUser, createInvestor, enableTwoStep, setAdminPassword, setInvestorPassword, setTwoStepPending } = await import("./accounts-store");
 
-process.env.BLOB_READ_WRITE_TOKEN = "test-token";
+process.env.SUPABASE_URL = "https://test.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 process.env.ADMIN_SESSION_SECRET = "s".repeat(32);
 process.env.ADMIN_PASSWORD = "bootstrap-password";
 delete process.env.VERCEL_ENV;

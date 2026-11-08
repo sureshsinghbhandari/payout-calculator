@@ -51,9 +51,10 @@ const blobs = vi.hoisted(() => {
 });
 
 vi.mock("server-only", () => ({}));
-vi.mock("@vercel/blob", () => ({
-  BlobError: blobs.FakeBlobError,
-  BlobPreconditionFailedError: blobs.FakePreconditionFailed,
+vi.mock("@/lib/server/object-store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/server/object-store")>()),
+  StoreError: blobs.FakeBlobError,
+  StoreConflictError: blobs.FakePreconditionFailed,
   get: blobs.get,
   put: blobs.put,
   del: blobs.del,
@@ -109,7 +110,8 @@ const { hashPassword } = await import("@/lib/server/passwords");
 const { saveInquiry, getInquiry } = await import("@/lib/server/inquiry-store");
 const { saveRates } = await import("@/lib/server/rates-store");
 
-process.env.BLOB_READ_WRITE_TOKEN = "test-token";
+process.env.SUPABASE_URL = "https://test.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 process.env.ADMIN_SESSION_SECRET = "s".repeat(32);
 process.env.ADMIN_PASSWORD = "bootstrap-password";
 delete process.env.VERCEL_ENV;

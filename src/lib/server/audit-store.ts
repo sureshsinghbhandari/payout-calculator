@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { BlobError, BlobPreconditionFailedError, get, list, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, list, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import { after } from "next/server";
 import { auditMonth, auditMonthsBetween, isAuditMonth, parseAuditEvents, type AuditEvent, type NewAuditEvent } from "../audit";
@@ -9,18 +10,18 @@ import type { InquiryLog } from "../inquiry-log";
 import { addInquiryEvents, readInquiryLog } from "./inquiry-log-store";
 
 /**
- * Audit events are appended to one private JSON file per month in Vercel Blob
+ * Audit events are appended to one private JSON document per month in Supabase
  * ("audit/<env>/<YYYY-MM>.json"). Writes check the file's ETag and retry on a
  * conflict, so simultaneous events are not lost. Production, preview and local
  * development use separate folders. Events about an inquiry are also copied to
  * that inquiry's log, so they show on the inquiry page.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const PREFIX = `audit/${ENV}/`;
 const WRITE_ATTEMPTS = 6;
 
 function isConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 function pathFor(month: string): string {
@@ -47,8 +48,8 @@ async function readMonth(month: string): Promise<{ events: AuditEvent[]; etag: s
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 
