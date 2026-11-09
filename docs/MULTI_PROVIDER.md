@@ -152,8 +152,11 @@ previous deployment keeps working; never apply a destructive schema change while
 
 - **Cloudflare + Gmail:** Gmail sending/receiving uses SMTP/IMAP (raw TCP), not available on Workers. Use Resend
   (`EMAIL_PROVIDER=resend`) on Cloudflare.
-- **Cloudflare size limits:** the Free plan allows 3 MiB per Worker (10 MiB paid). The Next.js + Excel + PDF bundle
-  may exceed the free limit; this must be checked on the first real build.
+- **Cloudflare size limit (measured on 2026-11-09):** the build succeeds, but the Worker is **6.2 MiB compressed**
+  (5.7 MiB with `--minify`). The Free plan allows **3 MiB**, so the deploy is refused there; the Paid plan
+  (Workers Paid, about $5/month, 10 MiB) fits. The bulk is the compiled app (Excel and PDF libraries, and several
+  copies of the same server chunks), not the framework. Getting under 3 MiB would need a code-size project
+  (for example moving Excel/PDF generation out of the Worker); it has not been attempted.
 - **`"use cache: remote"`** (rates, amounts and terms): on Vercel it is backed by Vercel's remote cache. Netlify and
   Cloudflare have no equivalent configured here, so cached values may stay stale for a short time on those
   providers after an admin saves new rates. Verify this on each provider before relying on it (see DEPLOYMENT.md).
