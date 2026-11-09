@@ -9,6 +9,7 @@
  *   --url=<https://...>   address to health-check when the CLI does not print one
  *   --skip-checks         skip typecheck, lint and tests (not recommended)
  *   --allow-dirty         deploy even with uncommitted changes (not recommended)
+ *   --preview             Vercel and Netlify: deploy to a preview address instead of production
  *
  * It never changes DNS and never deploys to the other providers. Providers you do not deploy to stay idle.
  * Passing every step, including a healthy /api/health, is the only thing reported as success.
@@ -106,12 +107,12 @@ if (!args["skip-checks"]) {
 let output = "";
 if (provider === "vercel") {
   // Vercel builds on its own servers with the project's settings and environment variables.
-  const result = run(`npx --yes ${CLI.vercel} deploy --prod --yes`);
+  const result = run(`npx --yes ${CLI.vercel} deploy ${args.preview ? "" : "--prod "}--yes`);
   if (result.status !== 0) stop("Vercel deployment failed.");
   output = result.output;
 } else if (provider === "netlify") {
   // `--build` runs the Netlify build locally with the site's environment variables, then uploads it.
-  const result = run(`npx --yes ${CLI.netlify} deploy --build --prod --json`);
+  const result = run(`npx --yes ${CLI.netlify} deploy --build ${args.preview ? "" : "--prod "}--json`);
   if (result.status !== 0) stop("Netlify build or deployment failed.");
   output = result.output;
 } else {
@@ -136,6 +137,7 @@ if (!url) {
 
 let health = "not checked (no deployment URL available; pass --url=https://...)";
 let healthy = false;
+let protectedByLogin = false;
 if (url) {
   const target = `${url.replace(/\/$/, "")}/api/health`;
   console.log(`\nChecking ${target}`);
@@ -145,6 +147,7 @@ if (url) {
       const body = await response.text();
       health = `HTTP ${response.status} ${body.slice(0, 300)}`;
       healthy = response.status === 200 && /"status"\s*:\s*"ok"/.test(body);
+      if (response.status === 401 || response.status === 403) { protectedByLogin = true; break; }
     } catch (error) {
       health = `unreachable (${error.message})`;
     }
@@ -161,6 +164,11 @@ console.log("DNS      : not changed (switch it yourself when the checks pass; se
 console.log("===========================================================");
 if (!url) {
   console.log("\nDeployed, but NOT verified: no URL to check. Open the provider dashboard, then run the health check yourself.");
+  process.exit(0);
+}
+if (protectedByLogin) {
+  console.log("\nDeployed. The address is protected by a login (for example Vercel Deployment Protection), so the health check could not run from here.");
+  console.log("Open it in your browser while signed in and check /api/health yourself.");
   process.exit(0);
 }
 if (!healthy) stop("Deployed, but the health check did NOT pass. Do not switch traffic to this deployment.");
