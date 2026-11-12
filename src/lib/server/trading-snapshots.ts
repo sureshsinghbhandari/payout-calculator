@@ -2,10 +2,14 @@ import "server-only";
 import { BlobError, get, put } from "@vercel/blob";
 import { easternDay } from "../time";
 import {
+  getTradingActive,
   getTradingMonth,
+  getTradingOpened,
   getTradingTabData,
   getTradingToday,
   isMonthKey,
+  type TradingActive,
+  type TradingOpened,
   type TradingResult,
   type TradingTabData,
   type TradingToday,
@@ -186,20 +190,38 @@ async function withFreshMonthList(slug: string, data: TradingTabData): Promise<T
   return { ...data, month: { ...data.month, available } };
 }
 
-/** Today's positions: live, saved on success; when the app is unreachable only a copy saved today is shown. */
-export async function loadToday(slug: string): Promise<Loaded<TradingToday>> {
-  const live = await getTradingToday(slug);
+/**
+ * A live view of the current day's positions (Today Expiring, Entry Board, Other Active Positions): live, saved on
+ * success; when the app is unreachable only a copy saved today is shown (yesterday's positions would mislead).
+ */
+async function loadDayView<T>(slug: string, name: string, fetchLive: (slug: string) => Promise<TradingResult<T>>): Promise<Loaded<T>> {
+  const live = await fetchLive(slug);
   if (live.ok) {
-    await writeSnapshot(slug, "today", live.value);
+    await writeSnapshot(slug, name, live.value);
     return { ok: true, value: live.value, stale: null };
   }
   // A refusal (including "the other app does not have this yet") is not an outage.
   if (live.status !== null) return live;
-  const saved = await readSnapshot<TradingToday>(slug, "today");
+  const saved = await readSnapshot<T>(slug, name);
   if (saved && easternDay(saved.savedAt) === easternDay(new Date().toISOString())) {
     return { ok: true, value: saved.data, stale: { savedAt: saved.savedAt, reason: "unreachable" } };
   }
   return live;
+}
+
+/** Today's positions (Today Expiring): live, saved on success; when the app is unreachable only a copy saved today is shown. */
+export function loadToday(slug: string): Promise<Loaded<TradingToday>> {
+  return loadDayView(slug, "today", getTradingToday);
+}
+
+/** The Entry Board: every strategy and what it opened today. Same live / saved-today rule as loadToday. */
+export function loadOpened(slug: string): Promise<Loaded<TradingOpened>> {
+  return loadDayView(slug, "opened", getTradingOpened);
+}
+
+/** Other Active Positions: the open positions that carry past today. Same live / saved-today rule as loadToday. */
+export function loadActive(slug: string): Promise<Loaded<TradingActive>> {
+  return loadDayView(slug, "active", getTradingActive);
 }
 
 type Failure = Extract<TradingResult<unknown>, { ok: false }>;

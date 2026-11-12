@@ -480,3 +480,21 @@ Nothing changes on the Payout Calculator side: `src/lib/server/trading-api.ts` a
 1. In this app's environment set `TRADING_API_URL` to the tunnel's base address (for example `https://example.ngrok-free.app`, no trailing slash) and `TRADING_API_TOKEN` to one of the tokens configured as `EOD_EXCEL_API_TOKEN` in the trading app's `.env`.
 2. Restart the trading app so the changed tunnel guard (`lib/tunnelGuard.js`) and the new route are live; the tunnel (ngrok, started by its `launch-app.bat`) must be running for the dashboard to reach it.
 3. Open the Trading dashboard: the month stepper should show `available` months and the "Today" panel should list rows (or the trading app's `note`) once a position expires, closes or closed that day.
+
+## 5. Entry Board and Other Active Positions (2026-11-12)
+
+The trading app (`tradiersuinew`) also serves two more read-only routes on the same public mount, behind the same key,
+tunnel rules and per-app tab list as `today`: `GET /api/public/eod-excel/tab/:slug/opened` (the **Entry Board**) and
+`GET /api/public/eod-excel/tab/:slug/active` (**Other Active Positions**). The dashboard's "Today" view is now called
+**Today Expiring** (its route is still `/today`). The shapes are in that repo's `docs/eod-excel.md`; the TypeScript types
+this app reads are `TradingOpened` and `TradingActive` in `src/lib/server/trading-api.ts`.
+
+- Shared by the three routes: cached about 10 s per tab there, so this app polls no faster than every 30 s, only while the
+  page is visible, and stops when `marketOpen` is false. A `404` can mean the owner has not ticked the tab for this app
+  (Admin > Dashboard > External apps).
+- `opened`: every strategy with `state` (`opened | waiting | skipped | off-day | disabled`), entry `settings`, `totals`,
+  `carriedOpen`, `earlierClosedToday`, `lastEntryAt` and `rows` (positions opened today, with `extras`).
+- `active`: only strategies that have an open position carrying past today, `rows` nearest expiry first; a position is never
+  in both `today` and `active`.
+- Every number can be null and is shown as a dash. Unknown fields are ignored and missing optional ones tolerated.
+- Only the accounts in `src/lib/trading-accounts.ts` (Ashwin = `simulator`, Suresh_Live = `tradier-sb-live`) are ever requested.

@@ -3,13 +3,15 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AdminBreadcrumb, AdminCard, AdminFrame, AdminLoading } from "@/components/admin/AdminFrame";
+import { ActiveView } from "@/components/admin/trading/ActiveView";
+import { ENTRY_FILTERS, EntryBoardView, type EntryFilter } from "@/components/admin/trading/EntryBoardView";
 import { MonthSheet } from "@/components/admin/trading/MonthSheet";
 import { OverviewView } from "@/components/admin/trading/OverviewView";
 import { TodayView } from "@/components/admin/trading/TodayView";
 import { toPublicAdmin } from "@/lib/accounts";
 import { requireAdminPage } from "@/lib/server/auth";
 import { isMonthKey, isNotBuiltYet, isTradingApiConfigured } from "@/lib/server/trading-api";
-import { loadMonth, loadOverview, loadToday, type Loaded } from "@/lib/server/trading-snapshots";
+import { loadActive, loadMonth, loadOpened, loadOverview, loadToday, type Loaded } from "@/lib/server/trading-snapshots";
 import { TRADING_ACCOUNTS as ACCOUNTS } from "@/lib/trading-accounts";
 import { formatTimestamp } from "@/lib/time";
 
@@ -21,7 +23,9 @@ export const metadata: Metadata = {
 const VIEWS = [
   { key: "overview", label: "Overview" },
   { key: "month", label: "Monthly sheet" },
-  { key: "today", label: "Today" },
+  { key: "today", label: "Today Expiring" },
+  { key: "opened", label: "Entry Board" },
+  { key: "active", label: "Other Active Positions" },
 ] as const;
 
 type ViewKey = (typeof VIEWS)[number]["key"];
@@ -40,11 +44,12 @@ function one(value: string | string[] | undefined): string {
 }
 
 /** The page's own address for an account / view / month (only what differs from the defaults goes into the query). */
-function hrefFor({ tab, view, month }: { tab: string; view: ViewKey; month?: string | null }): string {
+function hrefFor({ tab, view, month, show }: { tab: string; view: ViewKey; month?: string | null; show?: EntryFilter | null }): string {
   const q = new URLSearchParams();
   if (tab !== ACCOUNTS[0].slug) q.set("tab", tab);
   if (view !== "overview") q.set("view", view);
   if (view === "month" && month) q.set("month", month);
+  if (view === "opened" && show && show !== "all") q.set("show", show);
   const qs = q.toString();
   return `/admin/trading${qs ? `?${qs}` : ""}`;
 }
@@ -58,9 +63,11 @@ const chip = (active: boolean) =>
  * Read-only view of a separate app's (tradiersuinew) trading figures,
  * fetched over its data API (src/lib/server/trading-api.ts): the end-of-day
  * KPI tiles and strategy table (Overview), the month sheet of its Excel
- * export (Monthly sheet) and the positions expiring or closing today (Today),
- * for each account in ACCOUNTS. It places no orders and changes nothing
- * there. Master Admin only.
+ * export (Monthly sheet), the positions expiring or closing today (Today
+ * Expiring), every strategy's entry rule and what it opened (Entry Board) and
+ * the open positions that carry past today (Other Active Positions), for each
+ * account in ACCOUNTS (Ashwin and Suresh_Live only). It places no orders and
+ * changes nothing there. Master Admin only.
  */
 async function TradingDashboardContent({ searchParams }: { searchParams: SearchParams }) {
   await connection();
@@ -69,6 +76,7 @@ async function TradingDashboardContent({ searchParams }: { searchParams: SearchP
   const account = ACCOUNTS.find((a) => a.slug === one(params.tab)) ?? ACCOUNTS[0];
   const view: ViewKey = VIEWS.find((v) => v.key === one(params.view))?.key ?? "overview";
   const requestedMonth = isMonthKey(one(params.month)) ? one(params.month) : null;
+  const filter: EntryFilter = ENTRY_FILTERS.find((f) => f.key === one(params.show))?.key ?? "all";
 
   const breadcrumb = <AdminBreadcrumb items={[{ label: "Admin", href: "/admin/inquiries" }, { label: "Trading dashboard" }]} />;
 
@@ -143,6 +151,8 @@ async function TradingDashboardContent({ searchParams }: { searchParams: SearchP
         {view === "overview" && <OverviewSection slug={account.slug} />}
         {view === "month" && <MonthSection slug={account.slug} month={requestedMonth} />}
         {view === "today" && <TodaySection slug={account.slug} />}
+        {view === "opened" && <OpenedSection slug={account.slug} filter={filter} />}
+        {view === "active" && <ActiveSection slug={account.slug} />}
       </div>
     </AdminFrame>
   );
@@ -226,6 +236,32 @@ async function TodaySection({ slug }: { slug: string }) {
     <>
       {result.stale && <SavedCopyNotice stale={result.stale} />}
       <TodayView data={result.value} />
+    </>
+  );
+}
+
+async function OpenedSection({ slug, filter }: { slug: string; filter: EntryFilter }) {
+  const result = await loadOpened(slug);
+  if (!result.ok) {
+    return isNotBuiltYet(result, "opened") ? <NotBuiltYetCard what="the Entry Board" /> : <ErrorCard message={result.error} />;
+  }
+  return (
+    <>
+      {result.stale && <SavedCopyNotice stale={result.stale} />}
+      <EntryBoardView data={result.value} filter={filter} hrefFor={(show) => hrefFor({ tab: slug, view: "opened", show })} />
+    </>
+  );
+}
+
+async function ActiveSection({ slug }: { slug: string }) {
+  const result = await loadActive(slug);
+  if (!result.ok) {
+    return isNotBuiltYet(result, "active") ? <NotBuiltYetCard what="the other active positions" /> : <ErrorCard message={result.error} />;
+  }
+  return (
+    <>
+      {result.stale && <SavedCopyNotice stale={result.stale} />}
+      <ActiveView data={result.value} />
     </>
   );
 }

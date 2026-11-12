@@ -4,7 +4,7 @@ import { useSyncExternalStore, type ReactNode } from "react";
 
 /** The optional columns of the Today table, in table order. */
 export const TODAY_COLUMN_OPTIONS = [
-  { key: "position", label: "Today's position" },
+  { key: "position", label: "Position legs" },
   { key: "now", label: "Distance now" },
   { key: "entry", label: "Distance at entry" },
 ] as const;

@@ -412,12 +412,28 @@ Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
   column per strategy, TOTAL and CUMULATIVE, shaded by size. Arrows (or the month pills)
   step to the previous / next month; `?month=YYYY-MM` is in the address, so a month can be
   bookmarked.
-- **Today** — one row per position that expires, closes or closed today: all its legs,
+- **Today Expiring** — one row per position that expires, closes or closed today: all its legs,
   the distance of each short strike from the spot now and at entry (points, %, and the
   OTM+N ladder step), the current P/L (unrealized while open, realized once closed) and a
   payoff icon that opens the at-expiration payoff curve. Refreshes itself every 30 seconds
   while the market is open. The legs, distance-now and distance-at-entry columns are hidden
   until chosen with the settings (gear) icon above the table (kept per browser).
+- **Entry Board** — every strategy of the account, one block each: its name, where it stands
+  today (Opened, Waiting, Skipped, Off day or Disabled), its entry rule (entry time with ET / IST,
+  days, DTE, lots, targets), what it opened and the P/L, with the positions it opened below.
+  *Skipped* means it is switched on, today is an entry day, its entry time has passed and
+  nothing opened. Filter: All / Opened today / Not opened (`?view=opened&show=opened`).
+- **Other Active Positions** — every position that is still open and carries past today (so it
+  is not in Today Expiring), one collapsible group per strategy, **collapsed by default**; the
+  closed header shows the strategy, its position count and its P/L. "Expand all / Collapse all"
+  above the list; the page never opens a group by itself, also not when it refreshes.
+
+All three position views refresh every 30 seconds while the page is visible and the market is
+open (the trading app caches them about 10 seconds), show times in the account's market zone
+(ET for US, IST for India) and show a dash, never 0, for a figure the trading app could not give.
+Only Ashwin and Suresh_Live can be shown: the trading app's token can read many more
+accounts, but `src/lib/server/trading-api.ts` refuses any other one before a request is made and
+rejects a reply for a different tab.
 
 **Saved copies.** Only Ashwin and Suresh_Live are shown and saved
 (`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
@@ -592,7 +608,8 @@ have no password, so they cannot sign in to the portal.
 | `EMAIL_REPLY_DOMAIN` | Resend: domain that receives replies, e.g. `reply.acme.com`. |
 | `RESEND_WEBHOOK_SECRET` | Resend: signing secret (`whsec_...`) of the webhook. Secret. |
 | `TRADING_API_URL` | Optional: base address of the separate trading app for the Trading dashboard (no trailing slash), e.g. its ngrok tunnel. |
-| `TRADING_API_TOKEN` | Optional: bearer token for that app's data API, matching its `EOD_EXCEL_API_TOKEN`. Secret. |
+| `TRADING_API_TOKEN` | Optional: bearer token for that app's data API, matching its `EOD_EXCEL_API_TOKEN` (or an app key from its `EOD_EXCEL_APP_KEYS`). Secret. |
+| `TRADING_APP_NAME` | Optional: only if you use an app key: this app's name exactly as listed for that key in `EOD_EXCEL_APP_KEYS`. When sent it must match, otherwise the trading app answers 401, so leave it empty with the shared token. |
 
 Set a value with `npx vercel env add NAME production --sensitive` (you type the value),
 then redeploy with `npx vercel deploy --prod`.
