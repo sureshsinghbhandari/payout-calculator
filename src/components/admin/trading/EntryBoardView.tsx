@@ -98,7 +98,14 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
           <div className={`text-lg font-semibold tabular-nums ${pnlClass(pnl)}`}>{rows.length > 0 ? signedMoney(pnl, tab.currency) : "—"}</div>
         </div>
       </div>
-      {rows.length > 0 && (
+      {rows.length === 1 && (
+        // One position: shown straight away, no expand / collapse tile needed.
+        <div className="border-t border-slate-100 px-2 py-3 sm:px-3">
+          <PositionsTable rows={rows} tab={tab} caption={`Position ${strategy.name} opened today for ${tab.label}`} showTotal={false} />
+        </div>
+      )}
+      {rows.length > 1 && (
+        // Several positions: an expand / collapse tile (open by default).
         <details open className="border-t border-slate-100">
           <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-blue-900 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 sm:px-6">
             Positions opened today ({rows.length})
