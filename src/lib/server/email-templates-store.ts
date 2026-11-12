@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import {
   parseStoredTemplates,
@@ -10,18 +11,18 @@ import {
 } from "../email-templates";
 
 /**
- * Saved email templates are one private JSON file in Vercel Blob
+ * Saved email templates are one private JSON document in Supabase
  * ("settings/<env>/email-templates.json"). Only templates a Master Admin
  * changed are stored; the rest use the defaults in lib/email-templates.ts.
  * Writes check the ETag and retry on a conflict, so two admins saving
  * different templates at once never undo each other's change.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const PATH = `settings/${ENV}/email-templates.json`;
 const WRITE_ATTEMPTS = 6;
 
 export function isTemplateStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 async function readRaw(): Promise<{ templates: StoredTemplates; etag: string | null }> {
@@ -41,8 +42,8 @@ async function readRaw(): Promise<{ templates: StoredTemplates; etag: string | n
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

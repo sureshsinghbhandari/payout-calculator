@@ -10,7 +10,13 @@ const HOST_PATTERN = /^[a-z0-9.-]+(:\d{1,5})?$/i;
  * development) it is the address of the request.
  */
 export function siteOrigin(headers: { get(name: string): string | null }): string {
-  const production = process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() : "";
+  // SITE_URL (for example "https://payouts.example.com") works on every provider. It is used on the
+  // live data set only, so previews and local runs still link to themselves.
+  const configured = process.env.SITE_URL?.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const production =
+    process.env.APP_ENV === "production" || process.env.VERCEL_ENV === "production"
+      ? configured || process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() || ""
+      : "";
   const requested = headers.get("host")?.trim() ?? "";
   const host = [production, requested, process.env.VERCEL_URL?.trim()].find((h) => h && HOST_PATTERN.test(h)) ?? "localhost:3000";
   const local = /^(localhost|127\.0\.0\.1|[a-z0-9.-]+\.localhost)(:\d+)?$/i.test(host);

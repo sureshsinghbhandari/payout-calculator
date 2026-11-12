@@ -1,16 +1,17 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, del, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, del, get, put } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import type { AuditEvent } from "../audit";
 import { isInquiryId } from "../inquiry";
 import { parseInquiryLog, type InquiryLog, type InquiryNote } from "../inquiry-log";
 
 /**
- * Each inquiry's activity and notes are one private JSON file in Vercel Blob
+ * Each inquiry's activity and notes are one private JSON document in Supabase
  * ("inquiry-log/<env>/<inquiryId>.json"). Writes check the ETag and retry on a
  * conflict. Production, preview and local development use separate folders.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const PREFIX = `inquiry-log/${ENV}/`;
 const WRITE_ATTEMPTS = 6;
 
@@ -28,8 +29,8 @@ async function readLog(inquiryId: string): Promise<{ log: InquiryLog; etag: stri
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

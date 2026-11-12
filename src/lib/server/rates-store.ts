@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV, IS_PRODUCTION_DATA } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import { cacheLife, cacheTag } from "next/cache";
 import {
@@ -13,15 +14,15 @@ import {
 export type { StoredRates } from "../rates";
 
 /**
- * Earnings rates are stored as one private JSON file in Vercel Blob.
+ * Earnings rates are stored as one private JSON document in Supabase.
  * Private blobs need the server's token to read, so visitors cannot fetch them.
  */
 // Production deployments share one rates file. Preview deployments and local
 // development get their own file, so testing never changes the live rates.
 const RATES_PATHNAME =
-  process.env.VERCEL_ENV === "production"
+  IS_PRODUCTION_DATA
     ? "config/interest-rates.json"
-    : `config/${process.env.VERCEL_ENV || "local"}/interest-rates.json`;
+    : `config/${APP_ENV}/interest-rates.json`;
 const HISTORY_LIMIT = 20;
 const SAVE_ATTEMPTS = 3;
 
@@ -29,7 +30,7 @@ const SAVE_ATTEMPTS = 3;
 export const RATES_TAG = "interest-rates";
 
 export function isRateStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 interface RawRead {
@@ -87,8 +88,8 @@ export async function getCurrentRates(): Promise<RateTable> {
 
 function isWriteConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

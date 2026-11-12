@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV, IS_PRODUCTION_DATA } from "./app-env";
 import { cacheLife, cacheTag } from "next/cache";
 import {
   defaultStoredProducts,
@@ -14,14 +15,14 @@ export type { ProductSettings, StoredProducts } from "../products";
 
 /**
  * The amounts, terms and payout terms on offer are stored as one private JSON
- * file in Vercel Blob, next to the earnings rates.
+ * document in Supabase, next to the earnings rates.
  */
 // Production deployments share one file. Preview deployments and local
 // development get their own file, so testing never changes what is offered live.
 const PRODUCTS_PATHNAME =
-  process.env.VERCEL_ENV === "production"
+  IS_PRODUCTION_DATA
     ? "config/amounts-and-terms.json"
-    : `config/${process.env.VERCEL_ENV || "local"}/amounts-and-terms.json`;
+    : `config/${APP_ENV}/amounts-and-terms.json`;
 const HISTORY_LIMIT = 20;
 const SAVE_ATTEMPTS = 3;
 
@@ -29,7 +30,7 @@ const SAVE_ATTEMPTS = 3;
 export const PRODUCTS_TAG = "amounts-and-terms";
 
 export function isProductStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 interface RawRead {
@@ -87,8 +88,8 @@ export async function getCurrentProducts(): Promise<ProductSettings> {
 
 function isWriteConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

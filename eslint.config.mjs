@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     "docs/**",
     // Temporary worktrees of agents.
     ".claude/**",
+    // Build output of the other hosting providers.
+    ".open-next/**",
+    ".wrangler/**",
+    ".netlify/**",
   ]),
 ]);
 

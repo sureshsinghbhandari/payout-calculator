@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, get, put } from "@vercel/blob";
+import { StoreError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { easternDay } from "../time";
 import {
   getTradingActive,
@@ -20,7 +21,7 @@ import {
  * dashboard still shows its figures when that app (or its tunnel, or the PC it
  * runs on) is off.
  *
- * Every successful read is saved as one private JSON file in Vercel Blob,
+ * Every successful read is saved as one private JSON document in Supabase,
  * per account and view (`trading/<env>/<slug>/overview.json`,
  * `month-YYYY-MM.json`, `today.json`). When the live read fails, the saved
  * copy is shown instead, marked with the time it was saved. Only the accounts
@@ -39,10 +40,10 @@ import {
  */
 
 // Production shares one set of files; previews and local development keep their own.
-const ENV_FOLDER = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV_FOLDER = APP_ENV;
 
 export function isSnapshotStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 interface Snapshot<T> {
@@ -83,7 +84,7 @@ async function writeSnapshot<T>(slug: string, name: string, data: T): Promise<vo
       cacheControlMaxAge: 60,
     });
   } catch (error) {
-    if (!(error instanceof BlobError)) console.error("Saving a trading copy failed", error);
+    if (!(error instanceof StoreError)) console.error("Saving a trading copy failed", error);
     else console.error("Saving a trading copy failed", error.message);
   }
 }

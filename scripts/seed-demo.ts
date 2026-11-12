@@ -5,12 +5,12 @@
  *   npm run seed:demo -- <local|preview|production>            adds or refreshes it
  *   npm run seed:demo -- <local|preview|production> --remove   removes it
  *
- * Needs BLOB_READ_WRITE_TOKEN (from .env.local, written by `vercel env pull`).
+ * Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.
  * Everything it writes is marked as demo data (inquiry references DE30000x,
  * investor ids inv_demo…, audit ids demo-…), so it only ever replaces or
  * removes its own records. Investors get no password and cannot sign in.
  */
-import { BlobError, BlobPreconditionFailedError, del, get, list, put } from "@vercel/blob";
+import { del, get, list, put, StoreConflictError as BlobPreconditionFailedError, StoreError as BlobError } from "../src/lib/server/object-store";
 import { ROLE_LABELS, type AdminRole, type Investor } from "../src/lib/accounts";
 import { auditMonth, parseAuditEvents, type AuditActor, type AuditEvent } from "../src/lib/audit";
 import { formatDollars } from "../src/lib/format";
@@ -34,8 +34,8 @@ if (env !== "local" && env !== "preview" && env !== "production") {
   console.error("Usage: npm run seed:demo -- <local|preview|production> [--remove]");
   process.exit(1);
 }
-if (!process.env.BLOB_READ_WRITE_TOKEN) {
-  console.error("BLOB_READ_WRITE_TOKEN is not set. Run `npx vercel env pull .env.local` first.");
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local.");
   process.exit(1);
 }
 

@@ -43,3 +43,9 @@ next-env.d.ts
 
 # local tooling
 .claude/
+
+# other hosting providers (local build output and CLI state)
+.netlify
+.open-next
+.wrangler
+.dev.vars

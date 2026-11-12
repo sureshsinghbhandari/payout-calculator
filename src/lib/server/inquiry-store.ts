@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobPreconditionFailedError, del, get, list, put } from "@vercel/blob";
+import { StoreConflictError, del, get, list, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import {
   isInquiryId,
@@ -17,17 +18,17 @@ import { deleteInquiryLog } from "./inquiry-log-store";
 const UPDATE_ATTEMPTS = 4;
 
 /**
- * Inquiries are stored as one private JSON file each in Vercel Blob, so two
+ * Inquiries are stored as one private JSON document each in Supabase, so two
  * visitors sending at the same moment never conflict. Production uses its own
  * folder; preview deployments and local development use separate folders.
  */
-const PREFIX = `inquiries/${process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local"}/`;
+const PREFIX = `inquiries/${APP_ENV}/`;
 
 /** How many of the newest inquiries the admin page loads. */
 export const INQUIRY_LIST_LIMIT = 200;
 
 export function isInquiryStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 function pathnameFor(id: string): string {
@@ -127,7 +128,7 @@ async function updateInquiryWithRetry(
     try {
       return await updateInquiry(id, change);
     } catch (error) {
-      if (!(error instanceof BlobPreconditionFailedError) || attempt >= UPDATE_ATTEMPTS) throw error;
+      if (!(error instanceof StoreConflictError) || attempt >= UPDATE_ATTEMPTS) throw error;
       await new Promise((resolve) => setTimeout(resolve, 50 + Math.random() * 150 * attempt));
     }
   }

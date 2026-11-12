@@ -1,10 +1,11 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import { DEFAULT_REMINDER_DAYS, parseNoticeRun, parseReminderDays, type NoticeRun } from "../payout-notices";
 
 /**
- * Payout emails storage, two private JSON files in Vercel Blob:
+ * Payout emails storage, two private JSON documents in Supabase:
  * - "settings/<env>/payout-notices.json": the reminder days setting and the
  *   summary of the last run of the reminder job.
  * - "notices/<env>/payout-notices-sent.json": the sent-log, one entry per
@@ -12,7 +13,7 @@ import { DEFAULT_REMINDER_DAYS, parseNoticeRun, parseReminderDays, type NoticeRu
  * Writes check the ETag and retry on a conflict, so the daily job and Run now
  * at the same moment can never both claim (and send) the same reminder.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const SETTINGS_PATH = `settings/${ENV}/payout-notices.json`;
 const SENT_PATH = `notices/${ENV}/payout-notices-sent.json`;
 const WRITE_ATTEMPTS = 6;
@@ -20,13 +21,13 @@ const WRITE_ATTEMPTS = 6;
 const KEEP_SENT_DAYS = 400;
 
 export function isNoticeStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

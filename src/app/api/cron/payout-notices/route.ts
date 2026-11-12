@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { runExclusive } from "@/lib/server/job-guard";
 import { isCronRequestAuthorized, runPayoutReminders } from "@/lib/server/payout-notices";
 import { siteOrigin } from "@/lib/server/site-url";
 
@@ -16,6 +17,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!isCronRequestAuthorized(request.headers.get("authorization"))) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const run = await runPayoutReminders({ kind: "schedule" }, siteOrigin(request.headers));
+  const origin = siteOrigin(request.headers);
+  const run = await runExclusive("payout-notices", 120, () => runPayoutReminders({ kind: "schedule" }, origin));
   return Response.json(run);
 }

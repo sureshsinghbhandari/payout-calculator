@@ -45,9 +45,10 @@ const blobs = vi.hoisted(() => {
 });
 
 vi.mock("server-only", () => ({}));
-vi.mock("@vercel/blob", () => ({
-  BlobError: blobs.FakeBlobError,
-  BlobPreconditionFailedError: blobs.FakePreconditionFailed,
+vi.mock("@/lib/server/object-store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/server/object-store")>()),
+  StoreError: blobs.FakeBlobError,
+  StoreConflictError: blobs.FakePreconditionFailed,
   get: blobs.get,
   put: blobs.put,
   list: blobs.list,
@@ -94,7 +95,8 @@ const { createInvestor, getInvestor, updateInvestor } = await import("@/lib/serv
 const { getCurrentInvestor, startInvestorSession, verifyInvestorCredentials } = await import("@/lib/server/auth");
 const { hashPassword, verifyPassword } = await import("@/lib/server/passwords");
 
-process.env.BLOB_READ_WRITE_TOKEN = "test-token";
+process.env.SUPABASE_URL = "https://test.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 process.env.ADMIN_SESSION_SECRET = "s".repeat(32);
 process.env.ADMIN_PASSWORD = "bootstrap-password";
 delete process.env.VERCEL_ENV;
@@ -189,13 +191,13 @@ describe("investorLoginAction", () => {
 
 describe("investorLoginAction authorization", () => {
   it("still returns an error (not a redirect/throw) when sign-in storage is unavailable", async () => {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    delete process.env.BLOB_READ_WRITE_TOKEN;
+    const token = process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_URL;
     try {
       const result = await investorLoginAction({}, loginForm("someone", "whatever-password"));
       expect(result.error).toBe("Sign-in is not available right now. Please contact us.");
     } finally {
-      process.env.BLOB_READ_WRITE_TOKEN = token;
+      process.env.SUPABASE_URL = token;
     }
   });
 });

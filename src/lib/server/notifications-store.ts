@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { can } from "../accounts";
 import { isInquiryId } from "../inquiry";
 import { isAccountStorageConfigured, listAdminUsers } from "./accounts-store";
@@ -7,12 +8,12 @@ import { writableEtag } from "./blob-etag";
 
 /**
  * Unread new-inquiry notifications, one counter per admin. Each admin has their
- * own private JSON file in Vercel Blob ("notifications/<env>/<adminId>.json")
+ * own private JSON document in Supabase ("notifications/<env>/<adminId>.json")
  * listing the inquiries they have not opened yet, so one admin reading an
  * inquiry never changes another admin's count. Writes check the ETag and retry
  * on a conflict.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const PREFIX = `notifications/${ENV}/`;
 const WRITE_ATTEMPTS = 6;
 /** Most unread inquiries kept per admin; the oldest drop off. */
@@ -47,8 +48,8 @@ async function read(adminId: string): Promise<{ unread: UnreadEntry[]; etag: str
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

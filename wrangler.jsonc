@@ -1,0 +1,30 @@
+{
+  // Cloudflare Workers deployment (backup 2). Built by @opennextjs/cloudflare; see docs/MULTI_PROVIDER.md.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "payout-calculator",
+  // Our entry wraps the generated OpenNext worker to add the scheduled (cron) handler.
+  "main": "cloudflare/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    // The worker calls itself (used by the adapter's internals).
+    { "binding": "WORKER_SELF_REFERENCE", "service": "payout-calculator" }
+  ],
+  "observability": { "enabled": true },
+  // Non-secret settings. Secrets (SUPABASE_SERVICE_ROLE_KEY, ADMIN_PASSWORD, ADMIN_SESSION_SECRET,
+  // CRON_SECRET, email keys, ...) are set with `npx wrangler secret put NAME`, never written here.
+  "vars": {
+    "DEPLOY_PROVIDER": "cloudflare",
+    "APP_ENV": "production",
+    // Set to "false" while another provider is the live one: scheduled jobs then do nothing.
+    "PROVIDER_ACTIVE": "true"
+  },
+  // Same UTC schedule as vercel.json / netlify. cloudflare/worker.ts maps each one to its job.
+  "triggers": {
+    "crons": ["0 13 * * *", "35 13 * * 1-5", "35 14 * * 1-5", "1 20 * * 1-5", "1 21 * * 1-5"]
+  }
+}

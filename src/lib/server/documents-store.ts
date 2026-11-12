@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { BlobError, BlobPreconditionFailedError, del, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, del, get, put, isObjectStoreConfigured } from "./object-store";
+import { APP_ENV } from "./app-env";
 import {
   DOCUMENT_KINDS,
   isDocumentType,
@@ -19,7 +20,7 @@ import { writableEtag } from "./blob-etag";
  * the file's ETag and retry on a conflict, like the account files. Files are
  * only ever served through routes that check who is asking.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const ROOT = `documents/${ENV}/`;
 const INDEX_PATH = `${ROOT}index.json`;
 const WRITE_ATTEMPTS = 4;
@@ -27,7 +28,7 @@ const WRITE_ATTEMPTS = 4;
 const FILE_NAME = /^[a-f0-9]{32}\.(pdf|jpg|png)$/;
 
 export function isDocumentStorageConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+  return isObjectStoreConfigured();
 }
 
 export class DocumentError extends Error {}
@@ -102,8 +103,8 @@ async function readIndex(): Promise<{ index: Index; etag: string | null }> {
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

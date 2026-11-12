@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobError, BlobPreconditionFailedError, get, put } from "@vercel/blob";
+import { StoreError, StoreConflictError, get, put } from "./object-store";
+import { APP_ENV } from "./app-env";
 import { writableEtag } from "./blob-etag";
 import {
   EMAIL_LIMITS,
@@ -13,11 +14,11 @@ import {
 import { isInquiryId } from "../inquiry";
 
 /**
- * Each inquiry's emails are one private JSON file in Vercel Blob
+ * Each inquiry's emails are one private JSON document in Supabase
  * ("emails/<env>/<inquiryId>.json"); incoming emails that match no inquiry go to
  * "emails/<env>/unmatched.json". Writes check the ETag and retry on a conflict.
  */
-const ENV = process.env.VERCEL_ENV === "production" ? "production" : process.env.VERCEL_ENV || "local";
+const ENV = APP_ENV;
 const PREFIX = `emails/${ENV}/`;
 const UNMATCHED_PATH = `${PREFIX}unmatched.json`;
 const WRITE_ATTEMPTS = 6;
@@ -36,8 +37,8 @@ async function readJson(path: string): Promise<{ data: unknown; etag: string | n
 
 function isConflict(error: unknown): boolean {
   return (
-    error instanceof BlobPreconditionFailedError ||
-    (error instanceof BlobError && /already exists/i.test(error.message))
+    error instanceof StoreConflictError ||
+    (error instanceof StoreError && /already exists/i.test(error.message))
   );
 }
 

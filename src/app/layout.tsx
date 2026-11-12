@@ -25,10 +25,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full bg-slate-50 text-slate-900">
         {children}
-        {/* Privacy-friendly page-view counts (no cookies). Does nothing until Web Analytics is
-            turned on for this project in the Vercel dashboard (Project > Analytics). */}
-        <Analytics />
-        <SpeedInsights />
+        {/* Privacy-friendly page-view counts (no cookies). Vercel only: other providers load nothing
+            extra, and it does nothing until Web Analytics is turned on for the Vercel project. */}
+        {process.env.VERCEL ? (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        ) : null}
       </body>
     </html>
   );

@@ -1,0 +1,49 @@
+# Deploys the selected commit to ONE hosting provider, only when you start it by hand
+# (Actions > Deploy one provider > Run workflow). It never runs on its own, so it uses no
+# resources while you are not deploying. Use it for Cloudflare (that build needs Linux) or
+# whenever you do not want to deploy from your own computer.
+#
+# Repository secrets needed (only for the provider you use):
+#   vercel:     VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#   netlify:    NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
+#   cloudflare: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# The app's own settings (Supabase keys, passwords, ...) live in each provider, not here.
+name: Deploy one provider
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Where to deploy this commit
+        type: choice
+        required: true
+        options: [vercel, netlify, cloudflare]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Deploy
+        run: npm run deploy -- --provider=${{ inputs.provider }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

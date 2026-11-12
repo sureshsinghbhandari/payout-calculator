@@ -42,12 +42,13 @@ const blobs = vi.hoisted(() => {
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ cacheLife: () => {}, cacheTag: () => {} }));
-vi.mock("@vercel/blob", () => {
+vi.mock("@/lib/server/object-store", async (importOriginal) => {
   class BlobError extends Error {}
   class BlobPreconditionFailedError extends BlobError {}
   return {
-    BlobError,
-    BlobPreconditionFailedError,
+    ...(await importOriginal<typeof import("@/lib/server/object-store")>()),
+    StoreError: BlobError,
+    StoreConflictError: BlobPreconditionFailedError,
     get: (pathname: string) => blobs.get(pathname),
     put: async (pathname: string, body: string, options: { allowOverwrite?: boolean; ifMatch?: string }) => {
       try {
@@ -60,7 +61,8 @@ vi.mock("@vercel/blob", () => {
   };
 });
 
-process.env.BLOB_READ_WRITE_TOKEN = "test-token";
+process.env.SUPABASE_URL = "https://test.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 delete process.env.VERCEL_ENV;
 
 const store = await import("./rates-store");
