@@ -78,7 +78,7 @@ export function ActiveView({ data }: { data: TradingActive }) {
                   <span className={`text-lg font-semibold tabular-nums ${pnlClass(pnl)}`}>{signedMoney(pnl, currency)}</span>
                 </summary>
                 <div className="px-2 pb-3 sm:px-3">
-                  <PositionsTable rows={rows} tab={tab} caption={`Open positions of ${strategy.name} for ${tab.label} that carry past today`} totalLabel={strategy.name} />
+                  <PositionsTable rows={rows} tab={tab} caption={`Open positions of ${strategy.name} for ${tab.label} that carry past today`} showTotal={false} />
                 </div>
               </details>
             );

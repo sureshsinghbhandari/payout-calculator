@@ -66,7 +66,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             {strategy.underlying && <span className="text-xs text-slate-500">{strategy.underlying}</span>}
           </div>
           <p className="mt-1 text-xs text-slate-600">{rule || "Entry rule not available for this strategy."}</p>
-          {strategy.settings?.allocatedFunds !== null && strategy.settings?.allocatedFunds !== undefined && (
+          {typeof strategy.settings?.allocatedFunds === "number" && strategy.settings.allocatedFunds > 0 && (
             <p className="text-xs text-slate-500">Funds {money(strategy.settings.allocatedFunds, tab.currency)}</p>
           )}
         </div>
@@ -104,7 +104,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             Positions opened today ({rows.length})
           </summary>
           <div className="px-2 pb-3 sm:px-3">
-            <PositionsTable rows={rows} tab={tab} caption={`Positions ${strategy.name} opened today for ${tab.label}`} totalLabel={strategy.name} />
+            <PositionsTable rows={rows} tab={tab} caption={`Positions ${strategy.name} opened today for ${tab.label}`} showTotal={false} />
           </div>
         </details>
       )}

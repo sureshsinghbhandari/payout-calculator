@@ -194,11 +194,14 @@ export function PositionsTable({
   tab,
   caption,
   totalLabel = "Total",
+  showTotal = true,
 }: {
   rows: TradingTodayRow[];
   tab: TradingTab;
   caption: string;
   totalLabel?: string;
+  /** Off where the surrounding block already shows the same total (a strategy's header). */
+  showTotal?: boolean;
 }) {
   const currency = tab.currency;
   const openCount = rows.filter((r) => r.status === "open").length;
@@ -300,6 +303,7 @@ export function PositionsTable({
               );
             })}
           </tbody>
+          {showTotal && (
           <tfoot>
             <tr className="border-t border-slate-200 bg-slate-50 text-sm">
               <th scope="row" className="px-4 py-3 text-left font-semibold text-slate-900 sm:pl-6">
@@ -315,6 +319,7 @@ export function PositionsTable({
               <td className="sm:pr-6" />
             </tr>
           </tfoot>
+          )}
         </table>
       </div>
     </div>
