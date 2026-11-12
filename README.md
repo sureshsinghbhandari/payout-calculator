@@ -419,8 +419,8 @@ Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
   while the market is open. The legs, distance-now and distance-at-entry columns are hidden
   until chosen with the settings (gear) icon above the table (kept per browser).
 - **Entry Board** — every strategy of the account, one block each: its name, where it stands
-  today (Opened, Waiting, Skipped, Off day or Disabled), its entry rule (entry time with ET / IST,
-  days, DTE, lots, targets), what it opened and the P/L, with the positions it opened below.
+  today (Opened, Waiting, Skipped, Off day or Disabled), what it opened and the P/L, with the
+  positions it opened below (one position is shown directly; several sit in an expand / collapse tile).
   *Skipped* means it is switched on, today is an entry day, its entry time has passed and
   nothing opened. Filter: All / Opened today / Not opened (`?view=opened&show=opened`).
 - **Other Active Positions** — every position that is still open and carries past today (so it

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { TradingEntrySettings, TradingEntryState, TradingOpened, TradingOpenedStrategy } from "@/lib/server/trading-api";
+import type { TradingEntryState, TradingOpened, TradingOpenedStrategy } from "@/lib/server/trading-api";
 import { money, pnlClass, signedMoney } from "./format";
 import { clockWithZone, Pill, PositionsTable, ViewHeader, zoneShort } from "./positions";
 import { TodayColumns } from "./TodayColumns";
@@ -25,28 +25,10 @@ const chip = (active: boolean) =>
     active ? "border-blue-900 bg-blue-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
   }`;
 
-/** "09:35 ET · Mon Wed Fri · 0 DTE · 2 lots · target 50% · stop 100%": the entry rule, leaving out what is not set. */
-function entryRule(settings: TradingEntrySettings | null | undefined, market: string | null): string {
-  if (!settings) return "";
-  const parts: string[] = [];
-  if (settings.entryTime) {
-    const window = settings.entryWindowMinutes ? ` (+${settings.entryWindowMinutes} min)` : "";
-    parts.push(`${settings.entryTime} ${zoneShort(market)}${window}`);
-  }
-  if (settings.entryDays && settings.entryDays.length > 0) parts.push(settings.entryDays.length === 7 ? "every day" : settings.entryDays.join(" "));
-  if (settings.dteDays !== null && settings.dteDays !== undefined) parts.push(`${settings.dteDays} DTE`);
-  if (settings.quantity !== null && settings.quantity !== undefined) parts.push(`${settings.quantity} lot${settings.quantity === 1 ? "" : "s"}`);
-  if (settings.profitTargetPct !== null && settings.profitTargetPct !== undefined) parts.push(`target ${settings.profitTargetPct}%`);
-  if (settings.stopLossPct !== null && settings.stopLossPct !== undefined) parts.push(`stop ${settings.stopLossPct}%`);
-  if (settings.holdToExpiry) parts.push("hold to expiry");
-  return parts.join(" · ");
-}
-
 function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; data: TradingOpened }) {
   const { tab } = data;
   const rows = strategy.rows ?? [];
   const state = STATE_LABEL[strategy.state] ?? { label: String(strategy.state ?? "Unknown"), tone: "slate" as const, hint: "" };
-  const rule = entryRule(strategy.settings, tab.market);
   const openCount = strategy.totals?.open ?? rows.filter((r) => r.status === "open").length;
   const closedCount = strategy.totals?.closed ?? rows.filter((r) => r.status === "closed").length;
   const lots = strategy.totals?.lots ?? null;
@@ -65,7 +47,6 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             </Pill>
             {strategy.underlying && <span className="text-xs text-slate-500">{strategy.underlying}</span>}
           </div>
-          <p className="mt-1 text-xs text-slate-600">{rule || "Entry rule not available for this strategy."}</p>
           {typeof strategy.settings?.allocatedFunds === "number" && strategy.settings.allocatedFunds > 0 && (
             <p className="text-xs text-slate-500">Funds {money(strategy.settings.allocatedFunds, tab.currency)}</p>
           )}
@@ -86,7 +67,6 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
           ) : (
             <p className="text-slate-500">Nothing opened today.</p>
           )}
-          {strategy.carriedOpen ? <p className="text-slate-500">{strategy.carriedOpen} open from earlier days</p> : null}
           {earlier && earlier.count ? (
             <p className="text-slate-500">
               {earlier.count} earlier position{earlier.count === 1 ? "" : "s"} closed today ({signedMoney(earlier.realized, tab.currency)})
@@ -120,7 +100,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
 }
 
 /**
- * "Entry Board": every strategy of one tab with its entry rule, where it
+ * "Entry Board": every strategy of one tab, where it
  * stands today (opened, waiting, skipped, off day, disabled) and the positions
  * it opened, with their P&L (the `opened` route). A filter narrows it to the
  * strategies that opened something or that did not. Read-only.
