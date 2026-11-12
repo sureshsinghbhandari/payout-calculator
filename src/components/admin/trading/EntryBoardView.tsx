@@ -79,7 +79,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             <p className="text-xs text-slate-500">Funds {money(strategy.settings.allocatedFunds, tab.currency)}</p>
           )}
         </div>
-        <div className="basis-56 text-xs text-slate-700">
+        <div className="w-56 text-xs text-slate-700">
           {rows.length > 0 ? (
             <>
               <p>
@@ -120,7 +120,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
               <div className={SMALL_LABEL}>Distance at entry</div>
               <DistanceCell distance={single.distanceAtEntry ?? null} spot={single.entrySpot ?? null} />
             </div>
-            <div className="flex items-start gap-3">
+            <div className="ml-auto flex w-52 items-start justify-end gap-3">
               <PnlCell row={single} currency={tab.currency} market={tab.market} />
               <div className="pt-3">
                 <PayoffButton row={single} currency={tab.currency} />
@@ -128,7 +128,7 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             </div>
           </>
         ) : (
-          <div className="text-right">
+          <div className="ml-auto w-52 text-right">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">P/L today</div>
             <div className={`text-lg font-semibold tabular-nums ${pnlClass(pnl)}`}>{rows.length > 0 ? signedMoney(pnl, tab.currency) : "—"}</div>
           </div>
