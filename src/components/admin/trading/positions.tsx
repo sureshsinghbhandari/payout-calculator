@@ -19,9 +19,9 @@ import { canDrawPayoff } from "./payoff-legs";
  */
 
 /** Classes that hide a cell while TodayColumns lists its column in `data-hide` (written out in full so Tailwind keeps them). */
-const HIDE_POSITION = "[[data-hide~=position]_&]:hidden";
-const HIDE_NOW = "[[data-hide~=now]_&]:hidden";
-const HIDE_ENTRY = "[[data-hide~=entry]_&]:hidden";
+export const HIDE_POSITION = "[[data-hide~=position]_&]:hidden";
+export const HIDE_NOW = "[[data-hide~=now]_&]:hidden";
+export const HIDE_ENTRY = "[[data-hide~=entry]_&]:hidden";
 
 /** The time zone a tab's times are in: US tabs show Eastern time, India tabs India time. */
 export function marketZone(market: string | null | undefined): string {
@@ -108,7 +108,7 @@ function DistanceSide({ label, side }: { label: "P" | "C"; side: TradingDistance
   );
 }
 
-function DistanceCell({ distance, spot }: { distance: TradingDistance | null; spot: number | null }) {
+export function DistanceCell({ distance, spot }: { distance: TradingDistance | null; spot: number | null }) {
   return (
     <div className="space-y-0.5 text-xs">
       {distance ? (
@@ -124,7 +124,7 @@ function DistanceCell({ distance, spot }: { distance: TradingDistance | null; sp
   );
 }
 
-function PnlCell({ row, currency, market }: { row: TradingTodayRow; currency: string; market: string | null }) {
+export function PnlCell({ row, currency, market }: { row: TradingTodayRow; currency: string; market: string | null }) {
   const { current = null, maxProfit = null, markedAt = null } = row.pnl ?? {};
   const share = current !== null && maxProfit !== null && current > 0 && maxProfit > 0 ? Math.round((current / maxProfit) * 100) : null;
   const marked = clockWithZone(markedAt, market);
@@ -144,6 +144,49 @@ function PnlCell({ row, currency, market }: { row: TradingTodayRow; currency: st
         {marked && <> · at {marked}</>}
       </div>
     </div>
+  );
+}
+
+/** A position's legs (sells in red, buys in green, closed legs struck through) with its lots, expiry and structure. */
+export function PositionLegs({ row }: { row: TradingTodayRow }) {
+  const legs = [...(row.legs ?? [])].sort((a, b) => b.strike - a.strike);
+  return (
+    <>
+      <ul className="space-y-0.5">
+        {legs.map((leg, i) => (
+          <LegLine key={`${leg.action}-${leg.type}-${leg.strike}-${leg.expiration ?? ""}-${i}`} leg={leg} />
+        ))}
+      </ul>
+      <div className="mt-1 text-[11px] text-slate-500">
+        {row.quantity} lot{row.quantity === 1 ? "" : "s"} · exp {row.expiration}
+        {row.structure && <> · {row.structure}</>}
+      </div>
+    </>
+  );
+}
+
+/** The payoff-graph button of a position, or a dash when its legs cannot be drawn. */
+export function PayoffButton({ row, currency }: { row: TradingTodayRow; currency: string }) {
+  if (!canDrawPayoff(row.legs ?? [])) return <span className="text-slate-400">—</span>;
+  return (
+    <PayoffDialog
+      title={row.strategy}
+      currency={currency}
+      multiplier={row.multiplier}
+      legs={(row.legs ?? []).map((leg) => ({
+        action: leg.action,
+        type: leg.type,
+        strike: leg.strike,
+        quantity: leg.quantity,
+        entryMid: leg.entryMid,
+        status: leg.status,
+      }))}
+      spot={row.liveSpot}
+      entrySpot={row.entrySpot}
+      entryCredit={row.pnl?.entryCredit ?? null}
+      maxProfit={row.pnl?.maxProfit ?? null}
+      maxRisk={row.pnl?.maxRisk ?? null}
+    />
   );
 }
 
@@ -242,7 +285,6 @@ export function PositionsTable({
           </thead>
           <tbody className="text-slate-800">
             {rows.map((row) => {
-              const legs = [...(row.legs ?? [])].sort((a, b) => b.strike - a.strike);
               return (
                 <tr key={row.id} className="border-b border-slate-100 align-top last:border-b-0">
                   <th scope="row" className="px-4 py-3 text-left font-medium text-slate-900 sm:pl-6">
@@ -256,15 +298,7 @@ export function PositionsTable({
                     </div>
                   </th>
                   <td className={`px-4 py-3 ${HIDE_POSITION}`}>
-                    <ul className="space-y-0.5">
-                      {legs.map((leg, i) => (
-                        <LegLine key={`${leg.action}-${leg.type}-${leg.strike}-${leg.expiration ?? ""}-${i}`} leg={leg} />
-                      ))}
-                    </ul>
-                    <div className="mt-1 text-[11px] text-slate-500">
-                      {row.quantity} lot{row.quantity === 1 ? "" : "s"} · exp {row.expiration}
-                      {row.structure && <> · {row.structure}</>}
-                    </div>
+                    <PositionLegs row={row} />
                   </td>
                   <td className={`px-4 py-3 ${HIDE_NOW}`}>
                     <DistanceCell distance={row.distanceNow} spot={row.liveSpot} />
@@ -276,28 +310,7 @@ export function PositionsTable({
                     <PnlCell row={row} currency={currency} market={tab.market} />
                   </td>
                   <td className="px-4 py-3 text-center sm:pr-6">
-                    {canDrawPayoff(row.legs ?? []) ? (
-                      <PayoffDialog
-                        title={row.strategy}
-                        currency={currency}
-                        multiplier={row.multiplier}
-                        legs={(row.legs ?? []).map((leg) => ({
-                          action: leg.action,
-                          type: leg.type,
-                          strike: leg.strike,
-                          quantity: leg.quantity,
-                          entryMid: leg.entryMid,
-                          status: leg.status,
-                        }))}
-                        spot={row.liveSpot}
-                        entrySpot={row.entrySpot}
-                        entryCredit={row.pnl?.entryCredit ?? null}
-                        maxProfit={row.pnl?.maxProfit ?? null}
-                        maxRisk={row.pnl?.maxRisk ?? null}
-                      />
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
+                    <PayoffButton row={row} currency={currency} />
                   </td>
                 </tr>
               );

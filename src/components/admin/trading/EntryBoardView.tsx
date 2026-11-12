@@ -1,7 +1,20 @@
 import Link from "next/link";
 import type { TradingEntryState, TradingOpened, TradingOpenedStrategy } from "@/lib/server/trading-api";
 import { money, pnlClass, signedMoney } from "./format";
-import { clockWithZone, Pill, PositionsTable, ViewHeader, zoneShort } from "./positions";
+import {
+  clockWithZone,
+  DistanceCell,
+  HIDE_ENTRY,
+  HIDE_NOW,
+  HIDE_POSITION,
+  PayoffButton,
+  Pill,
+  PnlCell,
+  PositionLegs,
+  PositionsTable,
+  ViewHeader,
+  zoneShort,
+} from "./positions";
 import { TodayColumns } from "./TodayColumns";
 
 export type EntryFilter = "all" | "opened" | "not-opened";
@@ -25,9 +38,17 @@ const chip = (active: boolean) =>
     active ? "border-blue-900 bg-blue-900 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
   }`;
 
+const SMALL_LABEL = "mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500";
+
+/**
+ * One strategy. With exactly one position opened today everything about it (legs, distances, P/L, payoff
+ * graph) sits in the header row and there is no table below; with several, the positions are in an expand /
+ * collapse tile under the header. The legs and distance columns follow the settings (gear) menu.
+ */
 function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; data: TradingOpened }) {
   const { tab } = data;
   const rows = strategy.rows ?? [];
+  const single = rows.length === 1 ? rows[0] : null;
   const state = STATE_LABEL[strategy.state] ?? { label: String(strategy.state ?? "Unknown"), tone: "slate" as const, hint: "" };
   const openCount = strategy.totals?.open ?? rows.filter((r) => r.status === "open").length;
   const closedCount = strategy.totals?.closed ?? rows.filter((r) => r.status === "closed").length;
@@ -47,6 +68,13 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             </Pill>
             {strategy.underlying && <span className="text-xs text-slate-500">{strategy.underlying}</span>}
           </div>
+          {single && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {single.status === "open" ? <Pill tone="blue">Open</Pill> : <Pill tone="slate">Closed{single.exitReason ? ` · ${single.exitReason}` : ""}</Pill>}
+              {single.status === "open" && single.dte === 0 && <Pill tone="amber">Expires today</Pill>}
+              {single.status === "open" && single.dte !== null && single.dte !== undefined && single.dte > 0 && <Pill tone="slate">{single.dte} DTE</Pill>}
+            </div>
+          )}
           {typeof strategy.settings?.allocatedFunds === "number" && strategy.settings.allocatedFunds > 0 && (
             <p className="text-xs text-slate-500">Funds {money(strategy.settings.allocatedFunds, tab.currency)}</p>
           )}
@@ -61,7 +89,13 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
                 {lots !== null && <> · {lots} lot{lots === 1 ? "" : "s"}</>}
               </p>
               <p className="text-slate-500">
-                {openCount} open · {closedCount} closed{last && <> · last entry {last}</>}
+                {single ? (
+                  last ? <>last entry {last}</> : null
+                ) : (
+                  <>
+                    {openCount} open · {closedCount} closed{last && <> · last entry {last}</>}
+                  </>
+                )}
               </p>
             </>
           ) : (
@@ -73,17 +107,33 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
             </p>
           ) : null}
         </div>
-        <div className="text-right">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">P/L today</div>
-          <div className={`text-lg font-semibold tabular-nums ${pnlClass(pnl)}`}>{rows.length > 0 ? signedMoney(pnl, tab.currency) : "—"}</div>
-        </div>
+        {single ? (
+          <>
+            <div className={`basis-48 ${HIDE_POSITION}`}>
+              <PositionLegs row={single} />
+            </div>
+            <div className={`basis-40 ${HIDE_NOW}`}>
+              <div className={SMALL_LABEL}>Distance now</div>
+              <DistanceCell distance={single.distanceNow ?? null} spot={single.liveSpot ?? null} />
+            </div>
+            <div className={`basis-40 ${HIDE_ENTRY}`}>
+              <div className={SMALL_LABEL}>Distance at entry</div>
+              <DistanceCell distance={single.distanceAtEntry ?? null} spot={single.entrySpot ?? null} />
+            </div>
+            <div className="flex items-start gap-3">
+              <PnlCell row={single} currency={tab.currency} market={tab.market} />
+              <div className="pt-3">
+                <PayoffButton row={single} currency={tab.currency} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-right">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">P/L today</div>
+            <div className={`text-lg font-semibold tabular-nums ${pnlClass(pnl)}`}>{rows.length > 0 ? signedMoney(pnl, tab.currency) : "—"}</div>
+          </div>
+        )}
       </div>
-      {rows.length === 1 && (
-        // One position: shown straight away, no expand / collapse tile needed.
-        <div className="border-t border-slate-100 px-2 py-3 sm:px-3">
-          <PositionsTable rows={rows} tab={tab} caption={`Position ${strategy.name} opened today for ${tab.label}`} showTotal={false} />
-        </div>
-      )}
       {rows.length > 1 && (
         // Several positions: an expand / collapse tile (open by default).
         <details open className="border-t border-slate-100">
