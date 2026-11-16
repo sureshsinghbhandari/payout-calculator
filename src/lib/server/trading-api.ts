@@ -19,7 +19,7 @@ import { findTradingAccount, TRADING_ACCOUNTS } from "../trading-accounts";
  * describes them in full for whoever adds them there); the dashboard copes
  * while they are missing.
  *
- * Only the accounts listed in lib/trading-accounts.ts (Ashwin and Suresh_Live)
+ * Only the accounts listed in lib/trading-accounts.ts (Ashwin and Suresh Live)
  * are ever asked for. Every call below that takes a slug refuses any other
  * one before a request is made, and a reply that names a different tab than
  * the one asked for is rejected, so no other account's figures can reach a page.
@@ -390,7 +390,7 @@ async function call<T>(path: string): Promise<TradingResult<T>> {
 }
 
 /**
- * A call for one account's tab. Only the accounts in lib/trading-accounts.ts (Ashwin and Suresh_Live) may be
+ * A call for one account's tab. Only the accounts in lib/trading-accounts.ts (Ashwin and Suresh Live) may be
  * asked for: any other slug is refused here without a request, and a reply that names another tab is rejected.
  */
 async function accountCall<T extends { tab?: { slug?: string } }>(slug: string, route: string): Promise<TradingResult<T>> {

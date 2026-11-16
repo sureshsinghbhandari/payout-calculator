@@ -262,7 +262,7 @@ Investors
 
   "trading-dashboard": `Settings > Trading dashboard
 ------------------------------------------------------------------
- Account  [Ashwin] [Suresh_Live]
+ Account  [Ashwin] [Suresh Live]
  View     [Overview] [Monthly sheet] [Today]
 
  Overview

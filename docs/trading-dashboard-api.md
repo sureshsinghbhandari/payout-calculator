@@ -18,7 +18,7 @@ This document is the contract between the two repositories for two additions the
 | Docs | `docs/eod-excel.md` | Section "Data API (JSON, 2026-10-31)". |
 | Tests | `tests/server/eodExcel.test.js` (from line ~528: `fakeTabs`, `fakeRegistry`, `dataApp({ env, analyze, ttlMs, clock, log })`, `withServer(router, fn)` at ~282, `adapter(slug, history, extra)` at ~110), `tests/server/tunnelGuard.test.js` (the pass / refuse lists at ~219-245) | Run with `npm run test:server` (`node --import ./tests/server/testSetup.js --test "tests/server/*.test.js"`). |
 
-Tabs of interest: `simulator` and `tradier-sb-live` (both listed in `config/settings.json` `tabOrder.US` as `/tab/simulator`, `/tab/tradier-sb-live`; the tab records themselves come from the flavor registry, `server/src/services/condorFlavors.js` `getTabs()`, through `getAdapterRegistry().listTabs()`).
+Tabs of interest: `ashwin` and `suresh-live` (both listed in `config/settings.json` `tabOrder.US` as `/tab/ashwin`, `/tab/suresh-live`; the tab records themselves come from the flavor registry, `server/src/services/condorFlavors.js` `getTabs()`, through `getAdapterRegistry().listTabs()`).
 
 ## 2. Contract
 
@@ -33,7 +33,7 @@ Under the key `month` the response carries one month sheet of the workbook. `sec
 ```json
 {
   "version": 1,
-  "tab": { "slug": "tradier-sb-live", "label": "Tradier_SB Live", "market": "US", "currency": "USD" },
+  "tab": { "slug": "suresh-live", "label": "Suresh Live", "market": "US", "currency": "USD" },
   "generatedAt": "2026-10-30T20:05:00.000Z",
   "asOf": "2026-10-30",
   "sections": ["month"],
@@ -102,7 +102,7 @@ Every position of the tab's strategies that (a) is open and expires today, or (b
 ```json
 {
   "version": 1,
-  "tab": { "slug": "tradier-sb-live", "label": "Tradier_SB Live", "market": "US", "currency": "USD" },
+  "tab": { "slug": "suresh-live", "label": "Suresh Live", "market": "US", "currency": "USD" },
   "generatedAt": "2026-10-30T15:42:10.000Z",
   "date": "2026-10-30",
   "marketOpen": true,
@@ -289,7 +289,7 @@ Add two read-only additions to the EOD Excel data API (docs/eod-excel.md, "Data 
 - `server/src/lib/tunnelGuard.js` line 16: `const PUBLIC_EOD_DATA = /^\/api\/public\/eod-excel\/(?:tabs|tab\/[a-z0-9][a-z0-9-]{0,79}\/data)\/?$/i;` -> allow `today` too: `(?:tabs|tab\/[a-z0-9][a-z0-9-]{0,79}\/(?:data|today))`. Update the comment above it ("exactly these two paths" becomes three). `GET` and `OPTIONS` only, as now.
 - `server/src/docs/paths/misc.js`: tag `EOD Excel` (description near line 38 says "the two data reads": make it three), `EOD_SLUG`, `EOD_PUBLIC_ERRORS` (~494-510), path objects `'/api/public/eod-excel/tabs'` and `'/api/public/eod-excel/tab/{slug}/data'` (~863-887). Add the `month` query parameter and the `month` section to the data path, and a new `'/api/public/eod-excel/tab/{slug}/today'` path, using the file's `op / json / fail / obj / arr / str / nstr / nnum / num / bool / anyObject` helpers.
 - `docs/eod-excel.md`, section "Data API (JSON, 2026-10-31)": document the `month` section (`?month=`, `available`, the empty-month answer, the 400) and the `today` route (what qualifies, the row shape, which families cannot supply rows, the 10 s cache), plus the tunnel-guard sentence ("exactly these two paths" -> three) and two curl lines.
-- Tests: `tests/server/eodExcel.test.js` (from ~line 528: `fakeTabs` with adapters built by `adapter(slug, history, extra)` at ~110, `fakeRegistry`, `dataApp({ env, analyze, ttlMs, clock, log })` at ~584 wrapping `createEodExcelDataRouter`, `withServer(router, fn)` at ~282, `AUTH`, `NOW = Date.parse('2026-10-30T20:05:00Z')`) and `tests/server/tunnelGuard.test.js` (the pass / refuse lists at ~219-245: add `GET /api/public/eod-excel/tab/simulator/today` and `OPTIONS .../today` to the pass list, `POST .../today` and `GET .../today/extra` to the refuse list). Run `npm run test:server`.
+- Tests: `tests/server/eodExcel.test.js` (from ~line 528: `fakeTabs` with adapters built by `adapter(slug, history, extra)` at ~110, `fakeRegistry`, `dataApp({ env, analyze, ttlMs, clock, log })` at ~584 wrapping `createEodExcelDataRouter`, `withServer(router, fn)` at ~282, `AUTH`, `NOW = Date.parse('2026-10-30T20:05:00Z')`) and `tests/server/tunnelGuard.test.js` (the pass / refuse lists at ~219-245: add `GET /api/public/eod-excel/tab/ashwin/today` and `OPTIONS .../today` to the pass list, `POST .../today` and `GET .../today/extra` to the refuse list). Run `npm run test:server`.
 
 ### Where today's positions and live figures come from (verified; name these helpers, do not reimplement them)
 
@@ -309,7 +309,7 @@ Both responses keep `version: 1`, the existing `tab` object (`{ slug, label, mar
 ```json
 {
   "version": 1,
-  "tab": { "slug": "tradier-sb-live", "label": "Tradier_SB Live", "market": "US", "currency": "USD" },
+  "tab": { "slug": "suresh-live", "label": "Suresh Live", "market": "US", "currency": "USD" },
   "generatedAt": "2026-10-30T20:05:00.000Z",
   "asOf": "2026-10-30",
   "sections": ["month"],
@@ -351,7 +351,7 @@ Both responses keep `version: 1`, the existing `tab` object (`{ slug, label, mar
 ```json
 {
   "version": 1,
-  "tab": { "slug": "tradier-sb-live", "label": "Tradier_SB Live", "market": "US", "currency": "USD" },
+  "tab": { "slug": "suresh-live", "label": "Suresh Live", "market": "US", "currency": "USD" },
   "generatedAt": "2026-10-30T15:42:10.000Z",
   "date": "2026-10-30",
   "marketOpen": true,
@@ -464,10 +464,10 @@ Field rules:
 ## Acceptance checklist
 
 - [ ] `npm run test:server` passes.
-- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/data?sections=month&month=2026-10"` returns `sections: ["month"]` and a `month` object whose `days` / `summary` match the `October 2026` sheet of `Ashwin - EOD DATA.xlsx` (compare three cells by hand: a strategy's Returns, the TOTAL Returns, the last CUMULATIVE).
+- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/ashwin/data?sections=month&month=2026-10"` returns `sections: ["month"]` and a `month` object whose `days` / `summary` match the `October 2026` sheet of `Ashwin - EOD DATA.xlsx` (compare three cells by hand: a strategy's Returns, the TOTAL Returns, the last CUMULATIVE).
 - [ ] The same URL without `&month=` returns the current month; `&month=2026-13` returns 400; `?sections=kpi,strategies,month` returns all three keys.
-- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/today"` and `.../tab/tradier-sb-live/today` return the envelope with `date` = today (ET), `marketOpen`, `spot`, `rows` (during the session: `pnl.unrealized` and `distanceNow` filled for the condor rows; after the close: today's closed rows with `pnl.realized`), `note` null or a sentence.
-- [ ] `curl.exe -s -o NUL -w "%{http_code}" -H "x-forwarded-for: 203.0.113.7" -H "x-forwarded-host: x.ngrok-free.dev" -H "x-forwarded-proto: https" -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/simulator/today"` is 200 (the tunnel guard lets it through), while the same with `-X POST` is 403 or 405 and `GET .../tab/simulator/today/extra` is 403.
+- [ ] `curl.exe -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/ashwin/today"` and `.../tab/suresh-live/today` return the envelope with `date` = today (ET), `marketOpen`, `spot`, `rows` (during the session: `pnl.unrealized` and `distanceNow` filled for the condor rows; after the close: today's closed rows with `pnl.realized`), `note` null or a sentence.
+- [ ] `curl.exe -s -o NUL -w "%{http_code}" -H "x-forwarded-for: 203.0.113.7" -H "x-forwarded-host: x.ngrok-free.dev" -H "x-forwarded-proto: https" -H "Authorization: Bearer <token>" "http://localhost:3000/api/public/eod-excel/tab/ashwin/today"` is 200 (the tunnel guard lets it through), while the same with `-X POST` is 403 or 405 and `GET .../tab/ashwin/today/extra` is 403.
 - [ ] No engine store was written, no order placed, no new broker call outside the engines' existing status reads; `kpi` and `strategies` responses are byte-identical to before.
 - [ ] `docs/eod-excel.md` and the Swagger (`server/src/docs/paths/misc.js`) describe both additions; `GET /api/docs` still loads.
 - [ ] Committed, not pushed.
@@ -497,4 +497,4 @@ this app reads are `TradingOpened` and `TradingActive` in `src/lib/server/tradin
 - `active`: only strategies that have an open position carrying past today, `rows` nearest expiry first; a position is never
   in both `today` and `active`.
 - Every number can be null and is shown as a dash. Unknown fields are ignored and missing optional ones tolerated.
-- Only the accounts in `src/lib/trading-accounts.ts` (Ashwin = `simulator`, Suresh_Live = `tradier-sb-live`) are ever requested.
+- Only the accounts in `src/lib/trading-accounts.ts` (Ashwin = `ashwin`, Suresh Live = `suresh-live`) are ever requested.

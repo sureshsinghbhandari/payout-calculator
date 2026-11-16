@@ -2,8 +2,8 @@
  * One-time (and any-time) sync of the Trading dashboard's saved copies.
  *
  * Reads Overview, every month sheet and today's positions of Ashwin and
- * Suresh_Live from the trading app (tradiersuinew) while it is running,
- * and saves them in this project's private Blob storage. After that the
+ * Suresh Live from the trading app (tradiersuinew) while it is running,
+ * and saves them in this project's private storage (Supabase). After that the
  * dashboard shows them, with a "copy saved ..." notice, whenever the trading
  * app is off. Read-only on the trading app's side.
  *
@@ -12,7 +12,7 @@
  *   npm run trading:sync -- --env local        (saves under the local folder instead of production)
  *
  * Where things come from (nothing is printed):
- *   - BLOB_READ_WRITE_TOKEN: the environment, else .env.local.
+ *   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY: the environment, else .env.local.
  *   - TRADING_API_URL: --url, else the environment, else http://localhost:3000.
  *   - TRADING_API_TOKEN: the environment, else EOD_EXCEL_API_TOKEN in the
  *     trading app's own .env (folder: TRADING_REPO, else C:/MyGithub/tradiersuinew).
@@ -39,12 +39,12 @@ const tradingRepo = process.env.TRADING_REPO || "C:/MyGithub/tradiersuinew";
 const target = arg("env") === "local" ? "local" : "production";
 
 process.env.VERCEL_ENV = target === "production" ? "production" : "";
-process.env.BLOB_READ_WRITE_TOKEN ||= fromDotenv(path.join(root, ".env.local"), "BLOB_READ_WRITE_TOKEN");
+for (const key of ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]) process.env[key] ||= fromDotenv(path.join(root, ".env.local"), key);
 process.env.TRADING_API_URL = (arg("url") || process.env.TRADING_API_URL || "http://localhost:3000").replace(/\/+$/, "");
 process.env.TRADING_API_TOKEN ||= fromDotenv(path.join(tradingRepo, ".env"), "EOD_EXCEL_API_TOKEN");
 
-if (!process.env.BLOB_READ_WRITE_TOKEN) {
-  console.error("No BLOB_READ_WRITE_TOKEN found (environment or .env.local). Run: npx vercel env pull");
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("No SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY found (environment or .env.local).");
   process.exit(1);
 }
 if (!process.env.TRADING_API_TOKEN) {
@@ -68,7 +68,7 @@ try {
 const { TRADING_ACCOUNTS } = await import(pathToFileURL(path.join(root, "src/lib/trading-accounts.ts")).href);
 const { refreshSnapshots, isSnapshotStorageConfigured } = await import(pathToFileURL(path.join(root, "src/lib/server/trading-snapshots.ts")).href);
 if (!isSnapshotStorageConfigured()) {
-  console.error("Blob storage is not configured.");
+  console.error("Storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");
   process.exit(1);
 }
 

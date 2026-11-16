@@ -402,7 +402,7 @@ API (see that app's `docs/eod-excel.md`). This app only ever reads from it: no o
 placed, nothing there is changed, and nothing of this app's own data (inquiries,
 investors, rates) is sent to it.
 
-Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
+Pick an **account** (Ashwin, Suresh Live; the list is `TRADING_ACCOUNTS` in
 `src/lib/trading-accounts.ts`) and a **view**:
 
 - **Overview** — that app's end-of-day KPI tiles and ranked strategy figures, the same
@@ -431,11 +431,11 @@ Pick an **account** (Ashwin, Suresh_Live; the list is `TRADING_ACCOUNTS` in
 All three position views refresh every 30 seconds while the page is visible and the market is
 open (the trading app caches them about 10 seconds), show times in the account's market zone
 (ET for US, IST for India) and show a dash, never 0, for a figure the trading app could not give.
-Only Ashwin and Suresh_Live can be shown: the trading app's token can read many more
+Only Ashwin and Suresh Live can be shown: the trading app's token can read many more
 accounts, but `src/lib/server/trading-api.ts` refuses any other one before a request is made and
 rejects a reply for a different tab.
 
-**Saved copies.** Only Ashwin and Suresh_Live are shown and saved
+**Saved copies.** Only Ashwin and Suresh Live are shown and saved
 (`TRADING_ACCOUNTS` in `src/lib/trading-accounts.ts`). Every successful read is saved as a
 private JSON file in Vercel Blob (`trading/<env>/<account>/overview.json`,
 `month-YYYY-MM.json`, `today.json`; `src/lib/server/trading-snapshots.ts`), and a job

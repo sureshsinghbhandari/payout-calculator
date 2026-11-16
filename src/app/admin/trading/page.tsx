@@ -66,7 +66,7 @@ const chip = (active: boolean) =>
  * export (Monthly sheet), the positions expiring or closing today (Today
  * Expiring), every strategy's entry rule and what it opened (Entry Board) and
  * the open positions that carry past today (Other Active Positions), for each
- * account in ACCOUNTS (Ashwin and Suresh_Live only). It places no orders and
+ * account in ACCOUNTS (Ashwin and Suresh Live only). It places no orders and
  * changes nothing there. Master Admin only.
  */
 async function TradingDashboardContent({ searchParams }: { searchParams: SearchParams }) {
