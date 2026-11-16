@@ -135,8 +135,8 @@ function StrategyBlock({ strategy, data }: { strategy: TradingOpenedStrategy; da
         )}
       </div>
       {rows.length > 1 && (
-        // Several positions: an expand / collapse tile (open by default).
-        <details open className="border-t border-slate-100">
+        // Several positions: an expand / collapse tile (collapsed by default).
+        <details className="border-t border-slate-100">
           <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-blue-900 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 sm:px-6">
             Positions opened today ({rows.length})
           </summary>
