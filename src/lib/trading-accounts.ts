@@ -7,6 +7,7 @@
 export const TRADING_ACCOUNTS = [
   { slug: "ashwin", label: "Ashwin" },
   { slug: "suresh-live", label: "Suresh Live" },
+  { slug: "lottery", label: "Lottery" },
 ] as const;
 
 export type TradingAccount = (typeof TRADING_ACCOUNTS)[number];

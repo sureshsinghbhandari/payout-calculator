@@ -30,6 +30,7 @@ example `src/lib/trading-accounts.ts`, so adding one is a one-line change:
 | --- | --- |
 | Ashwin | `ashwin` |
 | Suresh Live | `suresh-live` |
+| Lottery | `lottery` |
 
 Only the label is shown to people; the slug is what the API uses. The API also reports each tab's
 `label`, `market` (`US`) and `currency` (`USD`); show amounts in that currency.
@@ -158,7 +159,7 @@ instead of an error.
   own machine - the same numbers as its end-of-day Excel export and its Overview tab. Nothing here places an
   order or changes anything there."
 - Two chip rows under it (`mt-5 space-y-3`), each a `<nav>` with a small uppercase label:
-  **Account** (Ashwin | Suresh Live) and **View** (Overview | Monthly sheet | Today). Label style:
+  **Account** (Ashwin | Suresh Live | Lottery) and **View** (Overview | Monthly sheet | Today). Label style:
   `text-xs font-semibold uppercase tracking-wide text-slate-500`. Chip: `rounded-full border px-3 py-1 text-xs font-semibold`;
   active `border-blue-900 bg-blue-900 text-white`, inactive `border-slate-300 bg-white text-slate-700 hover:bg-slate-50`;
   keyboard focus `focus-visible:ring-2 focus-visible:ring-blue-700`. Use real links with `aria-current="page"`.

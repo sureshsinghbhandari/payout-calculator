@@ -1,8 +1,8 @@
 /**
  * One-time (and any-time) sync of the Trading dashboard's saved copies.
  *
- * Reads Overview, every month sheet and today's positions of Ashwin and
- * Suresh Live from the trading app (tradiersuinew) while it is running,
+ * Reads Overview, every month sheet and today's positions of Ashwin,
+ * Suresh Live and Lottery from the trading app (tradiersuinew) while it is running,
  * and saves them in this project's private storage (Supabase). After that the
  * dashboard shows them, with a "copy saved ..." notice, whenever the trading
  * app is off. Read-only on the trading app's side.

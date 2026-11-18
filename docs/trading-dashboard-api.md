@@ -497,4 +497,4 @@ this app reads are `TradingOpened` and `TradingActive` in `src/lib/server/tradin
 - `active`: only strategies that have an open position carrying past today, `rows` nearest expiry first; a position is never
   in both `today` and `active`.
 - Every number can be null and is shown as a dash. Unknown fields are ignored and missing optional ones tolerated.
-- Only the accounts in `src/lib/trading-accounts.ts` (Ashwin = `ashwin`, Suresh Live = `suresh-live`) are ever requested.
+- Only the accounts in `src/lib/trading-accounts.ts` (Ashwin = `ashwin`, Suresh Live = `suresh-live`, Lottery = `lottery`) are ever requested.
