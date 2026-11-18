@@ -99,6 +99,8 @@ describe("rates store", () => {
   });
 
   it("refuses to quote from an unreadable file but lets the admin replace it", async () => {
+    // The store logs each unreadable-file error on purpose; keep that out of the test output.
+    vi.spyOn(console, "error").mockImplementation(() => {});
     blobs.files.set(LOCAL_PATH, { text: '{"rates":{"quarterly":8}}', etag: '"bad"' });
     await expect(store.readStoredRates()).rejects.toThrow("invalid");
     await expect(store.getCurrentRates()).rejects.toThrow();
